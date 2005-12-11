@@ -123,3 +123,6 @@ distclean:: clean
 
 depend:
 	mkdep ${CFLAGS:M-[ID]*} $(srcdir)/*.c
+
+package:
+	tar -zcvf wide-dhcpv6.tar.gz $(srcdir)/*.[chyl1-8] $(srcdir)/Makefile* $(srcdir/README $(srcdir)/COPYRIGHT $(srcdir)/CHANGES $(srcdir)/config* $(srcdir)/install-sh  $(srcdir)/missing $(srcdir)/*.sample
