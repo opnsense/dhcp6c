@@ -109,8 +109,6 @@ static int copyin_option __P((int, struct dhcp6opt *, struct dhcp6opt *,
 static int copy_option __P((u_int16_t, u_int16_t, void *, struct dhcp6opt **,
     struct dhcp6opt *, int *));
 static ssize_t gethwid __P((char *, int, const char *, u_int16_t *));
-static int get_delegated_prefixes __P((char *, char *,
-    struct dhcp6_optinfo *));
 static char *sprint_uint64 __P((char *, int, u_int64_t));
 static char *sprint_auth __P((struct dhcp6_optinfo *));
 
@@ -1531,10 +1529,6 @@ dhcp6_get_options(p, ep, optinfo)
 			dhcp6_clear_list(&sublist);
 
 			break;
-		case DH6OPT_PREFIX_DELEGATION:
-			if (get_delegated_prefixes(cp, cp + optlen, optinfo))
-				goto fail;
-			break;
 #ifdef USE_DH6OPT_REFRESHTIME
 		case DH6OPT_REFRESHTIME:
 			if (optlen != 4)
@@ -1868,103 +1862,6 @@ copyin_option(type, p, ep, list)
 
   fail:
 	dhcp6_clear_list(&sublist);
-	return (-1);
-}
-
-static int
-get_delegated_prefixes(p, ep, optinfo)
-	char *p, *ep;
-	struct dhcp6_optinfo *optinfo;
-{
-	char *np, *cp;
-	struct dhcp6opt opth;
-	struct dhcp6opt_prefix_info pi;
-	struct dhcp6_prefix prefix;
-	int optlen, opt;
-
-	for (; p + sizeof(struct dhcp6opt) <= ep; p = np) {
-		/* XXX: alignment issue */
-		memcpy(&opth, p, sizeof(opth));
-		optlen =  ntohs(opth.dh6opt_len);
-		opt = ntohs(opth.dh6opt_type);
-
-		cp = p + sizeof(opth);
-		np = cp + optlen;
-		dprintf(LOG_DEBUG, "", "  prefix delegation option: %s, "
-			"len %d", dhcp6optstr(opt), optlen);
-
-		if (np > ep) {
-			dprintf(LOG_INFO, FNAME, "malformed DHCP options");
-			return (-1);
-		}
-
-		switch(opt) {
-		case DH6OPT_PREFIX_INFORMATION:
-			if (optlen != sizeof(pi) - 4)
-				goto malformed;
-
-			memcpy(&pi, p, sizeof(pi));
-
-			if (pi.dh6_pi_plen > 128) {
-				dprintf(LOG_INFO, FNAME,
-				    "invalid prefix length (%d)",
-				    pi.dh6_pi_plen);
-				goto malformed;
-			}
-
-			/* clear padding bits in the prefix address */
-			prefix6_mask(&pi.dh6_pi_paddr, pi.dh6_pi_plen);
-
-			/* copy the information into internal format */
-			memset(&prefix, 0, sizeof(prefix));
-			prefix.addr = pi.dh6_pi_paddr;
-			prefix.plen = pi.dh6_pi_plen;
-			/* XXX */
-			prefix.vltime = ntohl(pi.dh6_pi_duration);
-			prefix.pltime = ntohl(pi.dh6_pi_duration);
-
-			if (prefix.vltime != DHCP6_DURATITION_INFINITE) {
-				dprintf(LOG_DEBUG, "",
-				    "  prefix information: "
-				    "%s/%d duration %lu",
-				    in6addr2str(&prefix.addr, 0),
-				    prefix.plen, prefix.vltime);
-			} else {
-				dprintf(LOG_DEBUG, "",
-				    "  prefix information: "
-				    "%s/%d duration infinity",
-				    in6addr2str(&prefix.addr, 0),
-				    prefix.plen);
-			}
-
-			if (dhcp6_find_listval(&optinfo->prefix_list,
-			    DHCP6_LISTVAL_PREFIX6, &prefix, 0)) {
-				dprintf(LOG_INFO, FNAME, 
-				    "duplicated prefix (%s/%d)",
-				    in6addr2str(&prefix.addr, 0),
-				    prefix.plen);
-				goto nextoption;
-			}
-
-			if (dhcp6_add_listval(&optinfo->prefix_list,
-			    DHCP6_LISTVAL_PREFIX6, &prefix, NULL) == NULL) {
-				dprintf(LOG_ERR, FNAME,
-				    "failed to copy a prefix");
-				goto fail;
-			}
-		}
-
-	  nextoption:
-		;
-	}
-
-	return (0);
-
-  malformed:
-	dprintf(LOG_INFO,
-		"", "  malformed prefix delegation option: type %d, len %d",
-		opt, optlen);
-  fail:
 	return (-1);
 }
 
@@ -2383,42 +2280,6 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		free(tmpbuf);
 		p = (struct dhcp6opt *)((char *)p + optlen);
 		len += optlen;
-	}
-
-	if (!TAILQ_EMPTY(&optinfo->prefix_list)) {
-		char *tp;
-		struct dhcp6_listval *dp;
-		struct dhcp6opt_prefix_info pi;
-
-		tmpbuf = NULL;
-		optlen = dhcp6_count_list(&optinfo->prefix_list) *
-			sizeof(struct dhcp6opt_prefix_info);
-		if ((tmpbuf = malloc(optlen)) == NULL) {
-			dprintf(LOG_ERR, FNAME,
-				"memory allocation failed for options");
-			goto fail;
-		}
-		for (dp = TAILQ_FIRST(&optinfo->prefix_list), tp = tmpbuf; dp;
-		     dp = TAILQ_NEXT(dp, link), tp += sizeof(pi)) {
-			/*
-			 * XXX: We need a temporary structure due to alignment
-			 * issue.
-			 */
-			memset(&pi, 0, sizeof(pi));
-			pi.dh6_pi_type = htons(DH6OPT_PREFIX_INFORMATION);
-			pi.dh6_pi_len = htons(sizeof(pi) - 4);
-			pi.dh6_pi_duration = htonl(dp->val_prefix6.vltime);
-			pi.dh6_pi_plen = dp->val_prefix6.plen;
-			memcpy(&pi.dh6_pi_paddr, &dp->val_prefix6.addr,
-			       sizeof(struct in6_addr));
-			memcpy(tp, &pi, sizeof(pi));
-		}
-		if (copy_option(DH6OPT_PREFIX_DELEGATION, optlen, tmpbuf, &p,
-		    optep, &len) != 0) {
-			goto fail;
-		}
-		free(tmpbuf);
-		     
 	}
 
 	if (optinfo->relaymsg_len) {
@@ -3001,10 +2862,6 @@ dhcp6optstr(type)
 	case DH6OPT_NTP:
 		return ("NTP server");
 #endif
-	case DH6OPT_PREFIX_DELEGATION:
-		return ("prefix delegation");
-	case DH6OPT_PREFIX_INFORMATION:
-		return ("prefix information");
 	case DH6OPT_IA_PD:
 		return ("IA_PD");
 	case DH6OPT_IA_PD_PREFIX:

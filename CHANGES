@@ -1,4 +1,9 @@
 
+	--- 20051211 tar ball released ---
+2005-12-11  SUZUKI, Shinsuke <suz@kame.net>
+	* Assign an official option number for Information Refresh Timer
+	* Removed old prefix delegation options, since these options numbers
+	  coinsides with Information Refresh Timer.
 	--- 20050723a tar ball released ---
 
 2005-07-22  JINMEI, Tatuya  <jinmei@isl.rdc.toshiba.co.jp>

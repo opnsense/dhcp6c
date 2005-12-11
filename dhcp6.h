@@ -286,25 +286,16 @@ struct dhcp6_relay {
 #ifndef DH6OPT_IA_PD_PREFIX
 #define DH6OPT_IA_PD_PREFIX 26
 #endif
-
-/*
- * The old prefix delegation option used in the service specification document
- * (200206xx version) by NTT Communications.
- */
-#define DH6OPT_PREFIX_DELEGATION CONF_DH6OPT_PREFIX_DELEGATION
-#define DH6OPT_PREFIX_INFORMATION CONF_DH6OPT_PREFIX_INFORMATION
-#define DH6OPT_PREFIX_REQUEST CONF_DH6OPT_PREFIX_REQUEST
+#ifndef DH6OPT_REFRESHTIME
+#define DH6OPT_REFRESHTIME 32
+ #define DH6OPT_REFRESHTIME_UNDEF -1
+#endif
 
 /* The followings are KAME specific. */
 #if CONF_DH6OPT_NTP > 0
 #define USE_DH6OPT_NTP
 #endif
 #define DH6OPT_NTP CONF_DH6OPT_NTP
-#if CONF_DH6OPT_REFRESHTIME > 0
-#define USE_DH6OPT_REFRESHTIME
-#endif
-#define DH6OPT_REFRESHTIME CONF_DH6OPT_REFRESHTIME
-#  define DH6OPT_REFRESHTIME_UNDEF -1
 
 struct dhcp6opt {
 	u_int16_t dh6opt_type;
@@ -325,15 +316,6 @@ struct dhcp6opt_stcode {
 	u_int16_t dh6_stcode_type;
 	u_int16_t dh6_stcode_len;
 	u_int16_t dh6_stcode_code;
-} __attribute__ ((__packed__));
-
-/* Prefix Information */
-struct dhcp6opt_prefix_info {
-	u_int16_t dh6_pi_type;
-	u_int16_t dh6_pi_len;
-	u_int32_t dh6_pi_duration;
-	u_int8_t dh6_pi_plen;
-	struct in6_addr dh6_pi_paddr;
 } __attribute__ ((__packed__));
 
 /*

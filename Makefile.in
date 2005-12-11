@@ -53,11 +53,8 @@ mandir=	@mandir@
 
 CFLAGS+= @DHCPOPT_DNS@ @DH6OPT_DNSNAME@ \
 	@DH6OPT_IA_PD@ @DH6OPT_IA_PD_PREFIX@ \
-	-DCONF_DH6OPT_PREFIX_DELEGATION=@dhcpopt_pdel@ \
-	-DCONF_DH6OPT_PREFIX_INFORMATION=@dhcpopt_pinfo@ \
-	-DCONF_DH6OPT_PREFIX_REQUEST=@dhcpopt_preq@ \
+	@DH6OPT_REFRESHTIME@ \
 	-DCONF_DH6OPT_NTP=@dhcpopt_ntp@ \
-	-DCONF_DH6OPT_REFRESHTIME=@dhcpopt_refreshtime@
 
 GENSRCS=cfparse.c cftoken.c
 CLIENTOBJS=	dhcp6c.o common.o config.o prefixconf.o dhcp6c_ia.o timer.o \
