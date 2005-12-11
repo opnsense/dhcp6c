@@ -122,4 +122,8 @@ depend:
 	mkdep ${CFLAGS:M-[ID]*} $(srcdir)/*.c
 
 package:
-	tar -zcvf wide-dhcpv6.tar.gz $(srcdir)/*.[chyl1-8] $(srcdir)/Makefile* $(srcdir/README $(srcdir)/COPYRIGHT $(srcdir)/CHANGES $(srcdir)/config* $(srcdir)/install-sh  $(srcdir)/missing $(srcdir)/*.sample
+	tar -zcvf wide-dhcpv6.tar.gz $(srcdir)/*.[chyl1-8] $(srcdir)/Makefile* \
+		$(srcdir)/README $(srcdir)/COPYRIGHT $(srcdir)/CHANGES \
+		$(srcdir)/config* $(srcdir)/install-sh  $(srcdir)/*.sample \
+		$(srcdir)/missing/arc4random.?  $(srcdir)/missing/strlcat.c \
+		$(srcdir)/missing/strlcpy.c
