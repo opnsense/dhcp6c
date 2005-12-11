@@ -1,6 +1,7 @@
 
 	--- 20051211 tar ball released ---
 2005-12-11  SUZUKI, Shinsuke <suz@kame.net>
+	* locate every files in /usr/local/xxx, instead of /usr/local/v6/xxx
 	* Assign an official option number for Information Refresh Timer
 	* Removed old prefix delegation options, since these options numbers
 	  coinsides with Information Refresh Timer.
