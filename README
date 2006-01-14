@@ -29,15 +29,11 @@ kame-dhcp6
 
 Bug Reports and Mailing Lists
 
-	Bugs reports should be sent to
-
-		kame-bugs@kame.net
-
-	or to the KAME user's mailing list
-
-		snap-users@kame.net
+	Bugs reports should be put to the Bug Tracking System at 
+	sourceforge.net
+		http://sourceforge.net/projects/wide-dhcpv6/
 
 	Information on the mailing list, including how to subscribe
 	and browse archives, is available at the following URL:
 
-		http://www.kame.net/snap-users/
+		http://sourceforge.net/mail/?group_id=153668
