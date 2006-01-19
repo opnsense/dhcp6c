@@ -1,4 +1,4 @@
-/*	$KAME: dhcp6relay.c,v 1.60 2005/10/16 16:17:18 suz Exp $	*/
+/*	$KAME: dhcp6relay.c,v 1.62 2006/01/19 04:25:16 jinmei Exp $	*/
 /*
  * Copyright (C) 2000 WIDE Project.
  * All rights reserved.
@@ -180,7 +180,7 @@ main(argc, argv)
 		if (argc != 1) {
 			fprintf(stderr, "you should explicitly specify a "
 			    "relaying interface, when you are to "
-			    "listen to multiple interfaces");
+			    "listen on multiple interfaces");
 			exit(0);
 		}
 		relaydevice = argv[0];
@@ -577,7 +577,7 @@ relay6_recv(s, fromclient)
 	 * interface, when a DHCPv6 server is running on that interface.
 	 * This check prevents such reception.
 	 */
-	if (ifd == NULL || pi->ipi6_ifindex != relayifid)
+	if (ifd == NULL && pi->ipi6_ifindex != relayifid)
 		return;
 	if (if_indextoname(pi->ipi6_ifindex, ifname) == NULL) {
 		dprintf(LOG_WARNING, FNAME,

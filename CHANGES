@@ -1,4 +1,7 @@
-
+2006-01-19  SUZUKI, Shinsuke <suz@kame.net>
+	* corrected the condition for detecting unwanted incoming messages
+	* missing initialization in dhcp6c
+	--- 20060114 tar ball released ---
 	--- 20051211 tar ball released ---
 2005-12-11  SUZUKI, Shinsuke <suz@kame.net>
 	* locate every files in /usr/local/xxx, instead of /usr/local/v6/xxx
