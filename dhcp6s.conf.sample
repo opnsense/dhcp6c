@@ -8,3 +8,16 @@ host kame {
 	duid 00:01:00:01:aa:bb;
 	prefix 2001:db8:1111::/48 infinity;
 };
+
+# The followings are a sample configuration to provide an IPv6 address
+# from an address pool 2001:db8:1:2::1000-2000.
+# Note. You have to send an RA with A-bit off to fxp0; otherwise
+# a client cannot be sure about the prefix-length and the default router.
+
+interface fxp0 {
+	address-pool pool1;
+};
+
+pool pool1 {
+	range 2001:db8:1:2::1000 to 2001:db8:1:2::2000 ;
+};
