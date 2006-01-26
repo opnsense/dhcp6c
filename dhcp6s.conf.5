@@ -162,6 +162,20 @@ The specified value will be contained in a preference option of
 advertise messages.
 The preference value must be a decimal integer and be between 0 and
 255 (inclusive.)
+.It Ic address-pool Ar pool Op Ar pltime Op Ar vltime ;
+This statement assigns an address pool
+.Ar pool
+to the interface. When
+.Nm
+receives a allocation request for an IA-NA, it assigns one IPv6 address from this pool.
+The specified pool name will be defined in a pool statement.
+Regarding the
+.Ar pltime
+and
+.Ar vltime
+, please see the explanation in the
+.Ar prefix
+substatement in host statement section.
 .El
 .El
 .\"
@@ -240,6 +254,31 @@ Solicit message,
 .Ic dhcp6s
 will perform the authentication protocol for succeeding message
 exchanges.
+.El
+.El
+.\"
+.Sh Pool statement
+A pool statement specifies an address pool for a particular interface.
+The generic format of a pool statement is as follows:
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic pool Ar name
+{
+.Ar substatements ;
+};
+.Xc
+.Ar name
+is an arbitrary string.
+It does not affect server's behavior but is provided for
+readability of log messages.
+Possible substatements are as follows.
+.Bl -tag -width Ds -compact
+.It Ic range Ar min-addr Ic to Ar max-addr
+This substatement defines the range of addresses allocated for the pool,
+i.e. from 
+.Ar min-addr
+to
+.Ar max-addr.
 .El
 .El
 .\"
