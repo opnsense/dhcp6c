@@ -58,6 +58,9 @@
 #include <common.h>
 #include <auth.h>
 #include <base64.h>
+#ifdef USE_POOL
+#include <lease.h>
+#endif /* USE_POOL */
 
 extern int errno;
 
@@ -72,6 +75,19 @@ static struct keyinfo *key_list, *key_list0;
 static struct authinfo *auth_list, *auth_list0;
 static struct dhcp6_list siplist0, sipnamelist0, dnslist0, dnsnamelist0, ntplist0;
 static long long optrefreshtime0;
+#ifdef USE_POOL
+#ifndef DHCP6_DYNAMIC_HOSTCONF_MAX
+#define DHCP6_DYNAMIC_HOSTCONF_MAX	1024
+#endif
+struct dynamic_hostconf {
+	TAILQ_ENTRY(dynamic_hostconf) link;
+	struct host_conf *host;
+};
+static TAILQ_HEAD(dynamic_hostconf_listhead, dynamic_hostconf)
+	dynamic_hostconf_head;
+static unsigned int dynamic_hostconf_count;
+static struct pool_conf *pool_conflist, *pool_conflist0;
+#endif /* USE_POOL */
 
 enum { DHCPOPTCODE_SEND, DHCPOPTCODE_REQUEST, DHCPOPTCODE_ALLOW };
 
@@ -94,6 +110,9 @@ struct dhcp6_ifconf {
 
 	struct authinfo *authinfo; /* authentication information
 				    * (no need to clear) */
+#ifdef USE_POOL
+	struct dhcp6_poolspec pool;
+#endif
 };
 
 extern struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
@@ -115,6 +134,13 @@ static void clear_authinfo __P((struct authinfo *));
 static int configure_duid __P((char *, struct duid *));
 static int get_default_ifid __P((struct prefix_ifconf *));
 static char *qstrdup __P((char *));
+#ifdef USE_POOL
+static void clear_poolconf __P((struct pool_conf *));
+static struct pool_conf *create_pool __P((char *, struct dhcp6_range *));
+struct host_conf *find_dynamic_hostconf __P((struct duid *));
+static int in6_addr_cmp __P((struct in6_addr *, struct in6_addr *));
+static void in6_addr_inc __P((struct in6_addr *));
+#endif /* USE_POOL */
 
 int
 configure_interface(iflist)
@@ -233,6 +259,45 @@ configure_interface(iflist)
 				cp += strlen(ifc->scriptpath) - 1;
 				*cp = '\0'; /* clear the terminating quote */
 				break;
+#ifdef USE_POOL
+			case DECL_ADDRESSPOOL:
+				{
+					struct dhcp6_poolspec* spec;
+					struct pool_conf* pool;
+
+					spec = (struct dhcp6_poolspec *)cfl->ptr;
+
+					for (pool = pool_conflist0; pool; pool = pool->next)
+						if (strcmp(spec->name, pool->name) == 0)
+							break;
+					if (pool == NULL) {
+						dprintf(LOG_ERR, FNAME, "%s:%d "
+							"pool '%s' not found",
+							configfilename, cfl->line,
+					   		spec->name);
+						goto bad;
+					}
+					if (spec->vltime != DHCP6_DURATITION_INFINITE &&
+						(spec->pltime == DHCP6_DURATITION_INFINITE ||
+						spec->pltime > spec->vltime)) {
+						dprintf(LOG_ERR, FNAME, "%s:%d ",
+							configfilename, cfl->line,
+							"specified a larger preferred lifetime "
+							"than valid lifetime");
+						goto bad;
+					}
+					ifc->pool = *spec;
+					if ((ifc->pool.name = strdup(spec->name)) == NULL) {
+						dprintf(LOG_ERR, FNAME,
+							"memory allocation failed");
+						goto bad;
+					}
+					dprintf(LOG_DEBUG, FNAME,
+						"pool '%s' is specified to the interface '%s'",
+						ifc->pool.name, ifc->ifname);
+				}
+				break;
+#endif /* USE_POOL */
 			default:
 				dprintf(LOG_ERR, FNAME, "%s:%d "
 					"invalid interface configuration",
@@ -534,6 +599,45 @@ configure_host(hostlist)
 				    "delayed auth with %s (keyid=%08x)",
 				    host->name, hconf->delayedkey->keyid);
 				break;
+#ifdef USE_POOL
+			case DECL_ADDRESSPOOL:
+				{
+					struct dhcp6_poolspec* spec;
+					struct pool_conf *pool;
+
+					spec = (struct dhcp6_poolspec *)cfl->ptr;
+
+					for (pool = pool_conflist0; pool; pool = pool->next)
+						if (strcmp(spec->name, pool->name) == 0)
+							break;
+					if (pool == NULL) {
+						dprintf(LOG_ERR, FNAME, "%s:%d "
+							"pool '%s' not found",
+							configfilename, cfl->line,
+					   		spec->name);
+						goto bad;
+					}
+					if (spec->vltime != DHCP6_DURATITION_INFINITE &&
+						(spec->pltime == DHCP6_DURATITION_INFINITE ||
+						spec->pltime > spec->vltime)) {
+						dprintf(LOG_ERR, FNAME, "%s:%d ",
+							configfilename, cfl->line,
+							"specified a larger preferred lifetime "
+							"than valid lifetime");
+						goto bad;
+					}
+					hconf->pool = *spec;
+					if ((hconf->pool.name = strdup(spec->name)) == NULL) {
+						dprintf(LOG_ERR, FNAME,
+							"memory allocation failed");
+						goto bad;
+					}
+					dprintf(LOG_DEBUG, FNAME,
+						"pool '%s' is specified to the host '%s'",
+						hconf->pool.name, hconf->name);
+				}
+				break;
+#endif /* USE_POOL */
 			default:
 				dprintf(LOG_ERR, FNAME, "%s:%d "
 				    "invalid host configuration for %s",
@@ -1210,6 +1314,9 @@ configure_cleanup()
 	dhcp6_clear_list(&ntplist0);
 	TAILQ_INIT(&ntplist0);
 	optrefreshtime0 = -1;
+#ifdef USE_POOL
+	clear_poolconf(pool_conflist0);
+#endif /* USE_POOL */
 }
 
 void
@@ -1258,6 +1365,10 @@ configure_commit()
 			ifp->authalgorithm = ifc->authinfo->algorithm;
 			ifp->authrdm = ifc->authinfo->rdm;
 		}
+#ifdef USE_POOL
+		ifp->pool = ifc->pool;
+		ifc->pool.name = NULL;
+#endif
 	}
 
 	clear_ifconf(dhcp6_ifconflist);
@@ -1307,6 +1418,12 @@ configure_commit()
 
 	/* commit information refresh time */
 	optrefreshtime = optrefreshtime0;
+#ifdef USE_POOL
+	/* commit pool configuration */
+	clear_poolconf(pool_conflist);
+	pool_conflist = pool_conflist0;
+	pool_conflist0 = NULL;
+#endif /* USE_POOL */
 }
 
 static void
@@ -1326,6 +1443,10 @@ clear_ifconf(iflist)
 		if (ifc->scriptpath)
 			free(ifc->scriptpath);
 
+#ifdef USE_POOL
+		if (ifc->pool.name)
+			free(ifc->pool.name);
+#endif
 		free(ifc);
 	}
 }
@@ -1384,6 +1505,10 @@ clear_hostconf(hlist)
 		dhcp6_clear_list(&host->addr_list);
 		if (host->duid.duid_id)
 			free(host->duid.duid_id);
+#ifdef USE_POOL
+		if (host->pool.name)
+			free(host->pool.name);
+#endif
 		free(host);
 	}
 }
@@ -1699,6 +1824,12 @@ find_hostconf(duid)
 {
 	struct host_conf *host;
 
+#ifdef USE_POOL
+	if ((host = find_dynamic_hostconf(duid)) != NULL) {
+		return (host);
+	}
+#endif /* USE_POOL */
+
 	for (host = host_conflist; host; host = host->next) {
 		if (host->duid.duid_len == duid->duid_len &&
 		    memcmp(host->duid.duid_id, duid->duid_id,
@@ -1779,3 +1910,344 @@ qstrdup(qstr)
 
 	return (dup);
 }
+
+#ifdef USE_POOL
+int
+configure_pool(poollist)
+	struct cf_namelist *poollist;
+{
+	struct cf_namelist *plp;
+
+	dprintf(LOG_DEBUG, FNAME, "called");
+
+	if (poollist && dhcp6_mode != DHCP6_MODE_SERVER) {
+		dprintf(LOG_ERR, FNAME, "%s:%d "
+			"pool statement is server-only",
+			configfilename, poollist->line);
+		goto bad;
+	}
+
+	for (plp = poollist; plp; plp = plp->next) {
+		struct pool_conf *pool = NULL;
+		struct dhcp6_range *range = NULL;
+		struct cf_list *cfl;
+
+		for (cfl = plp->params; cfl; cfl = cfl->next) {
+			switch(cfl->type) {
+			case DECL_RANGE:
+				range = cfl->ptr;
+				break;
+			default:
+				dprintf(LOG_ERR, FNAME, "%s:%d "
+					"invalid pool configuration",
+					configfilename, cfl->line);
+				goto bad;
+			}
+		}
+
+		if (!range) {
+			dprintf(LOG_ERR, FNAME, "%s:%d "
+				"pool '%s' has no range declaration",
+				configfilename, plp->line,
+				plp->name);
+			goto bad;
+		}
+		if ((pool = create_pool(plp->name, range)) == NULL) {
+			dprintf(LOG_ERR, FNAME,
+				"faled to craete pool '%s'", plp->name);
+			goto bad;
+		}
+		pool->next = pool_conflist0;
+		pool_conflist0 = pool;
+	}
+
+	return (0);
+
+  bad:
+	/* there is currently nothing special to recover the error */
+	return (-1);
+}
+
+static void
+clear_poolconf(plist)
+	struct pool_conf *plist;
+{
+	struct pool_conf *pool, *pool_next;
+
+	dprintf(LOG_DEBUG, FNAME, "called");
+
+	for (pool = plist; pool; pool = pool_next) {
+		pool_next = pool->next;
+		free(pool->name);
+		free(pool);
+	}
+}
+
+struct host_conf *
+create_dynamic_hostconf(duid, pool)
+	struct duid *duid;
+	struct dhcp6_poolspec *pool;
+{
+	struct dynamic_hostconf *dynconf = NULL;
+	struct host_conf *host;
+	char* strid = NULL;
+	static int init = 1;
+
+	if (init) {
+		TAILQ_INIT(&dynamic_hostconf_head);
+		dynamic_hostconf_count = 0;
+		init = 0;
+	}
+
+	if (dynamic_hostconf_count >= DHCP6_DYNAMIC_HOSTCONF_MAX) {
+		struct dynamic_hostconf_listhead *head = &dynamic_hostconf_head;
+
+		dprintf(LOG_DEBUG, FNAME, "reached to the max count (count=%lu)",
+			dynamic_hostconf_count);
+
+		/* Find the last entry that doesn't need authentication */
+		TAILQ_FOREACH_REVERSE(dynconf, head, dynamic_hostconf_listhead, link)
+			if (dynconf->host->delayedkey == NULL)
+				break;
+		if (dynconf == NULL)
+			dynconf = TAILQ_LAST(head, dynamic_hostconf_listhead);
+		TAILQ_REMOVE(head, dynconf, link);
+		dynamic_hostconf_count--;
+		clear_hostconf(dynconf->host);
+	} else {
+		if ((dynconf = malloc(sizeof(*dynconf))) == NULL) {
+			dprintf(LOG_ERR, FNAME, "memory allocation failed");
+			return (NULL);
+		}
+	}
+	memset(dynconf, 0, sizeof(*dynconf));
+
+	if ((host = malloc(sizeof(*host))) == NULL) {
+		dprintf(LOG_ERR, FNAME, "memory allocation failed");
+		return (NULL);
+	}
+	memset(host, 0, sizeof(*host));
+	TAILQ_INIT(&host->prefix_list);
+	TAILQ_INIT(&host->addr_list);
+
+	if ((strid = duidstr(duid)) == NULL)
+		strid = "???";
+	if ((host->name = strdup(strid)) == NULL) {
+		dprintf(LOG_ERR, FNAME, "memory allocation failed");
+		goto bad;
+	}
+	if (duidcpy(&host->duid, duid) != 0) {
+		goto bad;
+	}
+	if (pool->name) {
+		if ((host->pool.name = strdup(pool->name)) == NULL) {
+			dprintf(LOG_ERR, FNAME, "memory allocation failed");
+			goto bad;
+		}
+	}
+	host->pool.pltime = pool->pltime;
+	host->pool.vltime = pool->vltime;
+
+	dynconf->host = host;
+	TAILQ_INSERT_HEAD(&dynamic_hostconf_head, dynconf, link);
+	dynamic_hostconf_count++; 
+
+	dprintf(LOG_DEBUG, FNAME, "created host_conf (name=%s)", host->name);
+
+	return (host);
+
+bad:
+	if (host)
+		clear_hostconf(host);	/* host->next must be NULL */
+	if (dynconf)
+		free(dynconf);
+
+	return (NULL);
+}
+
+struct host_conf *
+find_dynamic_hostconf(duid)
+	struct duid *duid;
+{
+	struct dynamic_hostconf *dynconf = NULL;
+
+	TAILQ_FOREACH(dynconf, &dynamic_hostconf_head, link) {
+		if (dynconf->host->duid.duid_len == duid->duid_len &&
+			memcmp(dynconf->host->duid.duid_id, duid->duid_id,
+			   duid->duid_len) == 0)
+			break;
+	}
+
+	if (dynconf) {
+		/* relocation */
+		TAILQ_REMOVE(&dynamic_hostconf_head, dynconf, link);
+		TAILQ_INSERT_HEAD(&dynamic_hostconf_head, dynconf, link);
+
+		return (dynconf->host);
+	}
+
+	return (NULL);
+}
+
+struct pool_conf *
+create_pool(name, range)
+	char *name;
+	struct dhcp6_range *range;
+{
+	struct pool_conf *pool = NULL;
+
+	if (!name || !range) {
+		return (NULL);
+	}
+
+	dprintf(LOG_DEBUG, FNAME, "name=%s, range=%s->%s", name,
+		in6addr2str(&range->min, 0), in6addr2str(&range->max, 0));
+
+	if (in6_addr_cmp(&range->min, &range->max) >= 0) {
+		dprintf(LOG_ERR, FNAME, "invalid address range %s->%s",
+			in6addr2str(&range->min, 0),
+			in6addr2str(&range->max, 0));
+		return (NULL);
+	}
+
+	if ((pool = malloc(sizeof(struct pool_conf))) == NULL) {
+		dprintf(LOG_ERR, FNAME, "memory allocation failed");
+		return (NULL);
+	}
+	if ((pool->name = strdup(name)) == NULL) {
+		dprintf(LOG_ERR, FNAME, "memory allocation failed");
+		return (NULL);
+	}
+	pool->cur = pool->min = range->min;
+	pool->max = range->max;
+
+	return (pool);
+}
+
+struct pool_conf *
+find_pool(name)
+	const char *name;
+{
+	struct pool_conf *pool = NULL;
+	
+	if (!name)
+		return (NULL);
+
+	dprintf(LOG_DEBUG, FNAME, "name=%s", name);
+
+	for (pool = pool_conflist; pool; pool = pool->next) {
+		if (strcmp(name, pool->name) == 0) {
+			dprintf(LOG_DEBUG, FNAME, "found (name=%s)", name);
+			return (pool);
+		}
+	}
+
+	dprintf(LOG_DEBUG, FNAME, "not found (name=%s)", name);
+
+	return (NULL);
+}
+
+int
+get_free_address_from_pool(pool, addr)
+	struct pool_conf *pool;
+	struct in6_addr *addr;
+{
+	int found = 0;
+	int round = 0;
+	struct in6_addr first;
+
+	if (!pool || !addr)
+		return (0);
+
+	dprintf(LOG_DEBUG, FNAME, "called (pool=%s)", pool->name);
+
+	memcpy(&first, &pool->cur, sizeof(first));
+
+	while (!found) {
+		if (!is_leased(&pool->cur) &&
+			!IN6_IS_ADDR_MULTICAST(&pool->cur) &&
+			!IN6_IS_ADDR_LINKLOCAL(&pool->cur) &&
+			!IN6_IS_ADDR_SITELOCAL(&pool->cur)) {
+			memcpy(addr, &pool->cur, sizeof(*addr));
+			found = 1;
+			dprintf(LOG_DEBUG, FNAME, "found %s",
+				in6addr2str(addr, 0));
+		}
+
+		if (in6_addr_cmp(&pool->cur, &pool->max) == 0) {
+			memcpy(&pool->next, &pool->min, sizeof(pool->next));
+			round = 1;
+		} else {
+			in6_addr_inc(&pool->cur);
+		}
+
+		dprintf(LOG_DEBUG, FNAME, "next address %s",
+			in6addr2str(&pool->cur, 0));
+
+		if (round && !found &&
+			in6_addr_cmp(&pool->cur, &first) == 0) {
+			dprintf(LOG_NOTICE, FNAME, "no available address");
+			break;
+		}
+	}
+
+	return (found);
+}
+
+int
+is_available_in_pool(pool, addr)
+	struct pool_conf *pool;
+	struct in6_addr *addr;
+{
+	if (!pool || !addr)
+		return (0);
+
+	dprintf(LOG_DEBUG, FNAME, "pool=%s, addr=%s",
+		 pool->name, in6addr2str(addr, 0));
+
+	if (in6_addr_cmp(addr, &pool->min) >= 0 &&
+		in6_addr_cmp(addr, &pool->max) <= 0 &&
+		!is_leased(addr) &&
+		!IN6_IS_ADDR_MULTICAST(addr) &&
+		!IN6_IS_ADDR_LINKLOCAL(addr) &&
+		!IN6_IS_ADDR_SITELOCAL(addr)) {
+		return (1);
+	}
+
+	dprintf(LOG_DEBUG, FNAME, "unavailable address (pool=%s, addr=%s)",
+		 pool->name, in6addr2str(addr, 0));
+
+	return (0);
+}
+
+static int 
+in6_addr_cmp(addr1, addr2)
+	struct in6_addr *addr1, *addr2;
+{
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		if (addr1->s6_addr[i] != addr2->s6_addr[i]) {
+        	if (addr1->s6_addr[i] > addr2->s6_addr[i])
+				return (1);
+			else
+				return (-1);
+		}
+	}
+
+	return (0);
+}
+
+static void
+in6_addr_inc(addr)
+	struct in6_addr *addr;
+{
+	int i;
+
+	for (i = 15; i >= 0; i--) {
+		if (++(addr->s6_addr[i]) != 0x00)
+			break;
+	}
+}
+#endif /* USE_POOL */
+

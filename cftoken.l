@@ -110,6 +110,7 @@ ecl		\}
 %s S_AUTH
 %s S_KEY
 %s S_SECRET
+%s S_POOL
 
 %%
 %{
@@ -136,6 +137,15 @@ ecl		\}
 	return (HOSTNAME);
 }
 
+	/* pool configuration */
+<S_CNF>pool { DECHO; BEGIN S_POOL; return (POOL); }
+<S_POOL>{string} {
+	DECHO;
+	yylval.str = strdup(yytext);
+	BEGIN S_CNF;
+	return (POOLNAME);
+}
+
 <S_CNF>duid { DECHO; BEGIN S_DUID; return (DUID); }
 <S_DUID>{duid} {
 	DECHO;
@@ -159,6 +169,13 @@ ecl		\}
 
 	/* send */
 <S_CNF>send { DECHO; return (SEND); }
+
+	/* range */
+<S_CNF>range { DECHO; return (RANGE); }
+<S_CNF>to { DECHO; return (TO); }
+
+	/* address-pool */
+<S_CNF>address-pool { DECHO; return (ADDRESS_POOL); }
 
 	/* DHCP options */
 <S_CNF>option { DECHO; return (OPTION); }

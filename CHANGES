@@ -1,3 +1,7 @@
+2006-01-26  SUZUKI, Shinsuke <suz@kame.net>
+	* supported IA-NA address-pool
+		ToDo: IA-PD prefix-pool, write a manual
+
 2006-01-19  SUZUKI, Shinsuke <suz@kame.net>
 	* corrected the condition for detecting unwanted incoming messages
 	* missing initialization in dhcp6c

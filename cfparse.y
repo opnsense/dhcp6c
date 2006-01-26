@@ -83,6 +83,7 @@ extern void yyerror __P((char *, ...))
 	} while (0)
 
 static struct cf_namelist *iflist_head, *hostlist_head, *iapdlist_head;
+static struct cf_namelist *poollist_head;
 static struct cf_namelist *authinfolist_head, *keylist_head;
 static struct cf_namelist *ianalist_head;
 struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
@@ -109,6 +110,7 @@ static void cleanup_cflist __P((struct cf_list *));
 %token AUTHENTICATION PROTOCOL ALGORITHM DELAYED RECONFIG HMACMD5 MONOCOUNTER
 %token AUTHNAME RDM KEY
 %token KEYINFO REALM KEYID SECRET KEYNAME EXPIRE
+%token POOL POOLNAME RANGE TO ADDRESS_POOL
 
 %token NUMBER SLASH EOS BCL ECL STRING QSTRING PREFIX INFINITY
 %token COMMA
@@ -118,9 +120,12 @@ static void cleanup_cflist __P((struct cf_list *));
 	char* str;
 	struct cf_list *list;
 	struct dhcp6_prefix *prefix;
+	struct dhcp6_range *range;
+	struct dhcp6_poolspec *pool;
 }
 
 %type <str> IFNAME HOSTNAME AUTHNAME KEYNAME DUID_ID STRING QSTRING IAID
+%type <str> POOLNAME
 %type <num> NUMBER duration authproto authalg authrdm
 %type <list> declaration declarations dhcpoption ifparam ifparams
 %type <list> address_list address_list_ent dhcpoption_list
@@ -129,6 +134,8 @@ static void cleanup_cflist __P((struct cf_list *));
 %type <list> authparam_list authparam
 %type <list> keyparam_list keyparam
 %type <prefix> addressparam prefixparam
+%type <range> rangeparam
+%type <pool> poolparam
 
 %%
 statements:
@@ -143,6 +150,7 @@ statement:
 	|	ia_statement
 	|	authentication_statement
 	|	key_statement
+	|	pool_statement
 	;
 
 interface_statement:
@@ -328,6 +336,18 @@ key_statement:
 	}
 	;
 
+pool_statement:
+	POOL POOLNAME BCL declarations ECL EOS
+	{
+		struct cf_namelist *pool;
+
+		MAKE_NAMELIST(pool, $2, $4);
+
+		if (add_namelist(pool, &poollist_head))
+			return (-1);
+	}
+	;
+
 address_list:
 		{ $$ = NULL; }
 	|	address_list address_list_ent
@@ -470,6 +490,22 @@ declaration:
 
 			$$ = l;
 		}
+	|	RANGE rangeparam EOS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DECL_RANGE, $2, NULL);
+
+			$$ = l;
+		}
+	|	ADDRESS_POOL poolparam EOS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DECL_ADDRESSPOOL, $2, NULL);
+
+			$$ = l;
+		}
 	;
 
 dhcpoption_list:
@@ -565,6 +601,37 @@ dhcpoption:
 			MAKE_CFLIST(l, DHCPOPT_REFRESHTIME, NULL, NULL);
 			/* currently no value */
 			$$ = l;
+		}
+	;
+
+rangeparam:
+		STRING TO STRING
+		{
+			struct dhcp6_range range0, *range;		
+
+			memset(&range0, 0, sizeof(range0));
+			if (inet_pton(AF_INET6, $1, &range0.min) != 1) {
+				yywarn("invalid IPv6 address: %s", $1);
+				free($1);
+				free($3);
+				return (-1);
+			}
+			if (inet_pton(AF_INET6, $3, &range0.max) != 1) {
+				yywarn("invalid IPv6 address: %s", $3);
+				free($1);
+				free($3);
+				return (-1);
+			}
+			free($1);
+			free($3);
+
+			if ((range = malloc(sizeof(*range))) == NULL) {
+				yywarn("can't allocate memory");
+				return (-1);
+			}
+			*range = range0;
+
+			$$ = range;
 		}
 	;
 
@@ -685,6 +752,62 @@ prefixparam:
 
 			$$ = pconf;
 		}
+
+poolparam:
+		STRING duration
+		{
+			struct dhcp6_poolspec* pool;		
+
+			if ((pool = malloc(sizeof(*pool))) == NULL) {
+				yywarn("can't allocate memory");
+				free($1);
+				return (-1);
+			}
+			if ((pool->name = strdup($1)) == NULL) {
+				yywarn("can't allocate memory");
+				free($1);
+				return (-1);
+			}
+			free($1);
+
+			/* validate other parameters later */
+			if ($2 < 0)
+				pool->pltime = DHCP6_DURATITION_INFINITE;
+			else
+				pool->pltime = (u_int32_t)$2;
+			pool->vltime = pool->pltime;
+
+			$$ = pool;
+		}
+	|	STRING duration duration
+		{
+			struct dhcp6_poolspec* pool;		
+
+			if ((pool = malloc(sizeof(*pool))) == NULL) {
+				yywarn("can't allocate memory");
+				free($1);
+				return (-1);
+			}
+			if ((pool->name = strdup($1)) == NULL) {
+				yywarn("can't allocate memory");
+				free($1);
+				return (-1);
+			}
+			free($1);
+
+			/* validate other parameters later */
+			if ($2 < 0)
+				pool->pltime = DHCP6_DURATITION_INFINITE;
+			else
+				pool->pltime = (u_int32_t)$2;
+			if ($3 < 0)
+				pool->vltime = DHCP6_DURATITION_INFINITE;
+			else
+				pool->vltime = (u_int32_t)$3;
+
+			$$ = pool;
+		}
+	;
 
 duration:
 		INFINITY
@@ -967,6 +1090,8 @@ cleanup()
 	authinfolist_head = NULL;
 	cleanup_namelist(keylist_head);
 	keylist_head = NULL;
+	cleanup_namelist(poollist_head);
+	poollist_head = NULL;
 
 	cleanup_cflist(cf_sip_list);
 	cf_sip_list = NULL;
@@ -1004,6 +1129,11 @@ cleanup_cflist(p)
 		return;
 
 	n = p->next;
+#ifdef USE_POOL
+	if (p->type == DECL_ADDRESSPOOL) {
+		free(((struct dhcp6_poolspec *)p->ptr)->name);
+	}
+#endif
 	if (p->ptr)
 		free(p->ptr);
 	if (p->list)
@@ -1030,6 +1160,11 @@ cf_post_config()
 
 	if (configure_ia(ianalist_head, IATYPE_NA))
 		config_fail();
+
+#ifdef USE_POOL
+	if (configure_pool(poollist_head))
+		config_fail();
+#endif /* USE_POOL */
 
 	if (configure_interface(iflist_head))
 		config_fail();
