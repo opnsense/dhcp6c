@@ -1,5 +1,5 @@
 2006-01-26  SUZUKI, Shinsuke <suz@kame.net>
-	* supported IA-NA address-pool
+	* supported IA-NA address-pool (contributed by: WIDE Project Secure6-WG)
 		ToDo: IA-PD prefix-pool, write a manual
 
 2006-01-19  SUZUKI, Shinsuke <suz@kame.net>
