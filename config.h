@@ -33,6 +33,8 @@
 TAILQ_HEAD(ia_conflist, ia_conf);
 TAILQ_HEAD(pifc_list, prefix_ifconf);
 
+#define USE_POOL
+
 #ifdef USE_POOL
 struct dhcp6_poolspec {
 	char* name;
