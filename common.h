@@ -47,6 +47,30 @@
 #ifndef TAILQ_EMPTY
 #define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 #endif
+#ifndef TAILQ_LAST
+#define	TAILQ_LAST(head, headname)					\
+	(*(((struct headname *)((head)->tqh_last))->tqh_last))
+#endif
+#ifndef TAILQ_NEXT
+#define	TAILQ_NEXT(elm, field) ((elm)->field.tqe_next)
+#endif
+#ifndef TAILQ_PREV
+#define	TAILQ_PREV(elm, headname, field)				\
+	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
+#endif
+#ifndef TAILQ_FOREACH
+#define	TAILQ_FOREACH(var, head, field)					\
+	for ((var) = TAILQ_FIRST((head));				\
+	    (var);							\
+	    (var) = TAILQ_NEXT((var), field))
+#endif
+
+#ifndef TAILQ_FOREACH_REVERSE
+#define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
+	for ((var) = TAILQ_LAST((head), headname);			\
+	    (var);							\
+	    (var) = TAILQ_PREV((var), headname, field))
+#endif
 
 /* and linux *_FIRST and *_NEXT */
 #ifndef LIST_FIRST
@@ -61,6 +85,13 @@
 #ifndef TAILQ_NEXT
 #define	TAILQ_NEXT(elm, field) ((elm)->field.tqe_next)
 #endif
+#ifndef LIST_FOREACH
+#define	LIST_FOREACH(var, head, field)					\
+	for ((var) = LIST_FIRST((head));				\
+	    (var);							\
+	    (var) = LIST_NEXT((var), field))
+#endif
+
 
 #ifndef SO_REUSEPORT
 #define SO_REUSEPORT SO_REUSEADDR

@@ -1,3 +1,6 @@
+2006-03-08  SUZUKI, Shinsuke <suz@kame.net>
+	* added some missing queue-management macros to make it compilable on linux
+
 2006-01-26  SUZUKI, Shinsuke <suz@kame.net>
 	* supported IA-NA address-pool (contributed by: WIDE Project Secure6-WG)
 		ToDo: IA-PD prefix-pool, write a manual
