@@ -58,7 +58,7 @@ CFLAGS+= @DHCPOPT_DNS@ @DH6OPT_DNSNAME@ \
 
 GENSRCS=cfparse.c cftoken.c
 CLIENTOBJS=	dhcp6c.o common.o config.o prefixconf.o dhcp6c_ia.o timer.o \
-	dhcp6c_script.o if.o base64.o auth.o dhcp6_ctl.o addrconf.o \
+	dhcp6c_script.o if.o base64.o auth.o dhcp6_ctl.o addrconf.o lease.o \
 	$(GENSRCS:%.c=%.o)
 SERVOBJS=	dhcp6s.o common.o if.o config.o timer.o lease.o \
 	base64.o auth.o dhcp6_ctl.o $(GENSRCS:%.c=%.o)
