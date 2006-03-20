@@ -1,3 +1,7 @@
+2006-03-20  SUZUKI, Shinsuke <suz@kame.net>
+	* fixed a bug that dhcp6c cannot receive a DHCPv6 packet on linux.
+	(Request ID=1435976, and a patch proposed by Yasuyuki KOZAKAI)
+
 2006-03-08  SUZUKI, Shinsuke <suz@kame.net>
 	* added some missing queue-management macros to make it compilable on linux
 

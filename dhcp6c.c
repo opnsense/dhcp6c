@@ -87,8 +87,7 @@ static u_long sig_flags = 0;
 
 const dhcp6_mode_t dhcp6_mode = DHCP6_MODE_CLIENT;
 
-int insock;	/* inbound udp port */
-int outsock;	/* outbound udp port */
+int sock;	/* inbound/outbound udp port */
 int rtsock;	/* routing socket */
 int ctlsock = -1;		/* control TCP port */
 char *ctladdr = DEFAULT_CLIENT_CONTROL_ADDR;
@@ -285,107 +284,55 @@ client6_init()
 		    gai_strerror(error));
 		exit(1);
 	}
-	insock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (insock < 0) {
-		dprintf(LOG_ERR, FNAME, "socket(inbound)");
+	sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	if (sock < 0) {
+		dprintf(LOG_ERR, FNAME, "socket");
 		exit(1);
 	}
-	if (setsockopt(insock, SOL_SOCKET, SO_REUSEPORT,
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEPORT,
 		       &on, sizeof(on)) < 0) {
 		dprintf(LOG_ERR, FNAME,
-		    "setsockopt(inbound, SO_REUSEPORT): %s", strerror(errno));
+		    "setsockopt(SO_REUSEPORT): %s", strerror(errno));
 		exit(1);
 	}
 #ifdef IPV6_RECVPKTINFO
-	if (setsockopt(insock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		       sizeof(on)) < 0) {
 		dprintf(LOG_ERR, FNAME,
-			"setsockopt(inbound, IPV6_RECVPKTINFO): %s",
+			"setsockopt(IPV6_RECVPKTINFO): %s",
 			strerror(errno));
 		exit(1);
 	}
 #else
-	if (setsockopt(insock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 		       sizeof(on)) < 0) {
 		dprintf(LOG_ERR, FNAME,
-		    "setsockopt(inbound, IPV6_PKTINFO): %s",
+		    "setsockopt(IPV6_PKTINFO): %s",
 		    strerror(errno));
 		exit(1);
 	}
 #endif
-	if (setsockopt(insock, IPPROTO_IPV6, IPV6_V6ONLY,
-	    &on, sizeof(on)) < 0) {
-		dprintf(LOG_ERR, FNAME, "setsockopt(inbound, IPV6_V6ONLY): %s",
-		    strerror(errno));
-		exit(1);
-	}
-	if (bind(insock, res->ai_addr, res->ai_addrlen) < 0) {
-		dprintf(LOG_ERR, FNAME, "bind(inbound): %s", strerror(errno));
-		exit(1);
-	}
-	freeaddrinfo(res);
-
-	hints.ai_flags = 0;
-	error = getaddrinfo(NULL, DH6PORT_UPSTREAM, &hints, &res);
-	if (error) {
-		dprintf(LOG_ERR, FNAME, "getaddrinfo: %s",
-		    gai_strerror(error));
-		exit(1);
-	}
-	outsock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-	if (outsock < 0) {
-		dprintf(LOG_ERR, FNAME, "socket(outbound): %s",
-		    strerror(errno));
-		exit(1);
-	}
-	if (setsockopt(outsock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &on,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &on,
 		       sizeof(on)) < 0) {
 		dprintf(LOG_ERR, FNAME,
-		    "setsockopt(outsock, IPV6_MULTICAST_LOOP): %s",
+		    "setsockopt(sock, IPV6_MULTICAST_LOOP): %s",
 		    strerror(errno));
 		exit(1);
 	}
-	if (setsockopt(outsock, IPPROTO_IPV6, IPV6_V6ONLY,
+	if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
 	    &on, sizeof(on)) < 0) {
-		dprintf(LOG_ERR, FNAME,
-		    "setsockopt(outbound, IPV6_V6ONLY): %s", strerror(errno));
+		dprintf(LOG_ERR, FNAME, "setsockopt(IPV6_V6ONLY): %s",
+		    strerror(errno));
 		exit(1);
 	}
-#ifndef __linux__
-	/* make the socket write-only */
-	if (shutdown(outsock, 0)) {
-		dprintf(LOG_ERR, FNAME, "shutdown(outbound, 0): %s",
-			strerror(errno));
-		exit(1);
-	}
-#endif
-	freeaddrinfo(res);
 
 	/*
-	 * bind the well-known incoming port to the outgoing socket
-	 * for interoperability with some servers.
+	 * According RFC3315 2.2, only the incoming port should be bound to UDP
+	 * port 546.  However, to have an interoperability with some servers,
+	 * the outgoing port is also bound to the DH6PORT_DOWNSTREAM.
 	 */
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_INET6;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = IPPROTO_UDP;
-	hints.ai_flags = AI_PASSIVE;
-	error = getaddrinfo(NULL, DH6PORT_DOWNSTREAM, &hints, &res);
-	if (error) {
-		dprintf(LOG_ERR, FNAME, "getaddrinfo: %s",
-		    gai_strerror(error));
-		exit(1);
-	}
-	if (setsockopt(outsock, SOL_SOCKET, SO_REUSEPORT,
-		       &on, sizeof(on)) < 0) {
-		dprintf(LOG_ERR, FNAME,
-		    "setsockopt(outbound, SO_REUSEPORT): %s",
-		    strerror(errno));
-		exit(1);
-	}
-	if (bind(outsock, res->ai_addr, res->ai_addrlen) < 0) {
-		dprintf(LOG_ERR, FNAME, "bind(outbound): %s",
-		    strerror(errno));
+	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+		dprintf(LOG_ERR, FNAME, "bind: %s", strerror(errno));
 		exit(1);
 	}
 	freeaddrinfo(res);
@@ -574,11 +521,11 @@ client6_mainloop()
 		w = dhcp6_check_timer();
 
 		FD_ZERO(&r);
-		FD_SET(insock, &r);
-		maxsock = insock;
+		FD_SET(sock, &r);
+		maxsock = sock;
 		if (ctlsock >= 0) {
 			FD_SET(ctlsock, &r);
-			maxsock = (insock > ctlsock) ? insock : ctlsock;
+			maxsock = (sock > ctlsock) ? sock : ctlsock;
 			(void)dhcp6_ctl_setreadfds(&r, &maxsock);
 		}
 
@@ -597,7 +544,7 @@ client6_mainloop()
 		default:
 			break;
 		}
-		if (FD_ISSET(insock, &r))
+		if (FD_ISSET(sock, &r))
 			client6_recv();
 		if (ctlsock >= 0) {
 			if (FD_ISSET(ctlsock, &r)) {
@@ -1404,7 +1351,7 @@ client6_send(ev)
 	dst = *sa6_allagent;
 	dst.sin6_scope_id = ifp->linkid;
 
-	if (sendto(outsock, buf, len, 0, (struct sockaddr *)&dst,
+	if (sendto(sock, buf, len, 0, (struct sockaddr *)&dst,
 	    sysdep_sa_len((struct sockaddr *)&dst)) == -1) {
 		dprintf(LOG_ERR, FNAME,
 		    "transmit failed: %s", strerror(errno));
@@ -1468,7 +1415,7 @@ client6_recv()
 	mhdr.msg_iovlen = 1;
 	mhdr.msg_control = (caddr_t)cmsgbuf;
 	mhdr.msg_controllen = sizeof(cmsgbuf);
-	if ((len = recvmsg(insock, &mhdr, 0)) < 0) {
+	if ((len = recvmsg(sock, &mhdr, 0)) < 0) {
 		dprintf(LOG_ERR, FNAME, "recvmsg: %s", strerror(errno));
 		return;
 	}
