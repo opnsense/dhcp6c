@@ -110,7 +110,7 @@ ecl		\}
 %s S_AUTH
 %s S_KEY
 %s S_SECRET
-%s S_POOL
+%s S_ADDRPOOL
 
 %%
 %{
@@ -137,9 +137,13 @@ ecl		\}
 	return (HOSTNAME);
 }
 
-	/* pool configuration */
-<S_CNF>pool { DECHO; BEGIN S_POOL; return (POOL); }
-<S_POOL>{string} {
+	/* address pool configuration */
+<S_CNF>address-pool { DECHO; BEGIN S_ADDRPOOL; return (ADDRPOOL); }
+
+	/* kept for a backward compatiblity */
+<S_CNF>pool { DECHO; BEGIN S_ADDRPOOL; return (ADDRPOOL); }  
+
+<S_ADDRPOOL>{string} {
 	DECHO;
 	yylval.str = strdup(yytext);
 	BEGIN S_CNF;

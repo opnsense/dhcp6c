@@ -1,3 +1,7 @@
+2006-04-11  SUZUKI, Shinsuke <suz@kame.net>
+	* removed 'ifdef USE_POOL' macros, since it is always ON
+	* rename some pool-related variables to prepare for the support of prefix-pool
+
 	--- 20060322 tar ball released ---
 2006-03-20  SUZUKI, Shinsuke <suz@kame.net>
 	* fixed a bug that dhcp6c cannot receive a DHCPv6 packet on linux.

@@ -74,10 +74,8 @@
 #include <base64.h>
 #include <control.h>
 #include <dhcp6_ctl.h>
-#ifdef USE_POOL
 #include <signal.h>
 #include <lease.h>
-#endif
 
 #define DUID_FILE LOCALDBDIR "/dhcp6s_duid"
 #define DHCP6S_CONF SYSCONFDIR "/dhcp6s.conf"
@@ -189,10 +187,8 @@ static int make_ia __P((struct dhcp6_listval *, struct dhcp6_list *,
     struct dhcp6_list *, struct host_conf *, int));
 static int make_match_ia __P((struct dhcp6_listval *, struct dhcp6_list *,
     struct dhcp6_list *));
-#ifdef USE_POOL
 static int make_iana_from_pool __P((struct dhcp6_poolspec *,
     struct dhcp6_listval *, struct dhcp6_list *));
-#endif
 static void calc_ia_timo __P((struct dhcp6_ia *, struct dhcp6_list *,
     struct host_conf *));
 static void update_binding_duration __P((struct dhcp6_binding *));
@@ -340,12 +336,10 @@ server6_init()
 	static struct sockaddr_in6 sa6_any_relay_storage;
 
 	TAILQ_INIT(&dhcp6_binding_head);
-#ifdef USE_POOL
 	if (lease_init() != 0) {
 		dprintf(LOG_ERR, FNAME, "failed to initialize the lease table");
 		exit(1);
 	}
-#endif
 
 	ifidx = if_nametoindex(device);
 	if (ifidx == 0) {
@@ -1253,14 +1247,12 @@ react_solicit(ifp, dh6, len, optinfo, from, fromlen, relayinfohead)
 		struct dhcp6_list conflist;
 		struct dhcp6_listval *iana;
 
-#ifdef USE_POOL
 		if (client_conf == NULL && ifp->pool.name) {
 			if ((client_conf = create_dynamic_hostconf(&optinfo->clientID,
 				&ifp->pool)) == NULL)
 				dprintf(LOG_NOTICE, FNAME,
 			    	"failed to make host configuration");
 		}
-#endif
 		TAILQ_INIT(&conflist);
 
 		/* make a local copy of the configured addresses */
@@ -1470,14 +1462,12 @@ react_request(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 		struct dhcp6_list conflist;
 		struct dhcp6_listval *iana;
 
-#ifdef USE_POOL
 		if (client_conf == NULL && ifp->pool.name) {
 			if ((client_conf = create_dynamic_hostconf(&optinfo->clientID,
 				&ifp->pool)) == NULL)
 				dprintf(LOG_NOTICE, FNAME,
 			    	"failed to make host configuration");
 		}
-#endif
 		TAILQ_INIT(&conflist);
 
 		/* make a local copy of the configured prefixes */
@@ -2193,9 +2183,7 @@ release_binding_ia(iap, retlist, optinfo)
 						    lvia->val_prefix6.plen);
 						break;
 					case DHCP6_LISTVAL_IANA:
-#ifdef USE_POOL
 						release_address(&lvia->val_prefix6.addr);
-#endif
 						dprintf(LOG_DEBUG, FNAME,
 						    "bound address %s "
 						    "has been released",
@@ -2430,17 +2418,12 @@ make_ia(spec, conflist, retlist, client_conf, do_binding)
 	 * trivial case:
 	 * if the configuration is empty, we cannot make any IA.
 	 */
-#ifdef USE_POOL
 	if (TAILQ_EMPTY(conflist)) {
 		if (spec->type != DHCP6_LISTVAL_IANA ||
 			client_conf->pool.name == NULL) {
 			return (0);
 		}
 	}
-#else
-	if (TAILQ_EMPTY(conflist))
-		return (0);
-#endif /* USE_POOL */
 
 	TAILQ_INIT(&ialist);
 
@@ -2448,7 +2431,6 @@ make_ia(spec, conflist, retlist, client_conf, do_binding)
 	for (specia = TAILQ_FIRST(&spec->sublist); specia;
 	    specia = TAILQ_NEXT(specia, link)) {
 		/* try to find an IA that matches the spec best. */
-#ifdef USE_POOL
 		if (!TAILQ_EMPTY(conflist)) {
 			if (make_match_ia(specia, conflist, &ialist))
 				found++;
@@ -2457,13 +2439,8 @@ make_ia(spec, conflist, retlist, client_conf, do_binding)
 			if (make_iana_from_pool(&client_conf->pool, specia, &ialist))
 				found++;
 		}
-#else
-		if (make_match_ia(specia, conflist, &ialist))
-			found++;
-#endif /* USE_POOL */
 	}
 	if (found == 0) {
-#ifdef USE_POOL
 		if (!TAILQ_EMPTY(conflist)) {
 			struct dhcp6_listval *v;
 
@@ -2484,17 +2461,6 @@ make_ia(spec, conflist, retlist, client_conf, do_binding)
 			if (make_iana_from_pool(&client_conf->pool, NULL, &ialist))
 				found = 1;
 		}
-#else
-		struct dhcp6_listval *v;
-
-		/* use the first IA in the configuration list */
-		v = TAILQ_FIRST(conflist);
-		if (dhcp6_add_listval(&ialist, v->type, &v->uv, NULL)) {
-			found = 1;
-			TAILQ_REMOVE(conflist, v, link);
-			dhcp6_clear_listval(v);
-		}
-#endif /* USE_POOL */
 	}
 	if (found) {
 		memset(&ia, 0, sizeof(ia));
@@ -2543,10 +2509,8 @@ make_match_ia(spec, conflist, retlist)
 			break;
 		case DHCP6_LISTVAL_STATEFULADDR6:
 			/* No "partial match" for addresses */
-#ifdef USE_POOL
 			if (is_leased(&spec->val_statefuladdr6.addr))
 				match = 0;
-#endif
 			break;
 		default:
 			dprintf(LOG_ERR, FNAME, "unsupported IA type");
@@ -2570,7 +2534,6 @@ make_match_ia(spec, conflist, retlist)
 	return (matched);
 }
 
-#ifdef USE_POOL
 /* making sublist of iana */
 static int
 make_iana_from_pool(poolspec, spec, retlist)
@@ -2614,7 +2577,6 @@ make_iana_from_pool(poolspec, spec, retlist)
 
 	return (found);
 }
-#endif /* USE_POOL */
 
 static void
 calc_ia_timo(ia, ialist, client_conf)
@@ -2755,7 +2717,6 @@ add_binding(clientid, btype, iatype, iaid, val0)
 			    "failed to copy binding data");
 			goto fail;
 		}
-#ifdef USE_POOL
 		/* lease address */
 		if (iatype == DHCP6_LISTVAL_IANA) {
 			struct dhcp6_list *ia_list = &binding->val_list;
@@ -2783,7 +2744,6 @@ add_binding(clientid, btype, iatype, iaid, val0)
 				goto fail;
 			}
 		}
-#endif /* USE_POOL */
 		break;
 	default:
 		dprintf(LOG_ERR, FNAME, "unexpected binding type(%d)", btype);
@@ -2889,7 +2849,6 @@ free_binding(binding)
 	/* free configuration info in a type dependent manner. */
 	switch (binding->type) {
 	case DHCP6_BINDING_IA:
-#ifdef USE_POOL
 		/* releaes address */
 		if (binding->iatype == DHCP6_LISTVAL_IANA) {
 			struct dhcp6_list *ia_list = &binding->val_list;
@@ -2904,7 +2863,6 @@ free_binding(binding)
 				release_address(&lv->val_statefuladdr6.addr);
 			}
 		}
-#endif /* USE_POOL */
 		dhcp6_clear_list(&binding->val_list);
 		break;
 	default:
@@ -2954,10 +2912,8 @@ binding_timo(arg)
 				    in6addr2str(&iav->val_prefix6.addr, 0),
 				    iav->val_prefix6.plen,
 				    bindingstr(binding));
-#ifdef USE_POOL
 				if (binding->iatype == DHCP6_LISTVAL_IANA) 
 					release_address(&iav->val_prefix6.addr);
-#endif
 				TAILQ_REMOVE(ia_list, iav, link);
 				dhcp6_clear_listval(iav);
 			}

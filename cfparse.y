@@ -83,7 +83,7 @@ extern void yyerror __P((char *, ...))
 	} while (0)
 
 static struct cf_namelist *iflist_head, *hostlist_head, *iapdlist_head;
-static struct cf_namelist *poollist_head;
+static struct cf_namelist *addrpoollist_head;
 static struct cf_namelist *authinfolist_head, *keylist_head;
 static struct cf_namelist *ianalist_head;
 struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
@@ -110,7 +110,7 @@ static void cleanup_cflist __P((struct cf_list *));
 %token AUTHENTICATION PROTOCOL ALGORITHM DELAYED RECONFIG HMACMD5 MONOCOUNTER
 %token AUTHNAME RDM KEY
 %token KEYINFO REALM KEYID SECRET KEYNAME EXPIRE
-%token POOL POOLNAME RANGE TO ADDRESS_POOL
+%token ADDRPOOL POOLNAME RANGE TO ADDRESS_POOL
 
 %token NUMBER SLASH EOS BCL ECL STRING QSTRING PREFIX INFINITY
 %token COMMA
@@ -150,7 +150,7 @@ statement:
 	|	ia_statement
 	|	authentication_statement
 	|	key_statement
-	|	pool_statement
+	|	addrpool_statement
 	;
 
 interface_statement:
@@ -336,14 +336,14 @@ key_statement:
 	}
 	;
 
-pool_statement:
-	POOL POOLNAME BCL declarations ECL EOS
+addrpool_statement:
+	ADDRPOOL POOLNAME BCL declarations ECL EOS
 	{
 		struct cf_namelist *pool;
 
 		MAKE_NAMELIST(pool, $2, $4);
 
-		if (add_namelist(pool, &poollist_head))
+		if (add_namelist(pool, &addrpoollist_head))
 			return (-1);
 	}
 	;
@@ -1090,8 +1090,8 @@ cleanup()
 	authinfolist_head = NULL;
 	cleanup_namelist(keylist_head);
 	keylist_head = NULL;
-	cleanup_namelist(poollist_head);
-	poollist_head = NULL;
+	cleanup_namelist(addrpoollist_head);
+	addrpoollist_head = NULL;
 
 	cleanup_cflist(cf_sip_list);
 	cf_sip_list = NULL;
@@ -1129,11 +1129,9 @@ cleanup_cflist(p)
 		return;
 
 	n = p->next;
-#ifdef USE_POOL
 	if (p->type == DECL_ADDRESSPOOL) {
 		free(((struct dhcp6_poolspec *)p->ptr)->name);
 	}
-#endif
 	if (p->ptr)
 		free(p->ptr);
 	if (p->list)
@@ -1161,10 +1159,8 @@ cf_post_config()
 	if (configure_ia(ianalist_head, IATYPE_NA))
 		config_fail();
 
-#ifdef USE_POOL
-	if (configure_pool(poollist_head))
+	if (configure_pool(addrpoollist_head))
 		config_fail();
-#endif /* USE_POOL */
 
 	if (configure_interface(iflist_head))
 		config_fail();

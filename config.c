@@ -58,9 +58,7 @@
 #include <common.h>
 #include <auth.h>
 #include <base64.h>
-#ifdef USE_POOL
 #include <lease.h>
-#endif /* USE_POOL */
 
 extern int errno;
 
@@ -75,7 +73,6 @@ static struct keyinfo *key_list, *key_list0;
 static struct authinfo *auth_list, *auth_list0;
 static struct dhcp6_list siplist0, sipnamelist0, dnslist0, dnsnamelist0, ntplist0;
 static long long optrefreshtime0;
-#ifdef USE_POOL
 #ifndef DHCP6_DYNAMIC_HOSTCONF_MAX
 #define DHCP6_DYNAMIC_HOSTCONF_MAX	1024
 #endif
@@ -87,7 +84,6 @@ static TAILQ_HEAD(dynamic_hostconf_listhead, dynamic_hostconf)
 	dynamic_hostconf_head;
 static unsigned int dynamic_hostconf_count;
 static struct pool_conf *pool_conflist, *pool_conflist0;
-#endif /* USE_POOL */
 
 enum { DHCPOPTCODE_SEND, DHCPOPTCODE_REQUEST, DHCPOPTCODE_ALLOW };
 
@@ -110,9 +106,7 @@ struct dhcp6_ifconf {
 
 	struct authinfo *authinfo; /* authentication information
 				    * (no need to clear) */
-#ifdef USE_POOL
 	struct dhcp6_poolspec pool;
-#endif
 };
 
 extern struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
@@ -134,13 +128,11 @@ static void clear_authinfo __P((struct authinfo *));
 static int configure_duid __P((char *, struct duid *));
 static int get_default_ifid __P((struct prefix_ifconf *));
 static char *qstrdup __P((char *));
-#ifdef USE_POOL
 static void clear_poolconf __P((struct pool_conf *));
 static struct pool_conf *create_pool __P((char *, struct dhcp6_range *));
 struct host_conf *find_dynamic_hostconf __P((struct duid *));
 static int in6_addr_cmp __P((struct in6_addr *, struct in6_addr *));
 static void in6_addr_inc __P((struct in6_addr *));
-#endif /* USE_POOL */
 
 int
 configure_interface(iflist)
@@ -259,7 +251,6 @@ configure_interface(iflist)
 				cp += strlen(ifc->scriptpath) - 1;
 				*cp = '\0'; /* clear the terminating quote */
 				break;
-#ifdef USE_POOL
 			case DECL_ADDRESSPOOL:
 				{
 					struct dhcp6_poolspec* spec;
@@ -297,7 +288,6 @@ configure_interface(iflist)
 						ifc->pool.name, ifc->ifname);
 				}
 				break;
-#endif /* USE_POOL */
 			default:
 				dprintf(LOG_ERR, FNAME, "%s:%d "
 					"invalid interface configuration",
@@ -599,7 +589,6 @@ configure_host(hostlist)
 				    "delayed auth with %s (keyid=%08x)",
 				    host->name, hconf->delayedkey->keyid);
 				break;
-#ifdef USE_POOL
 			case DECL_ADDRESSPOOL:
 				{
 					struct dhcp6_poolspec* spec;
@@ -637,7 +626,6 @@ configure_host(hostlist)
 						hconf->pool.name, hconf->name);
 				}
 				break;
-#endif /* USE_POOL */
 			default:
 				dprintf(LOG_ERR, FNAME, "%s:%d "
 				    "invalid host configuration for %s",
@@ -1314,9 +1302,7 @@ configure_cleanup()
 	dhcp6_clear_list(&ntplist0);
 	TAILQ_INIT(&ntplist0);
 	optrefreshtime0 = -1;
-#ifdef USE_POOL
 	clear_poolconf(pool_conflist0);
-#endif /* USE_POOL */
 }
 
 void
@@ -1365,10 +1351,8 @@ configure_commit()
 			ifp->authalgorithm = ifc->authinfo->algorithm;
 			ifp->authrdm = ifc->authinfo->rdm;
 		}
-#ifdef USE_POOL
 		ifp->pool = ifc->pool;
 		ifc->pool.name = NULL;
-#endif
 	}
 
 	clear_ifconf(dhcp6_ifconflist);
@@ -1418,12 +1402,10 @@ configure_commit()
 
 	/* commit information refresh time */
 	optrefreshtime = optrefreshtime0;
-#ifdef USE_POOL
 	/* commit pool configuration */
 	clear_poolconf(pool_conflist);
 	pool_conflist = pool_conflist0;
 	pool_conflist0 = NULL;
-#endif /* USE_POOL */
 }
 
 static void
@@ -1443,10 +1425,8 @@ clear_ifconf(iflist)
 		if (ifc->scriptpath)
 			free(ifc->scriptpath);
 
-#ifdef USE_POOL
 		if (ifc->pool.name)
 			free(ifc->pool.name);
-#endif
 		free(ifc);
 	}
 }
@@ -1505,10 +1485,8 @@ clear_hostconf(hlist)
 		dhcp6_clear_list(&host->addr_list);
 		if (host->duid.duid_id)
 			free(host->duid.duid_id);
-#ifdef USE_POOL
 		if (host->pool.name)
 			free(host->pool.name);
-#endif
 		free(host);
 	}
 }
@@ -1824,11 +1802,9 @@ find_hostconf(duid)
 {
 	struct host_conf *host;
 
-#ifdef USE_POOL
 	if ((host = find_dynamic_hostconf(duid)) != NULL) {
 		return (host);
 	}
-#endif /* USE_POOL */
 
 	for (host = host_conflist; host; host = host->next) {
 		if (host->duid.duid_len == duid->duid_len &&
@@ -1911,7 +1887,6 @@ qstrdup(qstr)
 	return (dup);
 }
 
-#ifdef USE_POOL
 int
 configure_pool(poollist)
 	struct cf_namelist *poollist;
@@ -2249,5 +2224,3 @@ in6_addr_inc(addr)
 			break;
 	}
 }
-#endif /* USE_POOL */
-
