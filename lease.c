@@ -33,6 +33,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include "dhcp6.h"
 #include "config.h"
