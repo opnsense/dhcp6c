@@ -60,6 +60,18 @@
 char *configfilename;
 int lineno = 1;
 
+
+/* Recursion limit for includes */
+#define MAX_INCLUDE_DEPTH 10
+
+static struct include_stack {
+	char *path;
+	YY_BUFFER_STATE state;
+	int lineno;
+} incstack[MAX_INCLUDE_DEPTH];
+int incstackp = 0;
+
+
 static int yy_first_time = 1;
 static int yyerrorcount = 0;
  
@@ -111,6 +123,7 @@ ecl		\}
 %s S_KEY
 %s S_SECRET
 %s S_ADDRPOOL
+%s S_INCL
 
 %%
 %{
@@ -267,6 +280,15 @@ ecl		\}
 }
 <S_CNF>expire { DECHO; return (EXPIRE); }
 
+	/* include */
+<S_CNF>include { DECHO; BEGIN S_INCL; return (INCLUDE); }
+<S_INCL>{quotedstring} {
+	DECHO;
+	yylval.str = strdup(yytext);
+	BEGIN S_CNF;
+	return (QSTRING);
+}
+
 	/* quoted string */
 {quotedstring} {
 		DECHO;
@@ -294,6 +316,18 @@ ecl		\}
 		DECHO;
 		yylval.str = strdup(yytext);
 		return (STRING);
+	}
+
+<<EOF>>	{
+		if (--incstackp < 0)
+			yyterminate();
+		else {
+			yy_delete_buffer(YY_CURRENT_BUFFER);
+			free(incstack[incstackp + 1].path);
+			configfilename = incstack[incstackp].path;
+			lineno = incstack[incstackp].lineno;
+			yy_switch_to_buffer(incstack[incstackp].state);
+		}
 	}
 
 %%
@@ -350,6 +384,39 @@ yywarn(char *s, ...)
 #endif
 	yyerror0(LOG_WARNING, s, ap);
 	va_end(ap);
+}
+
+int
+cfswitch_buffer(incl)
+	char *incl;
+{
+	char *path = qstrdup(incl);
+	FILE *fp;
+
+	if (incstackp >= MAX_INCLUDE_DEPTH) {
+		dprintf(LOG_ERR, FNAME, "cfparse: includes nested too deeply");
+		return (-1);
+	}
+	incstack[incstackp].path = configfilename;
+	incstack[incstackp].state = YY_CURRENT_BUFFER;
+	incstack[incstackp].lineno = lineno;
+
+	fp = fopen(path, "r");
+	if (fp == NULL) {
+		dprintf(LOG_ERR, FNAME, "cfparse: fopen(%s): %s",
+			path, strerror(errno));
+		if (errno == ENOENT)
+			return (0);
+		return (-1);
+	}
+	incstackp++;
+	configfilename = path;
+	lineno = 1;
+	yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
+
+	BEGIN(S_CNF);
+
+	return (0);
 }
 
 int

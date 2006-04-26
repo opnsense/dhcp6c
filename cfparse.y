@@ -91,6 +91,7 @@ struct cf_list *cf_sip_list, *cf_sip_name_list;
 long long cf_refreshtime = -1;
 
 extern int yylex __P((void));
+extern int cfswitch_buffer __P((char *));
 static int add_namelist __P((struct cf_namelist *, struct cf_namelist **));
 static void cleanup __P((void));
 static void cleanup_namelist __P((struct cf_namelist *));
@@ -111,6 +112,7 @@ static void cleanup_cflist __P((struct cf_list *));
 %token AUTHNAME RDM KEY
 %token KEYINFO REALM KEYID SECRET KEYNAME EXPIRE
 %token ADDRPOOL POOLNAME RANGE TO ADDRESS_POOL
+%token INCLUDE
 
 %token NUMBER SLASH EOS BCL ECL STRING QSTRING PREFIX INFINITY
 %token COMMA
@@ -151,6 +153,7 @@ statement:
 	|	authentication_statement
 	|	key_statement
 	|	addrpool_statement
+	|	include_statement
 	;
 
 interface_statement:
@@ -333,6 +336,17 @@ key_statement:
 
 		if (add_namelist(key, &keylist_head))
 			return (-1);
+	}
+	;
+
+include_statement:
+	INCLUDE QSTRING EOS
+	{
+		if (cfswitch_buffer($2)) {
+			free($2);
+			return (-1);
+		}
+		free($2);
 	}
 	;
 

@@ -127,7 +127,6 @@ static void clear_keys __P((struct keyinfo *));
 static void clear_authinfo __P((struct authinfo *));
 static int configure_duid __P((char *, struct duid *));
 static int get_default_ifid __P((struct prefix_ifconf *));
-static char *qstrdup __P((char *));
 static void clear_poolconf __P((struct pool_conf *));
 static struct pool_conf *create_pool __P((char *, struct dhcp6_range *));
 struct host_conf *find_dynamic_hostconf __P((struct duid *));
@@ -1867,7 +1866,7 @@ find_key(realm, realmlen, id)
 	return (NULL);
 }
 
-static char *
+char *
 qstrdup(qstr)
 	char *qstr;
 {

@@ -60,6 +60,18 @@ Interfaces are specified in the form of "name unit", such as
 and
 .Ar gif1.
 .\"
+.Sh Include statement
+An include statement specifies another configuration file to be included.
+The format of an include statement is as follows:
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic include Ar \(dqfilename\(dq ;
+.Xc
+Where
+.Ar \(dqfilename\(dq
+is the name (full path) of the file to be included.
+.El
+.\"
 .Sh Option statement
 An option statement specifies configuration parameters provided for
 every client.

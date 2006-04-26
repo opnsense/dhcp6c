@@ -318,3 +318,4 @@ extern int get_free_address_from_pool __P((struct pool_conf *,
 	struct in6_addr *));
 struct host_conf *create_dynamic_hostconf __P((struct duid *,
 	struct dhcp6_poolspec *));
+extern char *qstrdup __P((char *));
