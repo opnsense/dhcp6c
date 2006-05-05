@@ -207,18 +207,20 @@ else
 	AC_MSG_RESULT(no)
 fi
 
-dnl DHCP option type values not officially defined
 AC_MSG_CHECKING(for DHCP NTP option)
 AC_ARG_WITH(opt-ntp,
 [  --with-opt-ntp=VALUE    specify DHCP option value for NTP],
     dhcpopt_ntp="$withval", dhcpopt_ntp=0)
-if test $dhcpopt_ntp = 0 ; then
-	dhcpopt_ntp=-1
-	AC_MSG_RESULT(unspecified)
-else
+if test $dhcpopt_ntp != 0 ; then
 	AC_MSG_RESULT(using $dhcpopt_ntp)
+	DH6OPT_NTP="-DDH6OPT_NTP=$dhcpopt_ntp"
+	AC_SUBST(DH6OPT_NTP)
+else
+	AC_MSG_RESULT(no)
 fi
-AC_SUBST(dhcpopt_ntp)
+
+dnl DHCP option type values not officially defined
+dnl (no such option now)
 
 AC_CHECK_HEADERS(stdarg.h)
 

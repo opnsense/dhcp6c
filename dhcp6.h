@@ -286,16 +286,45 @@ struct dhcp6_relay {
 #ifndef DH6OPT_IA_PD_PREFIX
 #define DH6OPT_IA_PD_PREFIX 26
 #endif
+#ifndef DH6OPT_NIS_SERVERS
+#define DH6OPT_NIS_SERVERS 27
+#endif
+#ifndef DH6OPT_NISP_SERVERS
+#define DH6OPT_NISP_SERVERS 28
+#endif
+#ifndef DH6OPT_NIS_DOMAIN_NAME
+#define DH6OPT_NIS_DOMAIN_NAME 29
+#endif
+#ifndef DH6OPT_NISP_DOMAIN_NAME
+#define DH6OPT_NISP_DOMAIN_NAME 30
+#endif
+#ifndef DH6OPT_NTP
+#define DH6OPT_NTP 31
+#endif
 #ifndef DH6OPT_REFRESHTIME
 #define DH6OPT_REFRESHTIME 32
  #define DH6OPT_REFRESHTIME_UNDEF -1
 #endif
+#ifndef DH6OPT_BCMCS_SERVER_D
+#define DH6OPT_BCMCS_SERVER_D 33
+#endif
+#ifndef DH6OPT_BCMCS_SERVER_A
+#define DH6OPT_BCMCS_SERVER_A 34
+#endif
+#ifndef DH6OPT_GEOCONF_CIVIC
+#define DH6OPT_GEOCONF_CIVIC 36
+#endif
+#ifndef DH6OPT_REMOTE_ID
+#define DH6OPT_REMOTE_ID 37
+#endif
+#ifndef DH6OPT_SUBSCRIBER_ID
+#define DH6OPT_SUBSCRIBER_ID 38
+#endif
+#ifndef DH6OPT_CLIENT_FQDN
+#define DH6OPT_CLIENT_FQDN 39
+#endif
 
 /* The followings are KAME specific. */
-#if CONF_DH6OPT_NTP > 0
-#define USE_DH6OPT_NTP
-#endif
-#define DH6OPT_NTP CONF_DH6OPT_NTP
 
 struct dhcp6opt {
 	u_int16_t dh6opt_type;

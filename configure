@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP YACC LEX LEXLIB LEX_OUTPUT_ROOT EGREP LIBOBJS localdbdir DHCPOPT_DNS DH6OPT_DNSNAME DH6OPT_IA_PD DH6OPT_IA_PD_PREFIX DH6OPT_REFRESHTIME dhcpopt_ntp LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP YACC LEX LEXLIB LEX_OUTPUT_ROOT EGREP LIBOBJS localdbdir DHCPOPT_DNS DH6OPT_DNSNAME DH6OPT_IA_PD DH6OPT_IA_PD_PREFIX DH6OPT_REFRESHTIME DH6OPT_NTP LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -5408,13 +5408,14 @@ if test "${with_opt_ntp+set}" = set; then
 else
   dhcpopt_ntp=0
 fi;
-if test $dhcpopt_ntp = 0 ; then
-	dhcpopt_ntp=-1
-	echo "$as_me:$LINENO: result: unspecified" >&5
-echo "${ECHO_T}unspecified" >&6
-else
+if test $dhcpopt_ntp != 0 ; then
 	echo "$as_me:$LINENO: result: using $dhcpopt_ntp" >&5
 echo "${ECHO_T}using $dhcpopt_ntp" >&6
+	DH6OPT_NTP="-DDH6OPT_NTP=$dhcpopt_ntp"
+
+else
+	echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
 
 
@@ -6229,7 +6230,7 @@ s,@DH6OPT_DNSNAME@,$DH6OPT_DNSNAME,;t t
 s,@DH6OPT_IA_PD@,$DH6OPT_IA_PD,;t t
 s,@DH6OPT_IA_PD_PREFIX@,$DH6OPT_IA_PD_PREFIX,;t t
 s,@DH6OPT_REFRESHTIME@,$DH6OPT_REFRESHTIME,;t t
-s,@dhcpopt_ntp@,$dhcpopt_ntp,;t t
+s,@DH6OPT_NTP@,$DH6OPT_NTP,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 
