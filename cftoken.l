@@ -147,9 +147,6 @@ ecl		\}
 }
 
 	/* address pool configuration */
-<S_CNF>address-pool { DECHO; BEGIN S_ADDRPOOL; return (ADDRPOOL); }
-
-	/* kept for a backward compatiblity */
 <S_CNF>pool { DECHO; BEGIN S_ADDRPOOL; return (ADDRPOOL); }  
 
 <S_ADDRPOOL>{string} {
