@@ -1,5 +1,8 @@
 2006-05-05  SUZUKI, Shinsuke <suz@kame.net>
 	* fixed a compilation error on netbsd
+	* updated the list of the supported RFCs
+	* NTP option number has been already assigned by IANA
+	* added other official option numbers for future implementors
 
 2006-04-26  SUZUKI, Shinsuke <suz@kame.net>
 	* supported 'include' statement
