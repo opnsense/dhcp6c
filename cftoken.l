@@ -49,11 +49,7 @@
 #include "dhcp6.h"
 #include "config.h"
 #include "common.h"
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 106000000	/* XXX */
-#include "cfparse.h"
-#else
 #include "y.tab.h"
-#endif
 
 #define YY_NO_UNPUT 1
 

@@ -80,11 +80,11 @@ dhcp6ctl: $(CTLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(CTLOBJS) $(LIBOBJS) $(LIBS)
 
 cfparse.c y.tab.h: cfparse.y
-	yacc -d cfparse.y
+	@YACC@ -d cfparse.y
 	mv y.tab.c cfparse.c
 
 cftoken.c: cftoken.l y.tab.h
-	lex cftoken.l
+	@LEX@ cftoken.l
 	mv lex.yy.c $@	
 
 getaddrinfo.o:	$(srcdir)/missing/getaddrinfo.c

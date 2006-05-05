@@ -402,6 +402,7 @@ address_list_ent:
 
 		$$ = l;
 	}
+	;
 
 declarations:
 		{ $$ = NULL; }
@@ -534,6 +535,7 @@ dhcpoption_list:
 
 			$$ = $1;
 		}
+	;
 
 dhcpoption:
 		RAPID_COMMIT
@@ -707,6 +709,7 @@ addressparam:
 
 			$$ = pconf;
 		}
+	;
 
 prefixparam:
 		STRING SLASH NUMBER duration
@@ -766,6 +769,7 @@ prefixparam:
 
 			$$ = pconf;
 		}
+	;
 
 poolparam:
 		STRING duration
