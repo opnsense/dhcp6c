@@ -63,7 +63,6 @@ CLIENTOBJS=	dhcp6c.o common.o config.o prefixconf.o dhcp6c_ia.o timer.o \
 SERVOBJS=	dhcp6s.o common.o if.o config.o timer.o lease.o \
 	base64.o auth.o dhcp6_ctl.o $(GENSRCS:%.c=%.o)
 RELAYOBJS =	dhcp6relay.o common.o timer.o
-LITECLIENTOBJS=	dhcp6lc.o common.o if.o timer.o dhcp6c_script.o
 CTLOBJS= dhcp6_ctlclient.o base64.o auth.o
 CLEANFILES+=	y.tab.h
 
@@ -74,8 +73,6 @@ dhcp6s:	$(SERVOBJS) $(LIBOBJS)
 	$(CC) $(LDFLAGS) -o dhcp6s $(SERVOBJS) $(LIBOBJS) $(LIBS)
 dhcp6relay: $(RELAYOBJS) $(LIBOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(RELAYOBJS) $(LIBOBJS) $(LIBS)
-dhcp6lc:$(LITECLIENTOBJS) $(LIBOBJS)
-	$(CC) $(LDFLAGS) -o $@ $(LITECLIENTOBJS) $(LIBOBJS) $(LIBS)
 dhcp6ctl: $(CTLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(CTLOBJS) $(LIBOBJS) $(LIBS)
 
