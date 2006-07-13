@@ -1464,7 +1464,6 @@ dhcp6_get_options(p, ep, optinfo)
 				}
 			}
 			break;
-#ifdef USE_DH6OPT_NTP
 		case DH6OPT_NTP:
 			if (optlen % sizeof(struct in6_addr) || optlen == 0)
 				goto malformed;
@@ -1490,7 +1489,6 @@ dhcp6_get_options(p, ep, optinfo)
 				;
 			}
 			break;
-#endif
 		case DH6OPT_IA_PD:
 			if (optlen + sizeof(struct dhcp6opt) <
 			    sizeof(optia))
@@ -1529,7 +1527,6 @@ dhcp6_get_options(p, ep, optinfo)
 			dhcp6_clear_list(&sublist);
 
 			break;
-#ifdef USE_DH6OPT_REFRESHTIME
 		case DH6OPT_REFRESHTIME:
 			if (optlen != 4)
 				goto malformed;
@@ -1556,9 +1553,6 @@ dhcp6_get_options(p, ep, optinfo)
 			} else
 				optinfo->refreshtime = (int64_t)val32;
 			break;
-#else
-			val32 = val32; /* XXX deceive compiler */
-#endif
 		case DH6OPT_IA_NA:
 			if (optlen + sizeof(struct dhcp6opt) <
 			    sizeof(optia))
@@ -2227,7 +2221,6 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		free(tmpbuf);
 	}
 
-#ifdef USE_DH6OPT_NTP
 	if (!TAILQ_EMPTY(&optinfo->ntp_list)) {
 		struct in6_addr *in6;
 
@@ -2250,7 +2243,6 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		}
 		free(tmpbuf);
 	}
-#endif
 
 	for (op = TAILQ_FIRST(&optinfo->iapd_list); op;
 	    op = TAILQ_NEXT(op, link)) {
@@ -2296,7 +2288,6 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		}
 	}
 
-#ifdef USE_DH6OPT_REFRESHTIME
 	if (optinfo->refreshtime != DH6OPT_REFRESHTIME_UNDEF) {
 		u_int32_t p32 = (u_int32_t)optinfo->refreshtime;
 
@@ -2306,7 +2297,6 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 			goto fail;
 		}
 	}
-#endif
 
 	if (optinfo->authproto != DHCP6_AUTHPROTO_UNDEF) {
 		struct dhcp6opt_auth *auth;
@@ -2858,18 +2848,14 @@ dhcp6optstr(type)
 		return ("DNS");
 	case DH6OPT_DNSNAME:
 		return ("domain search list");
-#ifdef USE_DH6OPT_NTP
 	case DH6OPT_NTP:
 		return ("NTP server");
-#endif
 	case DH6OPT_IA_PD:
 		return ("IA_PD");
 	case DH6OPT_IA_PD_PREFIX:
 		return ("IA_PD prefix");
-#ifdef USE_DH6OPT_REFRESHTIME
 	case DH6OPT_REFRESHTIME:
 		return ("information refresh time");
-#endif
 	default:
 		snprintf(genstr, sizeof(genstr), "opt_%d", type);
 		return (genstr);

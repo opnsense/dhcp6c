@@ -1094,7 +1094,6 @@ configure_global_option()
 	/* NTP servers */
 	TAILQ_INIT(&ntplist0);
 	for (cl = cf_ntp_list; cl; cl = cl->next) {
-#ifdef USE_DH6OPT_NTP
 		/* duplication check */
 		if (dhcp6_find_listval(&ntplist0, DHCP6_LISTVAL_ADDR6,
 		    cl->ptr, 0)) {
@@ -1109,22 +1108,11 @@ configure_global_option()
 			dprintf(LOG_ERR, FNAME, "failed to add an NTP server");
 			goto bad;
 		}
-#else
-		dprintf(LOG_ERR, FNAME,
-		    "the support for NTP option is disabled");
-		goto bad;
-#endif
 	}
 
 	/* Lifetime for stateless options */
 	if (cf_refreshtime >= 0) {
-#ifdef USE_DH6OPT_REFRESHTIME
 		optrefreshtime0 = cf_refreshtime;
-#else
-		dprintf(LOG_ERR, FNAME, "the support for "
-		    "information refresh time option is disabled");
-		goto bad;
-#endif
 	}
 
 	return (0);
@@ -1655,22 +1643,10 @@ add_options(opcode, ifc, cfl0)
 				opttype = DH6OPT_DNSNAME;
 				break;
 			case DHCPOPT_NTP:
-#ifdef USE_DH6OPT_NTP
 				opttype = DH6OPT_NTP;
-#else
-				dprintf(LOG_ERR, FNAME, "the support "
-				    "for NTP option is disabled");
-#endif
 				break;
 			case DHCPOPT_REFRESHTIME:
-#ifdef USE_DH6OPT_REFRESHTIME
 				opttype = DH6OPT_REFRESHTIME;
-#else
-				dprintf(LOG_ERR, FNAME, "the support "
-				    "for information refresh time option "
-				    "is disabled");
-				return (-1);
-#endif
 				break;
 			}
 			switch(opcode) {
