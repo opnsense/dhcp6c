@@ -137,9 +137,7 @@ static int construct_reqdata __P((struct dhcp6_if *, struct dhcp6_optinfo *,
     struct dhcp6_event *));
 static void destruct_iadata __P((struct dhcp6_eventdata *));
 static void tv_sub __P((struct timeval *, struct timeval *, struct timeval *));
-#ifdef USE_DH6OPT_REFRESHTIME
 static struct dhcp6_timer *client6_expire_refreshtime __P((void *));
-#endif
 static int process_auth __P((struct authparam *, struct dhcp6 *dh6, ssize_t,
     struct dhcp6_optinfo *));
 static int set_auth __P((struct dhcp6_event *, struct dhcp6_optinfo *));
@@ -786,7 +784,6 @@ client6_ifctl(ifname, command)
 	return (0);
 }
 
-#ifdef USE_DH6OPT_REFRESHTIME
 static struct dhcp6_timer *
 client6_expire_refreshtime(arg)
 	void *arg;
@@ -801,7 +798,6 @@ client6_expire_refreshtime(arg)
 
 	return (NULL);
 }
-#endif
 
 struct dhcp6_timer *
 client6_timo(arg)
@@ -1840,7 +1836,6 @@ client6_recvreply(ifp, dh6, len, optinfo)
 		client6_script(ifp->scriptpath, state, optinfo);
 	}
 
-#ifdef USE_DH6OPT_REFRESHTIME
 	/*
 	 * Set refresh timer for configuration information specified in
 	 * information-request.  If the timer value is specified by the server
@@ -1884,7 +1879,6 @@ client6_recvreply(ifp, dh6, len, optinfo)
 		dprintf(LOG_INFO, FNAME,
 		    "unexpected information refresh time option (ignored)");
 	}
-#endif /* USE_DH6OPT_REFRESHTIME */
 
 	/* update stateful configuration information */
 	if (state != DHCP6S_RELEASE) {
