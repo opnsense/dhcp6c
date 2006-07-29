@@ -1,3 +1,6 @@
+2006-07-29  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s and dhcp6relay dumps process-id file, like dhcp6c
+
 2006-05-05  SUZUKI, Shinsuke <suz@kame.net>
 	* fixed a compilation error on netbsd
 	* updated the list of the supported RFCs

@@ -80,6 +80,7 @@
 #define DUID_FILE LOCALDBDIR "/dhcp6s_duid"
 #define DHCP6S_CONF SYSCONFDIR "/dhcp6s.conf"
 #define DEFAULT_KEYFILE SYSCONFDIR "/dhcp6sctlkey"
+#define DHCP6S_PIDFILE "/var/run/dhcp6s.pid"
 
 #define CTLSKEW 300
 
@@ -123,6 +124,8 @@ struct relayinfo {
 TAILQ_HEAD(relayinfolist, relayinfo);
 
 static int debug = 0;
+static u_long sig_flags = 0;
+#define SIGF_TERM 0x1
 
 const dhcp6_mode_t dhcp6_mode = DHCP6_MODE_SERVER;
 char *device = NULL;
@@ -144,6 +147,7 @@ static struct dhcp6_list arg_dnslist;
 static char *ctlkeyfile = DEFAULT_KEYFILE;
 static struct keyinfo *ctlkey = NULL;
 static int ctldigestlen;
+static char *pid_file = DHCP6S_PIDFILE;
 
 static inline int get_val32 __P((char **, int *, u_int32_t *));
 static inline int get_val __P((char **, int *, void *, size_t));
@@ -155,6 +159,8 @@ static int server6_do_ctlcommand __P((char *, ssize_t));
 static void server6_reload __P((void));
 static void server6_stop __P((void));
 static void server6_recv __P((int));
+static void process_signals __P((void));
+static void server6_signal __P((int));
 static void free_relayinfo __P((struct relayinfo *));
 static int process_relayforw __P((struct dhcp6 **, struct dhcp6opt **,
     struct relayinfolist *, struct sockaddr *));
@@ -212,10 +218,11 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int ch;
+	int ch, pid;
 	struct in6_addr a;
 	struct dhcp6_listval *dlv;
 	char *progname;
+	FILE *pidfp;
 
 	if ((progname = strrchr(*argv, '/')) == NULL)
 		progname = *argv;
@@ -230,7 +237,7 @@ main(argc, argv)
 	TAILQ_INIT(&ntplist);
 
 	srandom(time(NULL) & getpid());
-	while ((ch = getopt(argc, argv, "c:dDfk:n:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dDfk:n:p:P:")) != -1) {
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
@@ -264,6 +271,8 @@ main(argc, argv)
 		case 'p':
 			ctlport = optarg;
 			break;
+		case 'P':
+			pid_file = optarg;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -295,6 +304,14 @@ main(argc, argv)
 		if (daemon(0, 0) < 0)
 			err(1, "daemon");
 	}
+
+	/* dump current PID */
+	pid = getpid();
+	if ((pidfp = fopen(pid_file, "w")) != NULL) {
+		fprintf(pidfp, "%d\n", pid);
+		fclose(pidfp);
+	}
+
 	/* prohibit a mixture of old and new style of DNS server config */
 	if (!TAILQ_EMPTY(&arg_dnslist)) {
 		if (!TAILQ_EMPTY(&dnslist)) {
@@ -317,7 +334,7 @@ usage()
 {
 	fprintf(stderr,
 	    "usage: dhcp6s [-c configfile] [-dDf] [-k ctlkeyfile] "
-	    "[-p ctlport] intface\n");
+	    "[-p ctlport] [-P pidfile] intface\n");
 	exit(0);
 }
 
@@ -543,7 +560,21 @@ server6_init()
 		exit(1);
 	}
 
+	if (signal(SIGTERM, server6_signal) == SIG_ERR) {
+		dprintf(LOG_WARNING, FNAME, "failed to set signal: %s",
+		    strerror(errno));
+		exit(1);
+	}
 	return;
+}
+
+static void
+process_signals()
+{
+	if ((sig_flags & SIGF_TERM)) {
+		unlink(pid_file);
+		exit(0);
+	}
 }
 
 static void
@@ -556,6 +587,9 @@ server6_mainloop()
 
 	
 	while (1) {
+		if (sig_flags)
+			process_signals();
+
 		w = dhcp6_check_timer();
 
 		FD_ZERO(&r);
@@ -570,10 +604,12 @@ server6_mainloop()
 		ret = select(maxsock + 1, &r, NULL, NULL, w);
 		switch (ret) {
 		case -1:
-			dprintf(LOG_ERR, FNAME, "select: %s",
-			    strerror(errno));
-			exit(1);
-			/* NOTREACHED */
+			if (errno != EINTR) {
+				dprintf(LOG_ERR, FNAME, "select: %s",
+				    strerror(errno));
+				exit(1);
+			}
+			continue;
 		case 0:		/* timeout */
 			break;
 		default:
@@ -2207,6 +2243,20 @@ release_binding_ia(iap, retlist, optinfo)
 	}
 
 	return (0);
+}
+
+static void
+server6_signal(sig)
+	int sig;
+{
+
+	dprintf(LOG_INFO, FNAME, "received a signal (%d)", sig);
+
+	switch (sig) {
+	case SIGTERM:
+		sig_flags |= SIGF_TERM;
+		break;
+	}
 }
 
 static int

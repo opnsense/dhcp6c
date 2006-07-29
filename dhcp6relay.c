@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/uio.h>
+#include <sys/signal.h>
 
 #include <net/if.h>
 #ifdef __FreeBSD__
@@ -60,11 +61,16 @@
 #include <config.h>
 #include <common.h>
 
+#define DHCP6RELAY_PIDFILE "/var/run/dhcp6relay.pid"
+static char *pid_file = DHCP6RELAY_PIDFILE;
+
 static int ssock;		/* socket for relaying to servers */
 static int csock;		/* socket for clients */
 static int maxfd;		/* maxi file descriptor for select(2) */
 
 static int debug = 0;
+static u_long sig_flags = 0;
+#define SIGF_TERM 0x1
 
 static char *relaydevice;
 static char *boundaddr;
@@ -102,6 +108,8 @@ static struct prefix_list *make_prefix __P((char *));
 static void relay6_init __P((int, char *[]));
 static void relay6_loop __P((void));
 static void relay6_recv __P((int, int));
+static void process_signals __P((void));
+static void relay6_signal __P((int));
 static int make_msgcontrol __P((struct msghdr *, void *, socklen_t,
     struct in6_pktinfo *, int));
 static void relay_to_server __P((struct dhcp6 *, ssize_t,
@@ -114,7 +122,7 @@ usage()
 {
 	fprintf(stderr,
 	    "usage: dhcp6relay [-dDf] [-b boundaddr] [-H hoplim] "
-	    "[-r relay-IF] [-s serveraddr] IF ...\n");
+	    "[-r relay-IF] [-s serveraddr] [-p pidfile] IF ...\n");
 	exit(0);
 }
 
@@ -123,16 +131,17 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch;
+	int ch, pid;
 	char *progname;
 	char *p;
+	FILE *pidfp;
 
 	if ((progname = strrchr(*argv, '/')) == NULL)
 		progname = *argv;
 	else
 		progname++;
 
-	while((ch = getopt(argc, argv, "b:dDfH:r:s:")) != -1) {
+	while((ch = getopt(argc, argv, "b:dDfH:r:s:p:")) != -1) {
 		switch(ch) {
 		case 'b':
 			boundaddr = optarg;
@@ -164,6 +173,9 @@ main(argc, argv)
 		case 's':
 			serveraddr = optarg;
 			break;
+		case 'p':
+			pid_file = optarg;
+			break;
 		default:
 			usage();
 			exit(0);
@@ -192,6 +204,13 @@ main(argc, argv)
 		openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 	}
 	setloglevel(debug);
+
+	/* dump current PID */
+	pid = getpid();
+	if ((pidfp = fopen(pid_file, "w")) != NULL) {
+		fprintf(pidfp, "%d\n", pid);
+		fclose(pidfp);
+	}
 
 	relay6_init(argc, argv);
 
@@ -479,10 +498,38 @@ relay6_init(int ifnum, char *iflist[])
 	}
 #endif
 
+	if (signal(SIGTERM, relay6_signal) == SIG_ERR) {
+		dprintf(LOG_WARNING, FNAME, "failed to set signal: %s",
+		    strerror(errno));
+		exit(1);
+	}
 	return;
 
   failexit:
 	exit(1);
+}
+
+static void
+relay6_signal(sig)
+	int sig;
+{
+
+	dprintf(LOG_INFO, FNAME, "received a signal (%d)", sig);
+
+	switch (sig) {
+	case SIGTERM:
+		sig_flags |= SIGF_TERM;
+		break;
+	}
+}
+
+static void
+process_signals()
+{
+	if ((sig_flags & SIGF_TERM)) {
+		unlink(pid_file);
+		exit(0);
+	}
 }
 
 static void
@@ -492,6 +539,9 @@ relay6_loop()
 	int e;
 
 	while(1) {
+		if (sig_flags)
+			process_signals();
+
 		/* we'd rather use FD_COPY here, but it's not POSIX friendly */
 		FD_ZERO(&readfds);
 		FD_SET(csock, &readfds);
@@ -503,8 +553,11 @@ relay6_loop()
 			errx(1, "select returned 0");
 				/* NOTREACHED */
 		case -1:
-			err(1, "select");
+			if (errno != EINTR) {
+				err(1, "select");
 				/* NOTREACHED */
+			}
+			continue;
 		default:
 			break;
 		}
