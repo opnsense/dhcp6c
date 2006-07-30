@@ -349,6 +349,178 @@ dhcp6_vbuf_cmp(vb1, vb2)
 	return (memcmp(vb1->dv_buf, vb2->dv_buf, vb1->dv_len));
 }
 
+static int
+dhcp6_get_addr(optlen, cp, type, list)
+	int optlen;
+	void *cp;
+	dhcp6_listval_type_t type;
+	struct dhcp6_list *list;
+{
+	void *val;
+	int option;
+
+	if (optlen % sizeof(struct in6_addr) || optlen == 0) {
+		dprintf(LOG_INFO, FNAME,
+		    "malformed DHCP option: type %d, len %d", type, optlen);
+		return -1;
+	}
+	for (val = cp; val < cp + optlen; val += sizeof(struct in6_addr)) {
+		struct in6_addr valaddr;
+
+		memcpy(&valaddr, val, sizeof(valaddr));
+		if (dhcp6_find_listval(list,
+		    DHCP6_LISTVAL_ADDR6, &valaddr, 0)) {
+			dprintf(LOG_INFO, FNAME, "duplicated %s address (%s)",
+			    dhcp6optstr(type), in6addr2str(&valaddr, 0));
+			continue;
+		}
+
+		if (dhcp6_add_listval(list, DHCP6_LISTVAL_ADDR6,
+		    &valaddr, NULL) == NULL) {
+			dprintf(LOG_ERR, FNAME,
+			    "failed to copy %s address", dhcp6optstr(type));
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int
+dhcp6_set_addr(type, list, p, optep, len)
+	dhcp6_listval_type_t type;
+	struct dhcp6_list *list;
+	struct dhcp6opt **p, *optep;
+	int *len;
+{
+	struct in6_addr *in6;
+	char *tmpbuf;
+	struct dhcp6_listval *d;
+	int optlen;
+
+	if (TAILQ_EMPTY(list))
+		return 0;
+
+	tmpbuf = NULL;
+	optlen = dhcp6_count_list(list) * sizeof(struct in6_addr);
+	if ((tmpbuf = malloc(optlen)) == NULL) {
+		dprintf(LOG_ERR, FNAME,
+		    "memory allocation failed for %s options",
+		    dhcp6optstr(type));
+		return -1;
+	}
+	in6 = (struct in6_addr *)tmpbuf;
+	for (d = TAILQ_FIRST(list); d; d = TAILQ_NEXT(d, link), in6++)
+		memcpy(in6, &d->val_addr6, sizeof(*in6));
+	if (copy_option(type, optlen, tmpbuf, p, optep, len) != 0) {
+		free(tmpbuf);
+		return -1;
+	}
+
+	free(tmpbuf);
+	return 0;
+}
+
+static int
+dhcp6_get_domain(optlen, cp, type, list)
+	int optlen;
+	void *cp;
+	dhcp6_listval_type_t type;
+	struct dhcp6_list *list;
+{
+	void *val;
+
+	val = cp;
+	while (val < cp + optlen) {
+		struct dhcp6_vbuf vb;
+		char name[MAXDNAME + 1];
+
+		if (dnsdecode((u_char **)(void *)&val,
+		    (u_char *)(cp + optlen), name, sizeof(name)) == NULL) {
+			dprintf(LOG_INFO, FNAME, "failed to "
+			    "decode a %s domain name",
+			    dhcp6optstr(type));
+			dprintf(LOG_INFO, FNAME,
+			    "malformed DHCP option: type %d, len %d",
+			     type, optlen);
+			return -1;
+		}
+
+		vb.dv_len = strlen(name) + 1;
+		vb.dv_buf = name;
+
+		if (dhcp6_add_listval(list,
+		    DHCP6_LISTVAL_VBUF, &vb, NULL) == NULL) {
+			dprintf(LOG_ERR, FNAME, "failed to "
+			    "copy a %s domain name", dhcp6optstr(type));
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int
+dhcp6_set_domain(type, list, p, optep, len)
+	dhcp6_listval_type_t type;
+	struct dhcp6_list *list;
+	struct dhcp6opt **p, *optep;
+	int *len;
+{
+	int optlen = 0;
+	struct dhcp6_listval *d;
+	char *tmpbuf;
+	char name[MAXDNAME], *cp, *ep;
+
+	if (TAILQ_EMPTY(list))
+		return 0;
+
+	for (d = TAILQ_FIRST(list); d; d = TAILQ_NEXT(d, link))
+		optlen += (d->val_vbuf.dv_len + 1);
+
+	if (optlen == 0) {
+		return 0;
+	}
+
+	tmpbuf = NULL;
+	if ((tmpbuf = malloc(optlen)) == NULL) {
+		dprintf(LOG_ERR, FNAME, "memory allocation failed for "
+		    "%s domain options", dhcp6optstr(type));
+		return -1;
+	}
+	cp = tmpbuf;
+	ep = cp + optlen;
+	for (d = TAILQ_FIRST(list); d; d = TAILQ_NEXT(d, link)) {
+		int nlen;
+
+		nlen = dnsencode((const char *)d->val_vbuf.dv_buf,
+		    name, sizeof (name));
+		if (nlen < 0) {
+			dprintf(LOG_ERR, FNAME,
+			    "failed to encode a %s domain name",
+			    dhcp6optstr(type));
+			free(tmpbuf);
+			return -1;
+		}
+		if (ep - cp < nlen) {
+			dprintf(LOG_ERR, FNAME,
+			    "buffer length for %s domain name is too short",
+			    dhcp6optstr(type));
+			free(tmpbuf);
+			return -1;
+		}
+		memcpy(cp, name, nlen);
+		cp += nlen;
+	}
+	if (copy_option(type, optlen, tmpbuf, p, optep, len) != 0) {
+		free(tmpbuf);
+		return -1;
+	}
+	free(tmpbuf);
+
+	return 0;
+}
+
 struct dhcp6_event *
 dhcp6_create_event(ifp, state)
 	struct dhcp6_if *ifp;
@@ -1001,6 +1173,12 @@ dhcp6_init_options(optinfo)
 	TAILQ_INIT(&optinfo->dnsname_list);
 	TAILQ_INIT(&optinfo->ntp_list);
 	TAILQ_INIT(&optinfo->prefix_list);
+	TAILQ_INIT(&optinfo->nis_list);
+	TAILQ_INIT(&optinfo->nisname_list);
+	TAILQ_INIT(&optinfo->nisp_list);
+	TAILQ_INIT(&optinfo->nispname_list);
+	TAILQ_INIT(&optinfo->bcmcs_list);
+	TAILQ_INIT(&optinfo->bcmcsname_list);
 
 	optinfo->authproto = DHCP6_AUTHPROTO_UNDEF;
 	optinfo->authalgorithm = DHCP6_AUTHALG_UNDEF;
@@ -1032,6 +1210,12 @@ dhcp6_clear_options(optinfo)
 	dhcp6_clear_list(&optinfo->dnsname_list);
 	dhcp6_clear_list(&optinfo->ntp_list);
 	dhcp6_clear_list(&optinfo->prefix_list);
+	dhcp6_clear_list(&optinfo->nis_list);
+	dhcp6_clear_list(&optinfo->nisname_list);
+	dhcp6_clear_list(&optinfo->nisp_list);
+	dhcp6_clear_list(&optinfo->nispname_list);
+	dhcp6_clear_list(&optinfo->bcmcs_list);
+	dhcp6_clear_list(&optinfo->bcmcsname_list);
 
 	if (optinfo->relaymsg_msg != NULL)
 		free(optinfo->relaymsg_msg);
@@ -1071,6 +1255,18 @@ dhcp6_copy_options(dst, src)
 	if (dhcp6_copy_list(&dst->ntp_list, &src->ntp_list))
 		goto fail;
 	if (dhcp6_copy_list(&dst->prefix_list, &src->prefix_list))
+		goto fail;
+	if (dhcp6_copy_list(&dst->nis_list, &src->nis_list))
+		goto fail;
+	if (dhcp6_copy_list(&dst->nisname_list, &src->nisname_list))
+		goto fail;
+	if (dhcp6_copy_list(&dst->nisp_list, &src->nisp_list))
+		goto fail;
+	if (dhcp6_copy_list(&dst->nispname_list, &src->nispname_list))
+		goto fail;
+	if (dhcp6_copy_list(&dst->bcmcs_list, &src->bcmcs_list))
+		goto fail;
+	if (dhcp6_copy_list(&dst->bcmcsname_list, &src->bcmcsname_list))
 		goto fail;
 	dst->elapsed_time = src->elapsed_time;
 	dst->refreshtime = src->refreshtime;
@@ -1364,130 +1560,59 @@ dhcp6_get_options(p, ep, optinfo)
 			optinfo->ifidopt_len = optlen;
 			break;
 		case DH6OPT_SIP_SERVER_D:
-			val = cp;
-			while (val < cp + optlen) {
-				struct dhcp6_vbuf vb;
-				char name[MAXDNAME + 1];
-
-				if (dnsdecode((u_char **)(void *)&val,
-				    (u_char *)(cp + optlen), name,
-				    sizeof(name)) == NULL) {
-					dprintf(LOG_INFO, FNAME, "failed to "
-					    "decode a SIP domain name");
-					goto malformed;	/* or proceed? */
-				}
-
-				vb.dv_len = strlen(name) + 1;
-				vb.dv_buf = name;
-
-				if (dhcp6_add_listval(&optinfo->sipname_list,
-				    DHCP6_LISTVAL_VBUF, &vb, NULL) == NULL) {
-					dprintf(LOG_ERR, FNAME, "failed to "
-					    "copy a SIP domain name");
-					goto fail;
-				}
-			}
-			break;
-		case DH6OPT_SIP_SERVER_A:
-			if (optlen % sizeof(struct in6_addr) || optlen == 0)
-				goto malformed;
-			for (val = cp; val < cp + optlen;
-			     val += sizeof(struct in6_addr)) {
-				memcpy(&valaddr, val, sizeof(valaddr));
-				if (dhcp6_find_listval(&optinfo->sip_list,
-				    DHCP6_LISTVAL_ADDR6, &valaddr, 0)) {
-					dprintf(LOG_INFO, FNAME, "duplicated "
-					    "SIP server address (%s)",
-					    in6addr2str(&valaddr, 0));
-					goto nextsip;
-				}
-
-				if (dhcp6_add_listval(&optinfo->sip_list,
-				    DHCP6_LISTVAL_ADDR6, &valaddr, NULL)
-				    == NULL) {
-					dprintf(LOG_ERR, FNAME,
-					    "failed to copy "
-					    "SIP server address");
-					goto fail;
-				}
-			  nextsip:
-				;
-			}
-			break;
-		case DH6OPT_DNS:
-			if (optlen % sizeof(struct in6_addr) || optlen == 0)
-				goto malformed;
-			for (val = cp; val < cp + optlen;
-			     val += sizeof(struct in6_addr)) {
-				memcpy(&valaddr, val, sizeof(valaddr));
-				if (dhcp6_find_listval(&optinfo->dns_list,
-				    DHCP6_LISTVAL_ADDR6, &valaddr, 0)) {
-					dprintf(LOG_INFO, FNAME, "duplicated "
-					    "DNS address (%s)",
-					    in6addr2str(&valaddr, 0));
-					goto nextdns;
-				}
-
-				if (dhcp6_add_listval(&optinfo->dns_list,
-				    DHCP6_LISTVAL_ADDR6, &valaddr, NULL)
-				    == NULL) {
-					dprintf(LOG_ERR, FNAME,
-					    "failed to copy DNS address");
-					goto fail;
-				}
-			  nextdns:
-				;
-			}
+			if (dhcp6_get_domain(optlen, cp, opt,
+			    &optinfo->sipname_list) == -1)
+				goto fail;
 			break;
 		case DH6OPT_DNSNAME:
-			val = cp;
-			while (val < cp + optlen) {
-				struct dhcp6_vbuf vb;
-				char name[MAXDNAME + 1];
-
-				if (dnsdecode((u_char **)(void *)&val,
-				    (u_char *)(cp + optlen), name,
-				    sizeof(name)) == NULL) {
-					dprintf(LOG_INFO, FNAME, "failed to "
-					    "decode a DNS name");
-					goto malformed;	/* or proceed? */
-				}
-
-				vb.dv_len = strlen(name) + 1;
-				vb.dv_buf = name;
-
-				if (dhcp6_add_listval(&optinfo->dnsname_list,
-				    DHCP6_LISTVAL_VBUF, &vb, NULL) == NULL) {
-					dprintf(LOG_ERR, FNAME, "failed to "
-					    "copy a DNS name");
-					goto fail;
-				}
-			}
+			if (dhcp6_get_domain(optlen, cp, opt,
+			    &optinfo->dnsname_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_NIS_DOMAIN_NAME:
+			if (dhcp6_get_domain(optlen, cp, opt,
+			    &optinfo->nisname_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_NISP_DOMAIN_NAME:
+			if (dhcp6_get_domain(optlen, cp, opt,
+			    &optinfo->nispname_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_BCMCS_SERVER_D:
+			if (dhcp6_get_domain(optlen, cp, opt,
+			    &optinfo->bcmcsname_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_SIP_SERVER_A:
+			if (dhcp6_get_addr(optlen, cp, opt,
+			    &optinfo->sip_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_DNS:
+			if (dhcp6_get_addr(optlen, cp, opt,
+			    &optinfo->dns_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_NIS_SERVERS:
+			if (dhcp6_get_addr(optlen, cp, opt,
+			    &optinfo->nis_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_NISP_SERVERS:
+			if (dhcp6_get_addr(optlen, cp, opt,
+			    &optinfo->nisp_list) == -1)
+				goto fail;
+			break;
+		case DH6OPT_BCMCS_SERVER_A:
+			if (dhcp6_get_addr(optlen, cp, opt,
+			    &optinfo->bcmcs_list) == -1)
+				goto fail;
 			break;
 		case DH6OPT_NTP:
-			if (optlen % sizeof(struct in6_addr) || optlen == 0)
-				goto malformed;
-			for (val = cp; val < cp + optlen;
-			     val += sizeof(struct in6_addr)) {
-				memcpy(&valaddr, val, sizeof(valaddr));
-				if (dhcp6_find_listval(&optinfo->ntp_list,
-				    DHCP6_LISTVAL_ADDR6, &valaddr, 0)) {
-					dprintf(LOG_INFO, FNAME, "duplicated "
-					    "NTP server address (%s)",
-					    in6addr2str(&valaddr, 0));
-					goto nextntp;
-				}
-
-				if (dhcp6_add_listval(&optinfo->ntp_list,
-				    DHCP6_LISTVAL_ADDR6, &valaddr, NULL)
-				    == NULL) {
-					dprintf(LOG_ERR, FNAME, "failed to "
-					    "copy NTP server address");
-					goto fail;
-				}
-			  nextntp:
-				;
-			}
+			if (dhcp6_get_addr(optlen, cp, opt,
+			    &optinfo->ntp_list) == -1)
+				goto fail;
 			break;
 		case DH6OPT_IA_PD:
 			if (optlen + sizeof(struct dhcp6opt) <
@@ -2089,160 +2214,49 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		free(tmpbuf);
 	}
 
-	optlen = 0;
-	for (d = TAILQ_FIRST(&optinfo->sipname_list); d;
-	    d = TAILQ_NEXT(d, link)) {
-		optlen += (d->val_vbuf.dv_len + 1);
-	}
-	if (optlen) {
-		char name[MAXDNAME], *cp, *ep;
-		tmpbuf = NULL;
+	if (dhcp6_set_domain(DH6OPT_SIP_SERVER_D, &optinfo->sipname_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-		if ((tmpbuf = malloc(optlen)) == NULL) {
-			dprintf(LOG_ERR, FNAME,
-			    "memory allocation failed for "
-			    "SIP server domain options");
-			goto fail;
-		}
-		cp = tmpbuf;
-		ep = cp + optlen;
-		for (d = TAILQ_FIRST(&optinfo->sipname_list); d;
-		     d = TAILQ_NEXT(d, link)) {
-			int nlen;
+	if (dhcp6_set_addr(DH6OPT_SIP_SERVER_A, &optinfo->sip_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-			nlen = dnsencode((const char *)d->val_vbuf.dv_buf,
-			    name, sizeof (name));
-			if (nlen < 0) {
-				dprintf(LOG_ERR, FNAME,
-				    "failed to encode a SIP server "
-				    "domain name");
-				goto fail;
-			}
-			if (ep - cp < nlen) {
-				dprintf(LOG_ERR, FNAME,
-				    "buffer length for SIP server "
-				    "domain name is too short");
-				goto fail;
-			}
-			memcpy(cp, name, nlen);
-			cp += nlen;
-		}
-		if (copy_option(DH6OPT_SIP_SERVER_D, optlen, tmpbuf, &p,
-		    optep, &len) != 0) {
-			goto fail;
-		}
-		free(tmpbuf);
-	}
-	if (!TAILQ_EMPTY(&optinfo->sip_list)) {
-		struct in6_addr *in6;
+	if (dhcp6_set_addr(DH6OPT_DNS, &optinfo->sip_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-		tmpbuf = NULL;
-		optlen = dhcp6_count_list(&optinfo->sip_list) *
-			sizeof(struct in6_addr);
-		if ((tmpbuf = malloc(optlen)) == NULL) {
-			dprintf(LOG_ERR, FNAME,
-			    "memory allocation failed for SIP server options");
-			goto fail;
-		}
-		in6 = (struct in6_addr *)tmpbuf;
-		for (d = TAILQ_FIRST(&optinfo->sip_list); d;
-		     d = TAILQ_NEXT(d, link), in6++) {
-			memcpy(in6, &d->val_addr6, sizeof(*in6));
-		}
-		if (copy_option(DH6OPT_SIP_SERVER_A, optlen, tmpbuf, &p,
-		    optep, &len) != 0) {
-			goto fail;
-		}
-		free(tmpbuf);
-	}
+	if (dhcp6_set_domain(DH6OPT_DNSNAME, &optinfo->dnsname_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-	if (!TAILQ_EMPTY(&optinfo->dns_list)) {
-		struct in6_addr *in6;
+	if (dhcp6_set_addr(DH6OPT_NIS_SERVERS, &optinfo->nis_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-		tmpbuf = NULL;
-		optlen = dhcp6_count_list(&optinfo->dns_list) *
-			sizeof(struct in6_addr);
-		if ((tmpbuf = malloc(optlen)) == NULL) {
-			dprintf(LOG_ERR, FNAME,
-			    "memory allocation failed for DNS options");
-			goto fail;
-		}
-		in6 = (struct in6_addr *)tmpbuf;
-		for (d = TAILQ_FIRST(&optinfo->dns_list); d;
-		     d = TAILQ_NEXT(d, link), in6++) {
-			memcpy(in6, &d->val_addr6, sizeof(*in6));
-		}
-		if (copy_option(DH6OPT_DNS, optlen, tmpbuf, &p,
-		    optep, &len) != 0) {
-			goto fail;
-		}
-		free(tmpbuf);
-	}
+	if (dhcp6_set_addr(DH6OPT_NISP_SERVERS, &optinfo->nisp_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-	optlen = 0;
-	for (d = TAILQ_FIRST(&optinfo->dnsname_list); d;
-	    d = TAILQ_NEXT(d, link)) {
-		optlen += (d->val_vbuf.dv_len + 1);
-	}
-	if (optlen) {
-		char name[MAXDNAME], *cp, *ep;
-		tmpbuf = NULL;
+	if (dhcp6_set_domain(DH6OPT_NIS_DOMAIN_NAME, &optinfo->nisname_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-		if ((tmpbuf = malloc(optlen)) == NULL) {
-			dprintf(LOG_ERR, FNAME,
-			    "memory allocation failed for DNS name options");
-			goto fail;
-		}
-		cp = tmpbuf;
-		ep = cp + optlen;
-		for (d = TAILQ_FIRST(&optinfo->dnsname_list); d;
-		     d = TAILQ_NEXT(d, link)) {
-			int nlen;
+	if (dhcp6_set_domain(DH6OPT_NISP_DOMAIN_NAME, &optinfo->nispname_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-			nlen = dnsencode((const char *)d->val_vbuf.dv_buf,
-			    name, sizeof (name));
-			if (nlen < 0) {
-				dprintf(LOG_ERR, FNAME,
-				    "failed to encode a DNS name");
-				goto fail;
-			}
-			if (ep - cp < nlen) {
-				dprintf(LOG_ERR, FNAME,
-				    "buffer length for DNS name is too short");
-				goto fail;
-			}
-			memcpy(cp, name, nlen);
-			cp += nlen;
-		}
-		if (copy_option(DH6OPT_DNSNAME, optlen, tmpbuf, &p,
-		    optep, &len) != 0) {
-			goto fail;
-		}
-		free(tmpbuf);
-	}
+	if (dhcp6_set_addr(DH6OPT_NTP, &optinfo->ntp_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-	if (!TAILQ_EMPTY(&optinfo->ntp_list)) {
-		struct in6_addr *in6;
+	if (dhcp6_set_domain(DH6OPT_BCMCS_SERVER_D, &optinfo->bcmcsname_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
-		tmpbuf = NULL;
-		optlen = dhcp6_count_list(&optinfo->ntp_list) *
-			sizeof(struct in6_addr);
-		if ((tmpbuf = malloc(optlen)) == NULL) {
-			dprintf(LOG_ERR, FNAME,
-			    "memory allocation failed for NTP options");
-			goto fail;
-		}
-		in6 = (struct in6_addr *)tmpbuf;
-		for (d = TAILQ_FIRST(&optinfo->ntp_list); d;
-		     d = TAILQ_NEXT(d, link), in6++) {
-			memcpy(in6, &d->val_addr6, sizeof(*in6));
-		}
-		if (copy_option(DH6OPT_NTP, optlen, tmpbuf, &p,
-		    optep, &len) != 0) {
-			goto fail;
-		}
-		free(tmpbuf);
-	}
+	if (dhcp6_set_addr(DH6OPT_BCMCS_SERVER_A, &optinfo->bcmcs_list,
+	    &p, optep, &len) != 0)
+		goto fail;
 
 	for (op = TAILQ_FIRST(&optinfo->iapd_list); op;
 	    op = TAILQ_NEXT(op, link)) {
@@ -2841,7 +2855,7 @@ dhcp6optstr(type)
 	case DH6OPT_RECONF_MSG:
 		return ("reconfigure message");
 	case DH6OPT_SIP_SERVER_D:
-		return ("SIP server domain name ");
+		return ("SIP domain name");
 	case DH6OPT_SIP_SERVER_A:
 		return ("SIP server address");
 	case DH6OPT_DNS:
@@ -2856,6 +2870,26 @@ dhcp6optstr(type)
 		return ("IA_PD prefix");
 	case DH6OPT_REFRESHTIME:
 		return ("information refresh time");
+	case DH6OPT_NIS_SERVERS:
+		return ("NIS servers");
+	case DH6OPT_NISP_SERVERS:
+		return ("NIS+ servers");
+	case DH6OPT_NIS_DOMAIN_NAME:
+		return ("NIS domain name");
+	case DH6OPT_NISP_DOMAIN_NAME:
+		return ("NIS+ domain name");
+	case DH6OPT_BCMCS_SERVER_D:
+		return ("BCMCS domain name");
+	case DH6OPT_BCMCS_SERVER_A:
+		return ("BCMCS server address");
+	case DH6OPT_GEOCONF_CIVIC:
+		return ("Geoconf Civic");
+	case DH6OPT_REMOTE_ID:
+		return ("remote ID");
+	case DH6OPT_SUBSCRIBER_ID:
+		return ("subscriber ID");
+	case DH6OPT_CLIENT_FQDN:
+		return ("client FQDN");
 	default:
 		snprintf(genstr, sizeof(genstr), "opt_%d", type);
 		return (genstr);

@@ -164,11 +164,17 @@ struct dhcp6_optinfo {
 	struct dhcp6_list reqopt_list; /* options in option request */
 	struct dhcp6_list stcode_list; /* status code */
 	struct dhcp6_list sip_list; /* SIP server list */
-	struct dhcp6_list sipname_list; /* SIP server domain list */
+	struct dhcp6_list sipname_list; /* SIP domain list */
 	struct dhcp6_list dns_list; /* DNS server list */
 	struct dhcp6_list dnsname_list; /* Domain Search list */
 	struct dhcp6_list ntp_list; /* NTP server list */
 	struct dhcp6_list prefix_list; /* prefix list */
+	struct dhcp6_list nis_list; /* NIS server list */
+	struct dhcp6_list nisname_list; /* NIS domain list */
+	struct dhcp6_list nisp_list; /* NIS+ server list */
+	struct dhcp6_list nispname_list; /* NIS+ domain list */
+	struct dhcp6_list bcmcs_list; /* BCMC server list */
+	struct dhcp6_list bcmcsname_list; /* BCMC domain list */
 
 	struct dhcp6_vbuf relay_msg; /* relay message */
 #define relaymsg_len relay_msg.dv_len
@@ -262,67 +268,25 @@ struct dhcp6_relay {
 #define DH6OPT_INTERFACE_ID 18
 #define DH6OPT_RECONF_MSG 19
 
-/*
- * The following values have been assigned by IANA very recently.  In order to
- * ensure interoperability with prior experimental implementation, we still
- * provide a way to configure these values.  It is highly recommended to use
- * the standard values whenever possible, of course.
- */
-#ifndef DH6OPT_SIP_SERVER_D
 #define DH6OPT_SIP_SERVER_D 21
-#endif
-#ifndef DH6OPT_SIP_SERVER_A
 #define DH6OPT_SIP_SERVER_A 22
-#endif
-#ifndef DH6OPT_DNS
 #define DH6OPT_DNS 23
-#endif
-#ifndef DH6OPT_DNSNAME
 #define DH6OPT_DNSNAME 24
-#endif
-#ifndef DH6OPT_IA_PD
 #define DH6OPT_IA_PD 25
-#endif
-#ifndef DH6OPT_IA_PD_PREFIX
 #define DH6OPT_IA_PD_PREFIX 26
-#endif
-#ifndef DH6OPT_NIS_SERVERS
 #define DH6OPT_NIS_SERVERS 27
-#endif
-#ifndef DH6OPT_NISP_SERVERS
 #define DH6OPT_NISP_SERVERS 28
-#endif
-#ifndef DH6OPT_NIS_DOMAIN_NAME
 #define DH6OPT_NIS_DOMAIN_NAME 29
-#endif
-#ifndef DH6OPT_NISP_DOMAIN_NAME
 #define DH6OPT_NISP_DOMAIN_NAME 30
-#endif
-#ifndef DH6OPT_NTP
 #define DH6OPT_NTP 31
-#endif
-#ifndef DH6OPT_REFRESHTIME
 #define DH6OPT_REFRESHTIME 32
  #define DH6OPT_REFRESHTIME_UNDEF -1
-#endif
-#ifndef DH6OPT_BCMCS_SERVER_D
 #define DH6OPT_BCMCS_SERVER_D 33
-#endif
-#ifndef DH6OPT_BCMCS_SERVER_A
 #define DH6OPT_BCMCS_SERVER_A 34
-#endif
-#ifndef DH6OPT_GEOCONF_CIVIC
 #define DH6OPT_GEOCONF_CIVIC 36
-#endif
-#ifndef DH6OPT_REMOTE_ID
 #define DH6OPT_REMOTE_ID 37
-#endif
-#ifndef DH6OPT_SUBSCRIBER_ID
 #define DH6OPT_SUBSCRIBER_ID 38
-#endif
-#ifndef DH6OPT_CLIENT_FQDN
 #define DH6OPT_CLIENT_FQDN 39
-#endif
 
 /* The followings are KAME specific. */
 

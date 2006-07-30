@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP YACC LEX LEXLIB LEX_OUTPUT_ROOT EGREP LIBOBJS localdbdir DHCPOPT_DNS DH6OPT_DNSNAME DH6OPT_IA_PD DH6OPT_IA_PD_PREFIX DH6OPT_REFRESHTIME DH6OPT_NTP LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP YACC LEX LEXLIB LEX_OUTPUT_ROOT EGREP LIBOBJS localdbdir LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -846,12 +846,6 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-localdbdir=VALUE where to put local DB files
-  --with-opt-dns=VALUE    specify DHCP option value for DNS
-  --with-opt-dnsname=VALUE    specify DHCP option value for DNS_NAME
-  --with-opt-ia-pd=VALUE  specify DHCP option value for IA_PD
-  --with-opt-ia-pd-prefix=VALUE   specify DHCP option value for IA_PD prefix
-  --with-opt-refreshtime=VALUE    specify DHCP option value for refresh time
-  --with-opt-ntp=VALUE    specify DHCP option value for NTP
 
 Some influential environment variables:
   CC          C compiler command
@@ -5298,126 +5292,6 @@ _ACEOF
 		;;
 esac
 
-echo "$as_me:$LINENO: checking for DHCP DNS option" >&5
-echo $ECHO_N "checking for DHCP DNS option... $ECHO_C" >&6
-
-# Check whether --with-opt-dns or --without-opt-dns was given.
-if test "${with_opt_dns+set}" = set; then
-  withval="$with_opt_dns"
-  dhcpopt_dns="$withval"
-else
-  dhcpopt_dns=0
-fi;
-if test $dhcpopt_dns != 0 ; then
-	echo "$as_me:$LINENO: result: using $dhcpopt_dns" >&5
-echo "${ECHO_T}using $dhcpopt_dns" >&6
-	DHCPOPT_DNS="-DDH6OPT_DNS=$dhcpopt_dns"
-
-else
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-echo "$as_me:$LINENO: checking for DHCP DNS_NAME option" >&5
-echo $ECHO_N "checking for DHCP DNS_NAME option... $ECHO_C" >&6
-
-# Check whether --with-opt-dnsname or --without-opt-dnsname was given.
-if test "${with_opt_dnsname+set}" = set; then
-  withval="$with_opt_dnsname"
-  dhcpopt_dnsname="$withval"
-else
-  dhcpopt_dnsname=0
-fi;
-if test $dhcpopt_dnsname != 0 ; then
-	echo "$as_me:$LINENO: result: using $dhcpopt_dnsname" >&5
-echo "${ECHO_T}using $dhcpopt_dnsname" >&6
-	DH6OPT_DNSNAME="-DDH6OPT_DNSNAME=$dhcpopt_dnsname"
-
-else
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-echo "$as_me:$LINENO: checking for DHCP IA_PD option" >&5
-echo $ECHO_N "checking for DHCP IA_PD option... $ECHO_C" >&6
-
-# Check whether --with-opt-ia-pd or --without-opt-ia-pd was given.
-if test "${with_opt_ia_pd+set}" = set; then
-  withval="$with_opt_ia_pd"
-  dhcpopt_ia_pd="$withval"
-else
-  dhcpopt_ia_pd=0
-fi;
-if test $dhcpopt_ia_pd != 0 ; then
-	echo "$as_me:$LINENO: result: using $dhcpopt_ia_pd" >&5
-echo "${ECHO_T}using $dhcpopt_ia_pd" >&6
-	DH6OPT_IA_PD="-DDH6OPT_IA_PD=$dhcpopt_ia_pd"
-
-else
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-echo "$as_me:$LINENO: checking for DHCP IA_PD_PREFIX option" >&5
-echo $ECHO_N "checking for DHCP IA_PD_PREFIX option... $ECHO_C" >&6
-
-# Check whether --with-opt-ia-pd-prefix or --without-opt-ia-pd-prefix was given.
-if test "${with_opt_ia_pd_prefix+set}" = set; then
-  withval="$with_opt_ia_pd_prefix"
-  dhcpopt_ia_pd_prefix="$withval"
-else
-  dhcpopt_ia_pd_prefix=0
-fi;
-if test $dhcpopt_ia_pd_prefix != 0 ; then
-	echo "$as_me:$LINENO: result: using $dhcpopt_ia_pd_prefix" >&5
-echo "${ECHO_T}using $dhcpopt_ia_pd_prefix" >&6
-	DH6OPT_IA_PD_PREFIX="-DDH6OPT_IA_PD_PREFIX=$dhcpopt_ia_pd_prefix"
-
-else
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-echo "$as_me:$LINENO: checking for DHCP information refresh time option" >&5
-echo $ECHO_N "checking for DHCP information refresh time option... $ECHO_C" >&6
-
-# Check whether --with-opt-refreshtime or --without-opt-refreshtime was given.
-if test "${with_opt_refreshtime+set}" = set; then
-  withval="$with_opt_refreshtime"
-  dhcpopt_refreshtime="$withval"
-else
-  dhcpopt_refreshtime=0
-fi;
-if test $dhcpopt_refreshtime != 0 ; then
-	echo "$as_me:$LINENO: result: using $dhcpopt_refresh" >&5
-echo "${ECHO_T}using $dhcpopt_refresh" >&6
-	DH6OPT_REFRESHTIME="-DDH6OPT_REFRESHTIME=$dhcpopt_refreshtime"
-
-else
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-echo "$as_me:$LINENO: checking for DHCP NTP option" >&5
-echo $ECHO_N "checking for DHCP NTP option... $ECHO_C" >&6
-
-# Check whether --with-opt-ntp or --without-opt-ntp was given.
-if test "${with_opt_ntp+set}" = set; then
-  withval="$with_opt_ntp"
-  dhcpopt_ntp="$withval"
-else
-  dhcpopt_ntp=0
-fi;
-if test $dhcpopt_ntp != 0 ; then
-	echo "$as_me:$LINENO: result: using $dhcpopt_ntp" >&5
-echo "${ECHO_T}using $dhcpopt_ntp" >&6
-	DH6OPT_NTP="-DDH6OPT_NTP=$dhcpopt_ntp"
-
-else
-	echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
 
 
 for ac_header in stdarg.h
@@ -6225,12 +6099,6 @@ s,@LEX_OUTPUT_ROOT@,$LEX_OUTPUT_ROOT,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@localdbdir@,$localdbdir,;t t
-s,@DHCPOPT_DNS@,$DHCPOPT_DNS,;t t
-s,@DH6OPT_DNSNAME@,$DH6OPT_DNSNAME,;t t
-s,@DH6OPT_IA_PD@,$DH6OPT_IA_PD,;t t
-s,@DH6OPT_IA_PD_PREFIX@,$DH6OPT_IA_PD_PREFIX,;t t
-s,@DH6OPT_REFRESHTIME@,$DH6OPT_REFRESHTIME,;t t
-s,@DH6OPT_NTP@,$DH6OPT_NTP,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
 

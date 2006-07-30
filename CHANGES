@@ -1,3 +1,13 @@
+2006-07-30  SUZUKI, Shinsuke <suz@kame.net>
+	* supported the following options:
+		NIS server option, NIS domain option (RFC3898)
+		NIS+ server option, NIS+ domain option (RFC3898)
+		BCMCS server option, BCMCS domain option (RFC4280)
+	* changed the name of the enviromental variable for SIP server
+	  address (new_sip_servers).
+	* removed a configure option to control the NTP option number.
+	  (since one year has been passed since its official assignment)
+
 2006-07-29  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s and dhcp6relay dumps process-id file, like dhcp6c
 

@@ -270,6 +270,9 @@ enum { DECL_SEND, DECL_ALLOW, DECL_INFO_ONLY, DECL_REQUEST, DECL_DUID,
        DHCPOPT_DNS, DHCPOPT_DNSNAME,
        DHCPOPT_IA_PD, DHCPOPT_IA_NA, DHCPOPT_NTP,
        DHCPOPT_REFRESHTIME,
+       DHCPOPT_NIS, DHCPOPT_NISNAME, 
+       DHCPOPT_NISP, DHCPOPT_NISPNAME, 
+       DHCPOPT_BCMCS, DHCPOPT_BCMCSNAME, 
        CFLISTENT_GENERIC,
        IACONF_PIF, IACONF_PREFIX, IACONF_ADDR,
        DHCPOPT_SIP, DHCPOPT_SIPNAME,
@@ -289,6 +292,12 @@ extern struct dhcp6_list sipnamelist;
 extern struct dhcp6_list dnslist;
 extern struct dhcp6_list dnsnamelist;
 extern struct dhcp6_list ntplist;
+extern struct dhcp6_list nislist;
+extern struct dhcp6_list nisnamelist;
+extern struct dhcp6_list nisplist;
+extern struct dhcp6_list nispnamelist;
+extern struct dhcp6_list bcmcslist;
+extern struct dhcp6_list bcmcsnamelist;
 extern long long optrefreshtime;
 
 extern struct dhcp6_if *ifinit __P((char *));

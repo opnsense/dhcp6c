@@ -88,6 +88,9 @@ static struct cf_namelist *authinfolist_head, *keylist_head;
 static struct cf_namelist *ianalist_head;
 struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
 struct cf_list *cf_sip_list, *cf_sip_name_list;
+struct cf_list *cf_nis_list, *cf_nis_name_list;
+struct cf_list *cf_nisp_list, *cf_nisp_name_list;
+struct cf_list *cf_bcmcs_list, *cf_bcmcs_name_list;
 long long cf_refreshtime = -1;
 
 extern int yylex __P((void));
@@ -106,6 +109,9 @@ static void cleanup_cflist __P((struct cf_list *));
 %token HOST HOSTNAME DUID
 %token OPTION RAPID_COMMIT IA_PD DNS_SERVERS DNS_NAME NTP_SERVERS REFRESHTIME
 %token SIP_SERVERS SIP_NAME
+%token NIS_SERVERS NIS_NAME
+%token NISP_SERVERS NISP_NAME
+%token BCMCS_SERVERS BCMCS_NAME
 %token INFO_ONLY
 %token SCRIPT DELAYEDKEY
 %token AUTHENTICATION PROTOCOL ALGORITHM DELAYED RECONFIG HMACMD5 MONOCOUNTER
@@ -236,6 +242,78 @@ option_statement:
 			} else {
 				cf_sip_name_list->tail->next = l;
 				cf_sip_name_list->tail = l->tail;
+			}
+		}
+	|	OPTION NIS_SERVERS address_list EOS
+		{
+			if (cf_nis_list == NULL)
+				cf_nis_list = $3;
+			else {
+				cf_nis_list->tail->next = $3;
+				cf_nis_list->tail = $3->tail;
+			}
+		}
+	|	OPTION NIS_NAME QSTRING EOS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, CFLISTENT_GENERIC, $3, NULL);
+
+			if (cf_nis_name_list == NULL) {
+				cf_nis_name_list = l;
+				cf_nis_name_list->tail = l;
+				cf_nis_name_list->next = NULL;
+			} else {
+				cf_nis_name_list->tail->next = l;
+				cf_nis_name_list->tail = l->tail;
+			}
+		}
+	|	OPTION NISP_SERVERS address_list EOS
+		{
+			if (cf_nisp_list == NULL)
+				cf_nisp_list = $3;
+			else {
+				cf_nisp_list->tail->next = $3;
+				cf_nisp_list->tail = $3->tail;
+			}
+		}
+	|	OPTION NISP_NAME QSTRING EOS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, CFLISTENT_GENERIC, $3, NULL);
+
+			if (cf_nisp_name_list == NULL) {
+				cf_nisp_name_list = l;
+				cf_nisp_name_list->tail = l;
+				cf_nisp_name_list->next = NULL;
+			} else {
+				cf_nisp_name_list->tail->next = l;
+				cf_nisp_name_list->tail = l->tail;
+			}
+		}
+	|	OPTION BCMCS_SERVERS address_list EOS
+		{
+			if (cf_bcmcs_list == NULL)
+				cf_bcmcs_list = $3;
+			else {
+				cf_bcmcs_list->tail->next = $3;
+				cf_bcmcs_list->tail = $3->tail;
+			}
+		}
+	|	OPTION BCMCS_NAME QSTRING EOS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, CFLISTENT_GENERIC, $3, NULL);
+
+			if (cf_bcmcs_name_list == NULL) {
+				cf_bcmcs_name_list = l;
+				cf_bcmcs_name_list->tail = l;
+				cf_bcmcs_name_list->next = NULL;
+			} else {
+				cf_bcmcs_name_list->tail->next = l;
+				cf_bcmcs_name_list->tail = l->tail;
 			}
 		}
 	|	OPTION REFRESHTIME NUMBER EOS
@@ -615,6 +693,54 @@ dhcpoption:
 			struct cf_list *l;
 
 			MAKE_CFLIST(l, DHCPOPT_REFRESHTIME, NULL, NULL);
+			/* currently no value */
+			$$ = l;
+		}
+	|	NIS_SERVERS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DHCPOPT_NIS, NULL, NULL);
+			/* currently no value */
+			$$ = l;
+		}
+	|	NIS_NAME
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DHCPOPT_NISNAME, NULL, NULL);
+			/* currently no value */
+			$$ = l;
+		}
+	|	NISP_SERVERS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DHCPOPT_NISP, NULL, NULL);
+			/* currently no value */
+			$$ = l;
+		}
+	|	NISP_NAME
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DHCPOPT_NISPNAME, NULL, NULL);
+			/* currently no value */
+			$$ = l;
+		}
+	|	BCMCS_SERVERS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DHCPOPT_BCMCS, NULL, NULL);
+			/* currently no value */
+			$$ = l;
+		}
+	|	BCMCS_NAME
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, DHCPOPT_BCMCSNAME, NULL, NULL);
 			/* currently no value */
 			$$ = l;
 		}
@@ -1121,6 +1247,18 @@ cleanup()
 	cf_dns_name_list = NULL;
 	cleanup_cflist(cf_ntp_list);
 	cf_ntp_list = NULL;
+	cleanup_cflist(cf_nis_list);
+	cf_nis_list = NULL;
+	cleanup_cflist(cf_nis_name_list);
+	cf_nis_name_list = NULL;
+	cleanup_cflist(cf_nisp_list);
+	cf_nisp_list = NULL;
+	cleanup_cflist(cf_nisp_name_list);
+	cf_nisp_name_list = NULL;
+	cleanup_cflist(cf_bcmcs_list);
+	cf_bcmcs_list = NULL;
+	cleanup_cflist(cf_bcmcs_name_list);
+	cf_bcmcs_name_list = NULL;
 }
 
 static void

@@ -1822,7 +1822,7 @@ client6_recvreply(ifp, dh6, len, optinfo)
 
 		for (d = TAILQ_FIRST(&optinfo->sipname_list); d;
 		     d = TAILQ_NEXT(d, link), i++) {
-			info_printf("SIP server domain name[%d] %s",
+			info_printf("SIP domain name[%d] %s",
 			    i, d->val_vbuf.dv_buf);
 		}
 	}

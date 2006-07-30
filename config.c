@@ -64,6 +64,9 @@ extern int errno;
 
 struct prefix_ifconf *prefix_ifconflist;
 struct dhcp6_list siplist, sipnamelist, dnslist, dnsnamelist, ntplist;
+struct dhcp6_list nislist, nisnamelist;
+struct dhcp6_list nisplist, nispnamelist;
+struct dhcp6_list bcmcslist, bcmcsnamelist;
 long long optrefreshtime = -1;
 
 static struct dhcp6_ifconf *dhcp6_ifconflist;
@@ -72,6 +75,9 @@ static struct host_conf *host_conflist0, *host_conflist;
 static struct keyinfo *key_list, *key_list0;
 static struct authinfo *auth_list, *auth_list0;
 static struct dhcp6_list siplist0, sipnamelist0, dnslist0, dnsnamelist0, ntplist0;
+static struct dhcp6_list nislist0, nisnamelist0;
+static struct dhcp6_list nisplist0, nispnamelist0;
+static struct dhcp6_list bcmcslist0, bcmcsnamelist0;
 static long long optrefreshtime0;
 #ifndef DHCP6_DYNAMIC_HOSTCONF_MAX
 #define DHCP6_DYNAMIC_HOSTCONF_MAX	1024
@@ -111,6 +117,9 @@ struct dhcp6_ifconf {
 
 extern struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
 extern struct cf_list *cf_sip_list, *cf_sip_name_list;
+extern struct cf_list *cf_nis_list, *cf_nis_name_list;
+extern struct cf_list *cf_nisp_list, *cf_nisp_name_list;
+extern struct cf_list *cf_bcmcs_list, *cf_bcmcs_name_list;
 extern long long cf_refreshtime;
 extern char *configfilename;
 
@@ -126,6 +135,8 @@ static void clear_hostconf __P((struct host_conf *));
 static void clear_keys __P((struct keyinfo *));
 static void clear_authinfo __P((struct authinfo *));
 static int configure_duid __P((char *, struct duid *));
+static int configure_addr __P((struct cf_list *, struct dhcp6_list *, char *));
+static int configure_domain __P((struct cf_list *, struct dhcp6_list *, char *));
 static int get_default_ifid __P((struct prefix_ifconf *));
 static void clear_poolconf __P((struct pool_conf *));
 static struct pool_conf *create_pool __P((char *, struct dhcp6_range *));
@@ -965,150 +976,49 @@ configure_global_option()
 {
 	struct cf_list *cl;
 
-	/* check against configuration restriction */
-	if ((cf_dns_list && cf_dns_name_list) &&
-	    dhcp6_mode != DHCP6_MODE_SERVER) {
-		dprintf(LOG_INFO, FNAME, "%s:%d server-only configuration",
-		    configfilename, cf_dns_list->line);
-		goto bad;
-	}
-	if ((cf_sip_list && cf_sip_name_list) &&
-	    dhcp6_mode != DHCP6_MODE_SERVER) {
-		dprintf(LOG_INFO, FNAME, "%s:%d server-only configuration",
-		    configfilename, cf_sip_list->line);
-		goto bad;
-	}
-
 	/* SIP Server address */
-	TAILQ_INIT(&siplist0);
-	for (cl = cf_sip_list; cl; cl = cl->next) {
-		/* duplication check */
-		if (dhcp6_find_listval(&siplist0, DHCP6_LISTVAL_ADDR6,
-		    cl->ptr, 0)) {
-			dprintf(LOG_INFO, FNAME,
-			    "%s:%d duplicated SIP server: %s",
-			    configfilename, cl->line,
-			    in6addr2str((struct in6_addr *)cl->ptr, 0));
-			goto bad;
-		}
-		if (dhcp6_add_listval(&siplist0, DHCP6_LISTVAL_ADDR6,
-		    cl->ptr, NULL) == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to add a SIP server");
-			goto bad;
-		}
-	}
+	if (configure_addr(cf_sip_list, &siplist0, "SIP") < 0)
+		goto bad;
 
-	/* SIP Server domain name */
-	TAILQ_INIT(&sipnamelist0);
-	for (cl = cf_sip_name_list; cl; cl = cl->next) {
-		char *name, *cp;
-		struct dhcp6_vbuf name_vbuf;
-
-		name = strdup(cl->ptr + 1);
-		if (name == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to copy a SIP server domain name");
-			goto bad;
-		}
-		cp = name + strlen(name) - 1;
-		*cp = '\0';	/* clear the terminating quote */
-
-		name_vbuf.dv_buf = name;
-		name_vbuf.dv_len = strlen(name) + 1;
-
-		/* duplication check */
-		if (dhcp6_find_listval(&sipnamelist0, DHCP6_LISTVAL_VBUF,
-		    &name_vbuf, 0)) {
-			dprintf(LOG_INFO, FNAME,
-			    "%s:%d duplicated SIP name: %s",
-			    configfilename, cl->line, name_vbuf.dv_buf);
-			dhcp6_vbuf_free(&name_vbuf);
-			goto bad;
-		}
-
-		/* add the name */
-		if (dhcp6_add_listval(&sipnamelist0, DHCP6_LISTVAL_VBUF,
-		    &name_vbuf, NULL) == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to add a SIP name");
-			dhcp6_vbuf_free(&name_vbuf);
-			goto bad;
-		}
-		dhcp6_vbuf_free(&name_vbuf);
-	}
+	/* SIP domain name */
+	if (configure_domain(cf_sip_name_list, &sipnamelist0, "SIP") < 0)
+		goto bad;
 
 	/* DNS servers */
-	TAILQ_INIT(&dnslist0);
-	for (cl = cf_dns_list; cl; cl = cl->next) {
-		/* duplication check */
-		if (dhcp6_find_listval(&dnslist0, DHCP6_LISTVAL_ADDR6,
-		    cl->ptr, 0)) {
-			dprintf(LOG_INFO, FNAME,
-			    "%s:%d duplicated DNS server: %s",
-			    configfilename, cl->line,
-			    in6addr2str((struct in6_addr *)cl->ptr, 0));
-			goto bad;
-		}
-		if (dhcp6_add_listval(&dnslist0, DHCP6_LISTVAL_ADDR6,
-		    cl->ptr, NULL) == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to add a DNS server");
-			goto bad;
-		}
-	}
+	if (configure_addr(cf_dns_list, &dnslist0, "DNS") < 0)
+		goto bad;
 
 	/* DNS name */
-	TAILQ_INIT(&dnsnamelist0);
-	for (cl = cf_dns_name_list; cl; cl = cl->next) {
-		char *name, *cp;
-		struct dhcp6_vbuf name_vbuf;
-
-		name = strdup(cl->ptr + 1);
-		if (name == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to copy a DNS name");
-			goto bad;
-		}
-		cp = name + strlen(name) - 1;
-		*cp = '\0';	/* clear the terminating quote */
-
-		name_vbuf.dv_buf = name;
-		name_vbuf.dv_len = strlen(name) + 1;
-
-		/* duplication check */
-		if (dhcp6_find_listval(&dnsnamelist0, DHCP6_LISTVAL_VBUF,
-		    &name_vbuf, 0)) {
-			dprintf(LOG_INFO, FNAME,
-			    "%s:%d duplicated DNS name: %s",
-			    configfilename, cl->line, name_vbuf.dv_buf);
-			dhcp6_vbuf_free(&name_vbuf);
-			goto bad;
-		}
-
-		/* add the name */
-		if (dhcp6_add_listval(&dnsnamelist0, DHCP6_LISTVAL_VBUF,
-		    &name_vbuf, NULL) == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to add a DNS name");
-			dhcp6_vbuf_free(&name_vbuf);
-			goto bad;
-		}
-		dhcp6_vbuf_free(&name_vbuf);
-	}
+	if (configure_domain(cf_dns_name_list, &dnsnamelist0, "DNS") < 0)
+		goto bad;
 
 	/* NTP servers */
-	TAILQ_INIT(&ntplist0);
-	for (cl = cf_ntp_list; cl; cl = cl->next) {
-		/* duplication check */
-		if (dhcp6_find_listval(&ntplist0, DHCP6_LISTVAL_ADDR6,
-		    cl->ptr, 0)) {
-			dprintf(LOG_INFO, FNAME,
-			    "%s:%d duplicated NTP server: %s",
-			    configfilename, cl->line,
-			    in6addr2str((struct in6_addr *)cl->ptr, 0));
-			goto bad;
-		}
-		if (dhcp6_add_listval(&ntplist0, DHCP6_LISTVAL_ADDR6,
-		    cl->ptr, NULL) == NULL) {
-			dprintf(LOG_ERR, FNAME, "failed to add an NTP server");
-			goto bad;
-		}
-	}
+	if (configure_addr(cf_ntp_list, &ntplist0, "NTP") < 0)
+		goto bad;
+
+	/* NIS Server address */
+	if (configure_addr(cf_nis_list, &nislist0, "NIS") < 0)
+		goto bad;
+
+	/* NIS domain name */
+	if (configure_domain(cf_nis_name_list, &nisnamelist0, "NIS") < 0)
+		goto bad;
+
+	/* NIS+ Server address */
+	if (configure_addr(cf_nisp_list, &nisplist0, "NISP") < 0)
+		goto bad;
+
+	/* NIS+ domain name */
+	if (configure_domain(cf_nisp_name_list, &nispnamelist0, "NISP") < 0)
+		goto bad;
+
+	/* BCMCS Server address */
+	if (configure_addr(cf_bcmcs_list, &bcmcslist0, "BCMCS") < 0)
+		goto bad;
+
+	/* BCMCS domain name */
+	if (configure_domain(cf_bcmcs_name_list, &bcmcsnamelist0, "BCMCS") < 0)
+		goto bad;
 
 	/* Lifetime for stateless options */
 	if (cf_refreshtime >= 0) {
@@ -1119,6 +1029,102 @@ configure_global_option()
 
   bad:
 	return (-1);		/* no need to free intermediate list */
+}
+
+static int
+configure_addr(cf_addr_list, list0, optname)
+	struct cf_list *cf_addr_list;
+	struct dhcp6_list *list0;
+	char *optname;
+{
+	struct cf_list *cl;
+
+	/* check against configuration restriction */
+	if (cf_addr_list != NULL && dhcp6_mode != DHCP6_MODE_SERVER) {
+		dprintf(LOG_INFO, FNAME, "%s:%d server-only configuration",
+		    configfilename, cf_addr_list->line);
+		return -1;
+	}
+
+	TAILQ_INIT(list0);
+	for (cl = cf_addr_list; cl; cl = cl->next) {
+		/* duplication check */
+		if (dhcp6_find_listval(list0, DHCP6_LISTVAL_ADDR6,
+		    cl->ptr, 0)) {
+			dprintf(LOG_INFO, FNAME,
+			    "%s:%d duplicated %s server: %s",
+			    configfilename, cl->line,
+			    optname,
+			    in6addr2str((struct in6_addr *)cl->ptr, 0));
+			return -1;
+		}
+		if (dhcp6_add_listval(list0, DHCP6_LISTVAL_ADDR6,
+		    cl->ptr, NULL) == NULL) {
+			dprintf(LOG_ERR, FNAME, "failed to add a %s server",
+			    optname);
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+static int
+configure_domain(cf_name_list, list0, optname)
+	struct cf_list *cf_name_list;
+	struct dhcp6_list *list0;
+	char *optname;
+{
+	struct cf_list *cl;
+
+	/* check against configuration restriction */
+	if (cf_name_list != NULL && dhcp6_mode != DHCP6_MODE_SERVER) {
+		dprintf(LOG_INFO, FNAME, "%s:%d server-only configuration",
+		    configfilename, cf_name_list->line);
+		return -1;
+	}
+
+	TAILQ_INIT(list0);
+	for (cl = cf_name_list; cl; cl = cl->next) {
+		char *name, *cp;
+		struct dhcp6_vbuf name_vbuf;
+
+		name = strdup(cl->ptr + 1);
+		if (name == NULL) {
+			dprintf(LOG_ERR, FNAME,
+			    "failed to copy a %s domain name",
+			    optname);
+			return -1;
+		}
+		cp = name + strlen(name) - 1;
+		*cp = '\0';	/* clear the terminating quote */
+
+		name_vbuf.dv_buf = name;
+		name_vbuf.dv_len = strlen(name) + 1;
+
+		/* duplication check */
+		if (dhcp6_find_listval(list0, DHCP6_LISTVAL_VBUF,
+		    &name_vbuf, 0)) {
+			dprintf(LOG_INFO, FNAME,
+			    "%s:%d duplicated %s name: %s",
+			    configfilename, cl->line, optname,
+			    name_vbuf.dv_buf);
+			dhcp6_vbuf_free(&name_vbuf);
+			return -1;
+		}
+
+		/* add the name */
+		if (dhcp6_add_listval(list0, DHCP6_LISTVAL_VBUF,
+		    &name_vbuf, NULL) == NULL) {
+			dprintf(LOG_ERR, FNAME, "failed to add a %s name",
+			    optname);
+			dhcp6_vbuf_free(&name_vbuf);
+			return -1;
+		}
+		dhcp6_vbuf_free(&name_vbuf);
+	}
+
+	return 0;
 }
 
 static int
@@ -1371,7 +1377,7 @@ configure_commit()
 	dhcp6_clear_list(&siplist);
 	dhcp6_move_list(&siplist, &siplist0);
 
-	/* commit SIP server domain names */
+	/* commit SIP domain names */
 	dhcp6_clear_list(&sipnamelist);
 	dhcp6_move_list(&sipnamelist, &sipnamelist0);
 
@@ -1386,6 +1392,30 @@ configure_commit()
 	/* commit NTP addresses */
 	dhcp6_clear_list(&ntplist);
 	dhcp6_move_list(&ntplist, &ntplist0);
+
+	/* commit NIS server addresses */
+	dhcp6_clear_list(&nislist);
+	dhcp6_move_list(&nislist, &nislist0);
+
+	/* commit NIS domain names */
+	dhcp6_clear_list(&nisnamelist);
+	dhcp6_move_list(&nisnamelist, &nisnamelist0);
+
+	/* commit NIS+ server addresses */
+	dhcp6_clear_list(&nisplist);
+	dhcp6_move_list(&nisplist, &nisplist0);
+
+	/* commit NIS+ domain names */
+	dhcp6_clear_list(&nispnamelist);
+	dhcp6_move_list(&nispnamelist, &nispnamelist0);
+
+	/* commit BCMCS server addresses */
+	dhcp6_clear_list(&bcmcslist);
+	dhcp6_move_list(&bcmcslist, &bcmcslist0);
+
+	/* commit BCMCS domain names */
+	dhcp6_clear_list(&bcmcsnamelist);
+	dhcp6_move_list(&bcmcsnamelist, &bcmcsnamelist0);
 
 	/* commit information refresh time */
 	optrefreshtime = optrefreshtime0;

@@ -60,11 +60,17 @@
 #include "config.h"
 #include "common.h"
 
-static char sipserver_str[] = "new_sip_name_servers";
+static char sipserver_str[] = "new_sip_servers";
 static char sipname_str[] = "new_sip_name";
 static char dnsserver_str[] = "new_domain_name_servers";
 static char dnsname_str[] = "new_domain_name";
 static char ntpserver_str[] = "new_ntp_servers";
+static char nisserver_str[] = "new_nis_servers";
+static char nisname_str[] = "new_nis_name";
+static char nispserver_str[] = "new_nisp_servers";
+static char nispname_str[] = "new_nisp_name";
+static char bcmcsserver_str[] = "new_bcmcs_servers";
+static char bcmcsname_str[] = "new_bcmcs_name";
 
 static int safefile __P((const char *));
 
@@ -76,6 +82,9 @@ client6_script(scriptpath, state, optinfo)
 {
 	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, ret = 0;
 	int sipservers, sipnamelen;
+	int nisservers, nisnamelen;
+	int nispservers, nispnamelen;
+	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
 	char reason[] = "REASON=NBI";
 	struct dhcp6_listval *v;
@@ -91,6 +100,12 @@ client6_script(scriptpath, state, optinfo)
 	dnsnamelen = 0;
 	sipservers = 0;
 	sipnamelen = 0;
+	nisservers = 0;
+	nisnamelen = 0;
+	nispservers = 0;
+	nispnamelen = 0;
+	bcmcsservers = 0;
+	bcmcsnamelen = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
 
 	/* count the number of variables */
@@ -113,6 +128,33 @@ client6_script(scriptpath, state, optinfo)
 		sipnamelen += v->val_vbuf.dv_len;
 	}
 	envc += sipnamelen ? 1 : 0;
+
+	for (v = TAILQ_FIRST(&optinfo->nis_list); v; v = TAILQ_NEXT(v, link))
+		nisservers++;
+	envc += nisservers ? 1 : 0;
+	for (v = TAILQ_FIRST(&optinfo->nisname_list); v;
+	    v = TAILQ_NEXT(v, link)) {
+		nisnamelen += v->val_vbuf.dv_len;
+	}
+	envc += nisnamelen ? 1 : 0;
+
+	for (v = TAILQ_FIRST(&optinfo->nisp_list); v; v = TAILQ_NEXT(v, link))
+		nispservers++;
+	envc += nispservers ? 1 : 0;
+	for (v = TAILQ_FIRST(&optinfo->nispname_list); v;
+	    v = TAILQ_NEXT(v, link)) {
+		nispnamelen += v->val_vbuf.dv_len;
+	}
+	envc += nispnamelen ? 1 : 0;
+
+	for (v = TAILQ_FIRST(&optinfo->bcmcs_list); v; v = TAILQ_NEXT(v, link))
+		bcmcsservers++;
+	envc += bcmcsservers ? 1 : 0;
+	for (v = TAILQ_FIRST(&optinfo->bcmcsname_list); v;
+	    v = TAILQ_NEXT(v, link)) {
+		bcmcsnamelen += v->val_vbuf.dv_len;
+	}
+	envc += bcmcsnamelen ? 1 : 0;
 
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -216,7 +258,7 @@ client6_script(scriptpath, state, optinfo)
 		elen = sizeof (sipname_str) + sipnamelen + 1;
 		if ((s = envp[i++] = malloc(elen)) == NULL) {
 			dprintf(LOG_NOTICE, FNAME,
-			    "failed to allocate strings for SIP server domain name");
+			    "failed to allocate strings for SIP domain name");
 			ret = -1;
 			goto clean;
 		}
@@ -228,6 +270,118 @@ client6_script(scriptpath, state, optinfo)
 			strlcat(s, " ", elen);
 		}
 	}
+
+	if (nisservers) {
+		elen = sizeof (nisserver_str) +
+		    (INET6_ADDRSTRLEN + 1) * nisservers + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for NIS servers");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", nisserver_str);
+		for (v = TAILQ_FIRST(&optinfo->nis_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			char *addr;
+
+			addr = in6addr2str(&v->val_addr6, 0);
+			strlcat(s, addr, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+	if (nisnamelen) {
+		elen = sizeof (nisname_str) + nisnamelen + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for NIS domain name");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", nisname_str);
+		for (v = TAILQ_FIRST(&optinfo->nisname_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			strlcat(s, v->val_vbuf.dv_buf, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+
+	if (nispservers) {
+		elen = sizeof (nispserver_str) +
+		    (INET6_ADDRSTRLEN + 1) * nispservers + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for NIS+ servers");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", nispserver_str);
+		for (v = TAILQ_FIRST(&optinfo->nisp_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			char *addr;
+
+			addr = in6addr2str(&v->val_addr6, 0);
+			strlcat(s, addr, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+	if (nispnamelen) {
+		elen = sizeof (nispname_str) + nispnamelen + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for NIS+ domain name");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", nispname_str);
+		for (v = TAILQ_FIRST(&optinfo->nispname_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			strlcat(s, v->val_vbuf.dv_buf, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+
+	if (bcmcsservers) {
+		elen = sizeof (bcmcsserver_str) +
+		    (INET6_ADDRSTRLEN + 1) * bcmcsservers + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for BCMC servers");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", bcmcsserver_str);
+		for (v = TAILQ_FIRST(&optinfo->bcmcs_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			char *addr;
+
+			addr = in6addr2str(&v->val_addr6, 0);
+			strlcat(s, addr, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+	if (bcmcsnamelen) {
+		elen = sizeof (bcmcsname_str) + bcmcsnamelen + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to allocate strings for BCMC domain name");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", bcmcsname_str);
+		for (v = TAILQ_FIRST(&optinfo->bcmcsname_list); v;
+		    v = TAILQ_NEXT(v, link)) {
+			strlcat(s, v->val_vbuf.dv_buf, elen);
+			strlcat(s, " ", elen);
+		}
+	}
+
 	/* launch the script */
 	pid = fork();
 	if (pid < 0) {

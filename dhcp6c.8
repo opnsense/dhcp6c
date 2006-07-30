@@ -140,12 +140,30 @@ which provides DNS name search path.
 A list of available NTP servers,
 each of which is an IPv6 numeric address and is separated by a white
 space character.
-.It Ic new_sip_name_servers
+.It Ic new_sip_servers
 A list of available SIP server addresses,
 each of which is an IPv6 numeric address and is separated by a white
 space character.
 .It Ic new_sip_name
 A list of SIP server domain names.
+.It Ic new_nis_servers
+A list of available NIS server addresses,
+each of which is an IPv6 numeric address and is separated by a white
+space character.
+.It Ic new_nis_name
+A list of NIS domain names.
+.It Ic new_nisp_servers
+A list of available NIS+ server addresses,
+each of which is an IPv6 numeric address and is separated by a white
+space character.
+.It Ic new_nisp_name
+A list of NIS+ domain names.
+.It Ic new_bcmcs_servers
+A list of available BCMCS server addresses,
+each of which is an IPv6 numeric address and is separated by a white
+space character.
+.It Ic new_bcmcs_name
+A list of BCMCS server domain names.
 .El
 .Pp
 Note that the daemon does not always provide all the parameters.
@@ -172,10 +190,6 @@ command first appeared in WIDE/KAME IPv6 protocol stack kit.
 .Nm
 is incomplete and violates DHCPv6 protocol spec, in several aspects.
 In particular, temporary address assignment is intentionally omitted.
-.Pp
-Some of useful option type values are still not officially assigned.
-The current implementation uses experimental values,
-which may cause interoperability problems with other implementations.
 .Pp
 Information Refresh Time Option is not recognied in Info-req mode, since
 .Nm

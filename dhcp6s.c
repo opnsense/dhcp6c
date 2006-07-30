@@ -235,6 +235,12 @@ main(argc, argv)
 	TAILQ_INIT(&siplist);
 	TAILQ_INIT(&sipnamelist);
 	TAILQ_INIT(&ntplist);
+	TAILQ_INIT(&nislist);
+	TAILQ_INIT(&nisnamelist);
+	TAILQ_INIT(&nisplist);
+	TAILQ_INIT(&nispnamelist);
+	TAILQ_INIT(&bcmcslist);
+	TAILQ_INIT(&bcmcsnamelist);
 
 	srandom(time(NULL) & getpid());
 	while ((ch = getopt(argc, argv, "c:dDfk:n:p:P:")) != -1) {
@@ -1106,10 +1112,10 @@ set_statelessinfo(type, optinfo)
 	int type;
 	struct dhcp6_optinfo *optinfo;
 {
-	/* SIP server domain name */
+	/* SIP domain name */
 	if (dhcp6_copy_list(&optinfo->sipname_list, &sipnamelist)) {
 		dprintf(LOG_ERR, FNAME,
-		    "failed to copy SIP server domain list");
+		    "failed to copy SIP domain list");
 		return (-1);
 	}
 
@@ -1134,6 +1140,45 @@ set_statelessinfo(type, optinfo)
 	/* NTP server */
 	if (dhcp6_copy_list(&optinfo->ntp_list, &ntplist)) {
 		dprintf(LOG_ERR, FNAME, "failed to copy NTP servers");
+		return (-1);
+	}
+
+	/* NIS domain name */
+	if (dhcp6_copy_list(&optinfo->nisname_list, &nisnamelist)) {
+		dprintf(LOG_ERR, FNAME,
+		    "failed to copy NIS domain list");
+		return (-1);
+	}
+
+	/* NIS server */
+	if (dhcp6_copy_list(&optinfo->nis_list, &nislist)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy NIS servers");
+		return (-1);
+	}
+
+	/* NIS+ domain name */
+	if (dhcp6_copy_list(&optinfo->nispname_list, &nispnamelist)) {
+		dprintf(LOG_ERR, FNAME,
+		    "failed to copy NIS+ domain list");
+		return (-1);
+	}
+
+	/* NIS+ server */
+	if (dhcp6_copy_list(&optinfo->nisp_list, &nisplist)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy NIS+ servers");
+		return (-1);
+	}
+
+	/* BCMCS domain name */
+	if (dhcp6_copy_list(&optinfo->bcmcsname_list, &bcmcsnamelist)) {
+		dprintf(LOG_ERR, FNAME,
+		    "failed to copy BCMCS domain list");
+		return (-1);
+	}
+
+	/* BCMCS server */
+	if (dhcp6_copy_list(&optinfo->bcmcs_list, &bcmcslist)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy BCMCS servers");
 		return (-1);
 	}
 

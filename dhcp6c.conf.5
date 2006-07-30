@@ -90,6 +90,30 @@ means a SIP Server address option.
 .Ic sip-server-domain-name
 .Xc
 means a SIP server domain name option.
+.It Xo
+.Ic nis-server-address
+.Xc
+means a NIS Server address option.
+.It Xo
+.Ic nis-server-domain-name
+.Xc
+means a NIS domain name option.
+.It Xo
+.Ic nisp-server-address
+.Xc
+means a NIS+ Server address option.
+.It Xo
+.Ic nisp-server-domain-name
+.Xc
+means a NIS+ domain name option.
+.It Xo
+.Ic bcmcs-server-address
+.Xc
+means a BCMCS Server address option.
+.It Xo
+.Ic bcmcs-server-domain-name
+.Xc
+means a BCMCS server domain name option.
 .It Ic ia-pd Ar ID
 means an IA_PD
 .Pq Identity Association for Prefix Delegation
@@ -206,9 +230,33 @@ will reject this option unless it is explicitly built to accept the option.
 .Xc
 requests a list of SIP server addresses.
 .It Xo
-.Ic sip-server-domain-name
+.Ic sip-domain-name
 .Xc
 requests a SIP server domain name.
+.It Xo
+.Ic nis-server-address
+.Xc
+requests a list of NIS server addresses.
+.It Xo
+.Ic nis-domain-name
+.Xc
+requests a NIS domain name.
+.It Xo
+.Ic nisp-server-address
+.Xc
+requests a list of NIS+ server addresses.
+.It Xo
+.Ic nisp-domain-name
+.Xc
+requests a NIS+ domain name.
+.It Xo
+.Ic bcmcs-server-address
+.Xc
+requests a list of BCMCS server addresses.
+.It Xo
+.Ic bcmcs-domain-name
+.Xc
+requests a BCMCS domain name.
 .It Xo
 .Ic refreshtime
 .Xc
@@ -217,10 +265,6 @@ This can only be specified when sent with information-request
 messages;
 .Nm dhcp6c
 will ignore this option for other messages.
-As of this writing, the option type for this option is not officially
-assigned.
-.Nm dhcp6c
-will reject this option unless it is explicitly built to accept the option.
 .El
 Multiple
 .Ic request

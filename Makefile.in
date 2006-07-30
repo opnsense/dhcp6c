@@ -51,11 +51,6 @@ bindir=	@bindir@
 sbindir=@sbindir@
 mandir=	@mandir@
 
-CFLAGS+= @DHCPOPT_DNS@ @DH6OPT_DNSNAME@ \
-	@DH6OPT_IA_PD@ @DH6OPT_IA_PD_PREFIX@ \
-	@DH6OPT_REFRESHTIME@ \
-	-DCONF_DH6OPT_NTP=@dhcpopt_ntp@ \
-
 GENSRCS=cfparse.c cftoken.c
 CLIENTOBJS=	dhcp6c.o common.o config.o prefixconf.o dhcp6c_ia.o timer.o \
 	dhcp6c_script.o if.o base64.o auth.o dhcp6_ctl.o addrconf.o lease.o \

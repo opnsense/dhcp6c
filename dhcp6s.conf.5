@@ -127,6 +127,51 @@ provides a domain name of a SIP server.
 Multiple names in the path can be specified by a sequence of these
 statements.
 .It Xo
+.Ic nis-server-address Ar nis-server-address Op Ar nis-server-addresses... ;
+.Xc
+provides NIS server address(es).
+Each
+.Ar nis-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic nis-server-domain-name Ar \(dqnis-server-domain-name\(dq ;
+.Xc
+provides a domain name of a NIS server.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic nisp-server-address Ar nisp-server-address Op Ar nisp-server-addresses... ;
+.Xc
+provides NIS+ server address(es).
+Each
+.Ar nisp-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic nisp-server-domain-name Ar \(dqnisp-server-domain-name\(dq ;
+.Xc
+provides a domain name of a NIS+ server.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
+.Ic bcmcs-server-address Ar bcmcs-server-address Op Ar bcmcs-server-addresses... ;
+.Xc
+provides BCMCS server address(es).
+Each
+.Ar bcmcs-server-address
+must be a numeric IPv6 address.
+Multiple server addresses can also be specified by a sequence of
+these statements.
+.It Xo
+.Ic bcmcs-server-domain-name Ar \(dqbcmcs-server-domain-name\(dq ;
+.Xc
+provides a domain name of a BCMCS server.
+Multiple names in the path can be specified by a sequence of these
+statements.
+.It Xo
 .Ic refreshtime Ar interval ;
 .Xc
 specifies the refresh time of stateless information that does not have
