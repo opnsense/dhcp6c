@@ -220,14 +220,14 @@ update_ia(iatype, ialist, ifp, serverid, authparam)
 				duration = 1800; /* 30min. XXX: no rationale */
 
 			if (ia->t1 == 0) {
-				if (duration == DHCP6_DURATITION_INFINITE)
-					ia->t1 = DHCP6_DURATITION_INFINITE;
+				if (duration == DHCP6_DURATION_INFINITE)
+					ia->t1 = DHCP6_DURATION_INFINITE;
 				else
 					ia->t1 = duration / 2;
 			}
 			if (ia->t2 == 0) {
-				if (duration == DHCP6_DURATITION_INFINITE)
-					ia->t2 = DHCP6_DURATITION_INFINITE;
+				if (duration == DHCP6_DURATION_INFINITE)
+					ia->t2 = DHCP6_DURATION_INFINITE;
 				else
 					ia->t2 = duration * 4 / 5;
 			}
@@ -245,17 +245,17 @@ update_ia(iatype, ialist, ifp, serverid, authparam)
 		 * the adjusted values may make some information expire
 		 * without renewal.
 		 */
-		if (ia->t2 < DHCP6_DURATITION_MIN) {
+		if (ia->t2 < DHCP6_DURATION_MIN) {
 			dprintf(LOG_INFO, FNAME, "T1 (%lu) or T2 (%lu) "
 			    "is too small", ia->t1, ia->t2);
-			ia->t2 = DHCP6_DURATITION_MIN;
+			ia->t2 = DHCP6_DURATION_MIN;
 			ia->t1 = ia->t2 * 5 / 8;
 			dprintf(LOG_INFO, "", "  adjusted to %lu and %lu",
 			    ia->t1, ia->t2);
 		}
 
 		/* set up a timer for this IA. */
-		if (ia->t1 == DHCP6_DURATITION_INFINITE) {
+		if (ia->t1 == DHCP6_DURATION_INFINITE) {
 			if (ia->timer)
 				dhcp6_remove_timer(&ia->timer);
 		} else {

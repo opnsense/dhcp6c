@@ -278,8 +278,8 @@ configure_interface(iflist)
 					   		spec->name);
 						goto bad;
 					}
-					if (spec->vltime != DHCP6_DURATITION_INFINITE &&
-						(spec->pltime == DHCP6_DURATITION_INFINITE ||
+					if (spec->vltime != DHCP6_DURATION_INFINITE &&
+						(spec->pltime == DHCP6_DURATION_INFINITE ||
 						spec->pltime > spec->vltime)) {
 						dprintf(LOG_ERR, FNAME, "%s:%d ",
 							configfilename, cfl->line,
@@ -616,8 +616,8 @@ configure_host(hostlist)
 					   		spec->name);
 						goto bad;
 					}
-					if (spec->vltime != DHCP6_DURATITION_INFINITE &&
-						(spec->pltime == DHCP6_DURATITION_INFINITE ||
+					if (spec->vltime != DHCP6_DURATION_INFINITE &&
+						(spec->pltime == DHCP6_DURATION_INFINITE ||
 						spec->pltime > spec->vltime)) {
 						dprintf(LOG_ERR, FNAME, "%s:%d ",
 							configfilename, cfl->line,
@@ -1760,8 +1760,8 @@ add_prefix(head, name, type, prefix0)
 	}
 
 	/* validation about relationship of pltime and vltime */
-	if (oprefix.vltime != DHCP6_DURATITION_INFINITE &&
-	    (oprefix.pltime == DHCP6_DURATITION_INFINITE ||
+	if (oprefix.vltime != DHCP6_DURATION_INFINITE &&
+	    (oprefix.pltime == DHCP6_DURATION_INFINITE ||
 	    oprefix.pltime > oprefix.vltime)) {
 		if (type == DHCP6_LISTVAL_PREFIX6) {
 			dprintf(LOG_NOTICE, FNAME,

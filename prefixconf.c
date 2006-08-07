@@ -138,8 +138,8 @@ update_prefix(ia, pinfo, pifc, dhcpifp, ctlp, callback)
          * lifetime is greater than the valid lifetime.
 	 * [RFC3315 22.6] 
 	 */
-	if (pinfo->vltime != DHCP6_DURATITION_INFINITE &&
-	    (pinfo->pltime == DHCP6_DURATITION_INFINITE ||
+	if (pinfo->vltime != DHCP6_DURATION_INFINITE &&
+	    (pinfo->pltime == DHCP6_DURATION_INFINITE ||
 	    pinfo->pltime > pinfo->vltime)) {
 		dprintf(LOG_INFO, FNAME, "invalid prefix %s/%d: "
 		    "pltime (%lu) is larger than vltime (%lu)",
@@ -227,7 +227,7 @@ update_prefix(ia, pinfo, pifc, dhcpifp, ctlp, callback)
 	case 0:
 		remove_siteprefix(sp);
 		break;
-	case DHCP6_DURATITION_INFINITE:
+	case DHCP6_DURATION_INFINITE:
 		if (sp->timer)
 			dhcp6_remove_timer(&sp->timer);
 		break;
@@ -310,7 +310,7 @@ duration(iac)
 {
 	struct iactl_pd *iac_pd = (struct iactl_pd *)iac;
 	struct siteprefix *sp;
-	u_int32_t base = DHCP6_DURATITION_INFINITE, pltime, passed;
+	u_int32_t base = DHCP6_DURATION_INFINITE, pltime, passed;
 	time_t now;
 
 	/* Determine the smallest period until pltime expires. */
@@ -322,7 +322,7 @@ duration(iac)
 		pltime = sp->prefix.pltime > passed ?
 		    sp->prefix.pltime - passed : 0;
 
-		if (base == DHCP6_DURATITION_INFINITE || pltime < base)
+		if (base == DHCP6_DURATION_INFINITE || pltime < base)
 			base = pltime;
 	}
 

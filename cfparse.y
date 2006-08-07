@@ -792,7 +792,7 @@ addressparam:
 			/* validate other parameters later */
 			pconf0.plen = 128; /* XXX this field is ignored */
 			if ($2 < 0)
-				pconf0.pltime = DHCP6_DURATITION_INFINITE;
+				pconf0.pltime = DHCP6_DURATION_INFINITE;
 			else
 				pconf0.pltime = (u_int32_t)$2;
 			pconf0.vltime = pconf0.pltime;
@@ -819,11 +819,11 @@ addressparam:
 			/* validate other parameters later */
 			pconf0.plen = 128; /* XXX */
 			if ($2 < 0)
-				pconf0.pltime = DHCP6_DURATITION_INFINITE;
+				pconf0.pltime = DHCP6_DURATION_INFINITE;
 			else
 				pconf0.pltime = (u_int32_t)$2;
 			if ($3 < 0)
-				pconf0.vltime = DHCP6_DURATITION_INFINITE;
+				pconf0.vltime = DHCP6_DURATION_INFINITE;
 			else
 				pconf0.vltime = (u_int32_t)$3;
 
@@ -852,7 +852,7 @@ prefixparam:
 			/* validate other parameters later */
 			pconf0.plen = $3;
 			if ($4 < 0)
-				pconf0.pltime = DHCP6_DURATITION_INFINITE;
+				pconf0.pltime = DHCP6_DURATION_INFINITE;
 			else
 				pconf0.pltime = (u_int32_t)$4;
 			pconf0.vltime = pconf0.pltime;
@@ -879,11 +879,11 @@ prefixparam:
 			/* validate other parameters later */
 			pconf0.plen = $3;
 			if ($4 < 0)
-				pconf0.pltime = DHCP6_DURATITION_INFINITE;
+				pconf0.pltime = DHCP6_DURATION_INFINITE;
 			else
 				pconf0.pltime = (u_int32_t)$4;
 			if ($5 < 0)
-				pconf0.vltime = DHCP6_DURATITION_INFINITE;
+				pconf0.vltime = DHCP6_DURATION_INFINITE;
 			else
 				pconf0.vltime = (u_int32_t)$5;
 
@@ -916,7 +916,7 @@ poolparam:
 
 			/* validate other parameters later */
 			if ($2 < 0)
-				pool->pltime = DHCP6_DURATITION_INFINITE;
+				pool->pltime = DHCP6_DURATION_INFINITE;
 			else
 				pool->pltime = (u_int32_t)$2;
 			pool->vltime = pool->pltime;
@@ -941,11 +941,11 @@ poolparam:
 
 			/* validate other parameters later */
 			if ($2 < 0)
-				pool->pltime = DHCP6_DURATITION_INFINITE;
+				pool->pltime = DHCP6_DURATION_INFINITE;
 			else
 				pool->pltime = (u_int32_t)$2;
 			if ($3 < 0)
-				pool->vltime = DHCP6_DURATITION_INFINITE;
+				pool->vltime = DHCP6_DURATION_INFINITE;
 			else
 				pool->vltime = (u_int32_t)$3;
 

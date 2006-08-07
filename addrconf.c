@@ -119,8 +119,8 @@ update_address(ia, addr, dhcpifp, ctlp, callback)
          * lifetime is greater than the valid lifetime.
 	 * [RFC3315 22.6] 
 	 */
-	if (addr->vltime != DHCP6_DURATITION_INFINITE &&
-	    (addr->pltime == DHCP6_DURATITION_INFINITE ||
+	if (addr->vltime != DHCP6_DURATION_INFINITE &&
+	    (addr->pltime == DHCP6_DURATION_INFINITE ||
 	    addr->pltime > addr->vltime)) {
 		dprintf(LOG_INFO, FNAME, "invalid address %s: "
 		    "pltime (%lu) is larger than vltime (%lu)",
@@ -184,7 +184,7 @@ update_address(ia, addr, dhcpifp, ctlp, callback)
 	case 0:
 		remove_addr(sa);
 		break;
-	case DHCP6_DURATITION_INFINITE:
+	case DHCP6_DURATION_INFINITE:
 		if (sa->timer)
 			dhcp6_remove_timer(&sa->timer);
 		break;
@@ -257,7 +257,7 @@ duration_addr(iac)
 {
 	struct iactl_na *iac_na = (struct iactl_na *)iac;
 	struct statefuladdr *sa;
-	u_int32_t base = DHCP6_DURATITION_INFINITE, pltime, passed;
+	u_int32_t base = DHCP6_DURATION_INFINITE, pltime, passed;
 	time_t now;
 
 	/* Determine the smallest period until pltime expires. */
@@ -269,7 +269,7 @@ duration_addr(iac)
 		pltime = sa->addr.pltime > passed ?
 		    sa->addr.pltime - passed : 0;
 
-		if (base == DHCP6_DURATITION_INFINITE || pltime < base)
+		if (base == DHCP6_DURATION_INFINITE || pltime < base)
 			base = pltime;
 	}
 

@@ -2680,7 +2680,7 @@ calc_ia_timo(ia, ialist, client_conf)
 	struct host_conf *client_conf; /* unused yet */
 {
 	struct dhcp6_listval *iav;
-	u_int32_t base = DHCP6_DURATITION_INFINITE;
+	u_int32_t base = DHCP6_DURATION_INFINITE;
 	int iatype;
 
 	iatype = TAILQ_FIRST(ialist)->type;
@@ -2693,7 +2693,7 @@ calc_ia_timo(ia, ialist, client_conf)
 		switch (iatype) {
 		case DHCP6_LISTVAL_PREFIX6:
 		case DHCP6_LISTVAL_STATEFULADDR6:
-			if (base == DHCP6_DURATITION_INFINITE ||
+			if (base == DHCP6_DURATION_INFINITE ||
 			    iav->val_prefix6.pltime < base)
 				base = iav->val_prefix6.pltime;
 			break;
@@ -2709,9 +2709,9 @@ calc_ia_timo(ia, ialist, client_conf)
 		 * We could also set the parameters to 0 if we let the client
 		 * decide the renew timing (not implemented yet).
 		 */
-		if (base == DHCP6_DURATITION_INFINITE) {
-			ia->t1 = DHCP6_DURATITION_INFINITE;
-			ia->t2 = DHCP6_DURATITION_INFINITE;
+		if (base == DHCP6_DURATION_INFINITE) {
+			ia->t1 = DHCP6_DURATION_INFINITE;
+			ia->t2 = DHCP6_DURATION_INFINITE;
 		} else {
 			ia->t1 = base / 2;
 			ia->t2 = (base * 4) / 5;
@@ -2726,7 +2726,7 @@ update_binding_duration(binding)
 {
 	struct dhcp6_list *ia_list = &binding->val_list;
 	struct dhcp6_listval *iav;
-	int duration = DHCP6_DURATITION_INFINITE;
+	int duration = DHCP6_DURATION_INFINITE;
 	u_int32_t past, min_lifetime;
 	time_t now = time(NULL);
 
@@ -2757,7 +2757,7 @@ update_binding_duration(binding)
 			}
 
 			if (min_lifetime == 0 ||
-			    (lifetime != DHCP6_DURATITION_INFINITE &&
+			    (lifetime != DHCP6_DURATION_INFINITE &&
 			    lifetime < min_lifetime))
 				min_lifetime = lifetime;
 		}
@@ -2787,7 +2787,7 @@ add_binding(clientid, btype, iatype, iaid, val0)
 	void *val0;
 {
 	struct dhcp6_binding *binding = NULL;
-	u_int32_t duration = DHCP6_DURATITION_INFINITE;
+	u_int32_t duration = DHCP6_DURATION_INFINITE;
 
 	if ((binding = malloc(sizeof(*binding))) == NULL) {
 		dprintf(LOG_NOTICE, FNAME, "failed to allocate memory");
@@ -2848,7 +2848,7 @@ add_binding(clientid, btype, iatype, iaid, val0)
 	/* calculate duration and start timer accordingly */
 	binding->updatetime = time(NULL);
 	update_binding_duration(binding);
-	if (binding->duration != DHCP6_DURATITION_INFINITE) {
+	if (binding->duration != DHCP6_DURATION_INFINITE) {
 		struct timeval timo;
 
 		binding->timer = dhcp6_add_timer(binding_timo, binding);
@@ -2911,7 +2911,7 @@ update_binding(binding)
 	update_binding_duration(binding);
 
 	/* if the lease duration is infinite, there's nothing to do. */
-	if (binding->duration == DHCP6_DURATITION_INFINITE)
+	if (binding->duration == DHCP6_DURATION_INFINITE)
 		return;
 
 	/* reset the timer with the duration */
@@ -3000,7 +3000,7 @@ binding_timo(arg)
 				return (NULL); /* XXX */
 			}
 
-			if (lifetime != DHCP6_DURATITION_INFINITE &&
+			if (lifetime != DHCP6_DURATION_INFINITE &&
 			    lifetime <= past) {
 				dprintf(LOG_DEBUG, FNAME, "bound prefix %s/%d"
 				    " in %s has expired",
@@ -3030,7 +3030,7 @@ binding_timo(arg)
 	update_binding_duration(binding);
 
 	/* if the lease duration is infinite, there's nothing to do. */
-	if (binding->duration == DHCP6_DURATITION_INFINITE)
+	if (binding->duration == DHCP6_DURATION_INFINITE)
 		return (NULL);
 
 	/* reset the timer with the duration */
