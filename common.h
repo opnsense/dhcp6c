@@ -84,6 +84,9 @@
 	    (var);							\
 	    (var) = TAILQ_NEXT((var), field))
 #endif
+#ifdef HAVE_TAILQ_FOREACH_REVERSE_OLD
+#undef TAILQ_FOREACH_REVERSE
+#endif
 #ifndef TAILQ_FOREACH_REVERSE
 #define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
 	for ((var) = TAILQ_LAST((head), headname);			\

@@ -5293,6 +5293,108 @@ _ACEOF
 esac
 
 
+echo "$as_me:$LINENO: checking checking the existence TAILQ_FOREACH_REVERSE" >&5
+echo $ECHO_N "checking checking the existence TAILQ_FOREACH_REVERSE... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <sys/queue.h>
+ #ifdef TAILQ_FOREACH_REVERSE
+  yes
+#endif
+_ACEOF
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "yes" >/dev/null 2>&1; then
+  result=yes
+fi
+rm -f conftest*
+
+echo "$as_me:$LINENO: result: $result" >&5
+echo "${ECHO_T}$result" >&6
+case $result in
+yes)	tailq_foreach=yes
+ 	;;
+*)	tailq_foreach=no
+	;;
+esac
+
+if test $tailq_foreach = yes) {
+	echo "$as_me:$LINENO: checking argument order of TAILQ_FOREACH_REVERSE" >&5
+echo $ECHO_N "checking argument order of TAILQ_FOREACH_REVERSE... $ECHO_C" >&6
+	cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+	#include <stdio.h>
+	#include <sys/queue.h>
+
+	TAILQ_HEAD(tailhead, entry) head = TAILQ_HEAD_INITIALIZER(head);
+	struct entry {
+		TAILQ_ENTRY(entry) entries;
+	} *p;
+
+	int i;
+	struct tailhead *headp;
+
+	TAILQ_FOREACH_REVERSE(p, headp, tailhead, entries) {
+	}
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  echo "$as_me:$LINENO: result: new" >&5
+echo "${ECHO_T}new" >&6
+	 cat >>confdefs.h <<\_ACEOF
+#define HAVE_TAILQ_FOREACH_REVERSE 1
+_ACEOF
+
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+echo "$as_me:$LINENO: result: old" >&5
+echo "${ECHO_T}old" >&6
+	 cat >>confdefs.h <<\_ACEOF
+#define HAVE_TAILQ_FOREACH_REVERSE_OLD 1
+_ACEOF
+
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext;
+fi
+
 
 for ac_header in stdarg.h
 do

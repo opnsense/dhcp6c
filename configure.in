@@ -147,6 +147,46 @@ esac
 dnl DHCP option type values not officially defined
 dnl (no such option now)
 
+dnl Checks the existence of TAILQ_FOREACH_REVERSE
+AC_MSG_CHECKING(checking the existence TAILQ_FOREACH_REVERSE)
+AC_EGREP_CPP(yes,
+[#include <sys/queue.h>
+ #ifdef TAILQ_FOREACH_REVERSE
+  yes
+#endif], [result=yes], [result=no])
+AC_MSG_RESULT($result)
+case $result in
+yes)	tailq_foreach=yes
+ 	;;
+*)	tailq_foreach=no
+	;;
+esac
+
+dnl Checks the argument order of TAILQ_FOREACH_REVERSE if it exists
+if test $tailq_foreach = yes ; then
+	AC_MSG_CHECKING(argument order of TAILQ_FOREACH_REVERSE)
+	AC_TRY_COMPILE([],
+	[
+	#include <stdio.h>
+	#include <sys/queue.h>
+
+	TAILQ_HEAD(tailhead, entry) head = TAILQ_HEAD_INITIALIZER(head);
+	struct entry {
+		TAILQ_ENTRY(entry) entries;
+	} *p;
+
+	int i;
+	struct tailhead *headp;
+
+	TAILQ_FOREACH_REVERSE(p, headp, tailhead, entries) {
+	}
+	],
+	[AC_MSG_RESULT(new)
+	 AC_DEFINE(HAVE_TAILQ_FOREACH_REVERSE)],
+	[AC_MSG_RESULT(old)
+	 AC_DEFINE(HAVE_TAILQ_FOREACH_REVERSE_OLD)]);
+fi
+
 AC_CHECK_HEADERS(stdarg.h)
 
 AC_OUTPUT(Makefile)
