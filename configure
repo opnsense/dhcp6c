@@ -5309,6 +5309,8 @@ _ACEOF
 if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "yes" >/dev/null 2>&1; then
   result=yes
+else
+  result=no
 fi
 rm -f conftest*
 
@@ -5321,7 +5323,7 @@ yes)	tailq_foreach=yes
 	;;
 esac
 
-if test $tailq_foreach = yes {
+if test $tailq_foreach = yes ; then
 	echo "$as_me:$LINENO: checking argument order of TAILQ_FOREACH_REVERSE" >&5
 echo $ECHO_N "checking argument order of TAILQ_FOREACH_REVERSE... $ECHO_C" >&6
 	cat >conftest.$ac_ext <<_ACEOF
