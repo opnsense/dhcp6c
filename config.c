@@ -1330,6 +1330,7 @@ configure_commit()
 		/* copy new configuration */
 		ifp->send_flags = ifc->send_flags;
 		ifp->allow_flags = ifc->allow_flags;
+		dhcp6_copy_list(&ifp->reqopt_list, &ifc->reqopt_list);
 		while ((iac = TAILQ_FIRST(&ifc->iaconf_list)) != NULL) {
 			TAILQ_REMOVE(&ifc->iaconf_list, iac, link);
 			TAILQ_INSERT_TAIL(&ifp->iaconf_list,
@@ -1658,6 +1659,12 @@ add_options(opcode, ifc, cfl0)
 		case DHCPOPT_DNS:
 		case DHCPOPT_DNSNAME:
 		case DHCPOPT_NTP:
+		case DHCPOPT_NIS:
+		case DHCPOPT_NISNAME:
+		case DHCPOPT_NISP:
+		case DHCPOPT_NISPNAME:
+		case DHCPOPT_BCMCS:
+		case DHCPOPT_BCMCSNAME:
 		case DHCPOPT_REFRESHTIME:
 			switch (cfl->type) {
 			case DHCPOPT_SIP:
@@ -1674,6 +1681,24 @@ add_options(opcode, ifc, cfl0)
 				break;
 			case DHCPOPT_NTP:
 				opttype = DH6OPT_NTP;
+				break;
+			case DHCPOPT_NIS:
+				opttype = DH6OPT_NIS_SERVERS;
+				break;
+			case DHCPOPT_NISNAME:
+				opttype = DH6OPT_NIS_DOMAIN_NAME;
+				break;
+			case DHCPOPT_NISP:
+				opttype = DH6OPT_NISP_SERVERS;
+				break;
+			case DHCPOPT_NISPNAME:
+				opttype = DH6OPT_NISP_DOMAIN_NAME;
+				break;
+			case DHCPOPT_BCMCS:
+				opttype = DH6OPT_BCMCS_SERVER_A;
+				break;
+			case DHCPOPT_BCMCSNAME:
+				opttype = DH6OPT_BCMCS_SERVER_D;
 				break;
 			case DHCPOPT_REFRESHTIME:
 				opttype = DH6OPT_REFRESHTIME;
