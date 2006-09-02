@@ -1,3 +1,11 @@
+	--- 20060902 tar ball released ---
+2006-09-02  SUZUKI, Shinsuke <suz@kame.net>
+	* added a configure check routine to automatically detect a 
+	  difference in TAILQ_FOREACH_REVERSE macros (Suggested by Brute
+	  STEVANT)
+	* fixed a bug that dhcp6c cannot advertise an Option-Request-Option.
+	* fixed a compilation failure in freebsd4
+
 2006-07-30  SUZUKI, Shinsuke <suz@kame.net>
 	* supported the following options:
 		NIS server option, NIS domain option (RFC3898)
