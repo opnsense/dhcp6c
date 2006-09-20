@@ -1,6 +1,8 @@
 2006-09-20  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a bug that dhcp6s inserts SIP server addresses into
 	  DNS server address option (Bug-ID 1561202).  (degrade from 2006-07-30)
+	* common.c: fixed a bug that status-code option might include a unexpected
+	  garbage value.  (Bug-ID 1561202)
 
 2006-09-20  STEVANT, Bruno <bruno.stevant@enst-bretagne.fr>
 	* lease.c: Fix a memory violation in lease management.
