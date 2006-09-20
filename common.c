@@ -2222,7 +2222,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 	    &p, optep, &len) != 0)
 		goto fail;
 
-	if (dhcp6_set_addr(DH6OPT_DNS, &optinfo->sip_list,
+	if (dhcp6_set_addr(DH6OPT_DNS, &optinfo->dns_list,
 	    &p, optep, &len) != 0)
 		goto fail;
 
