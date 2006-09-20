@@ -1,3 +1,6 @@
+2006-09-20  STEVANT, Bruno <bruno.stevant@enst-bretagne.fr>
+	* lease.c: Fix a memory violation in lease management.
+
 	--- 20060902 tar ball released ---
 2006-09-02  SUZUKI, Shinsuke <suz@kame.net>
 	* added a configure check routine to automatically detect a 

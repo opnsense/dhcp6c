@@ -217,6 +217,8 @@ hash_table_cleanup(table)
 		while (!LIST_EMPTY(&table->table[i])) {
 			struct hash_entry *entry = LIST_FIRST(&table->table[i]);
 			LIST_REMOVE(entry, list);
+			if (entry->val)
+				free(entry->val);
 			free(entry);
 		}
 	}
@@ -237,10 +239,14 @@ hash_table_add(table, val, size)
 		return (-1);
 	}
 
-	if ((entry = malloc(sizeof(*entry) + size)) == NULL) {
+	if ((entry = malloc(sizeof(*entry))) == NULL) {
 		return (-1);
 	}
 	memset(entry, 0, sizeof(*entry));
+
+	if ((entry->val = malloc(size)) == NULL) {
+		return (-1);
+	}
 	memcpy(entry->val, val, size);
 
 	i = table->hash(val) % table->size;
@@ -265,6 +271,8 @@ hash_table_remove(table, val)
 	}
 
 	LIST_REMOVE(entry, list);
+	if (entry->val)
+		free(entry->val);
 	free(entry);
 
 	return (0);
