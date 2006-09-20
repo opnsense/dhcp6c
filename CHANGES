@@ -3,6 +3,8 @@
 	  DNS server address option (Bug-ID 1561202).  (degrade from 2006-07-30)
 	* common.c: fixed a bug that status-code option might include a unexpected
 	  garbage value.  (Bug-ID 1561202)
+	* dhcp6s.conf.5, dhcp6s.conf.sample: you need to provide a preferred-lifetime
+	  for each address-prefix.  (Bug-ID 1558811)
 
 2006-09-20  STEVANT, Bruno <bruno.stevant@enst-bretagne.fr>
 	* lease.c: Fix a memory violation in lease management.
