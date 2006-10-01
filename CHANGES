@@ -1,4 +1,8 @@
 2006-10-01  SUZUKI, Shinsuke <suz@kame.net>
+	* cftoken.l, dhcp6[cs].conf.5: accepted "nis-domain-name" and "nisp-
+	  domain-name" as a configuration keyword for NIS/NIS+ domain name,
+	  as well as nis/nisp-server-domain-name. (Bug-ID 1566494)
+
 	* cftoken.l: supported a declaration name (hostname, poolname,
 	  keyname, authname) including "-".  (Bug-ID 1566476)
 
