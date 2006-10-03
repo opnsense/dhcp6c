@@ -1,3 +1,11 @@
+2006-10-03  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c: dhcp6s does not include a 0 refresh-time option in 
+	ADVERTISE/REPLY message, when "option refreshtime" configuration does 
+	not exist in its configuration.  (patch submitted by Jun-ya Kato)
+
+	* cftoken.l, cfparse.y: fixed a compilation failure by flex 2.5.4
+	 (patch submitted by Jun-ya Kato)
+
 2006-10-01  SUZUKI, Shinsuke <suz@kame.net>
 	* cftoken.l, dhcp6[cs].conf.5: accepted "nis-domain-name" and "nisp-
 	  domain-name" as a configuration keyword for NIS/NIS+ domain name,
