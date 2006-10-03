@@ -67,7 +67,7 @@ struct dhcp6_list siplist, sipnamelist, dnslist, dnsnamelist, ntplist;
 struct dhcp6_list nislist, nisnamelist;
 struct dhcp6_list nisplist, nispnamelist;
 struct dhcp6_list bcmcslist, bcmcsnamelist;
-long long optrefreshtime = -1;
+long long optrefreshtime;
 
 static struct dhcp6_ifconf *dhcp6_ifconflist;
 struct ia_conflist ia_conflist0;
@@ -78,7 +78,7 @@ static struct dhcp6_list siplist0, sipnamelist0, dnslist0, dnsnamelist0, ntplist
 static struct dhcp6_list nislist0, nisnamelist0;
 static struct dhcp6_list nisplist0, nispnamelist0;
 static struct dhcp6_list bcmcslist0, bcmcsnamelist0;
-static long long optrefreshtime0;
+static long long optrefreshtime0 = -1;
 #ifndef DHCP6_DYNAMIC_HOSTCONF_MAX
 #define DHCP6_DYNAMIC_HOSTCONF_MAX	1024
 #endif
