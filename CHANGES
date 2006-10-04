@@ -1,3 +1,10 @@
+2006-10-04  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c: fixed a improper memory access when there is no free
+	  address in an address pool.  (Bug-ID 1563232)
+
+	  fixed a bug that a pooled address will never be reused even when
+	  it is released.
+
 2006-10-03  SUZUKI, Shinsuke <suz@kame.net>
 	* config.c: dhcp6s does not include a 0 refresh-time option in 
 	ADVERTISE/REPLY message, when "option refreshtime" configuration does 

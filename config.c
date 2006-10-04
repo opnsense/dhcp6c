@@ -2123,7 +2123,7 @@ create_pool(name, range)
 		dprintf(LOG_ERR, FNAME, "memory allocation failed");
 		return (NULL);
 	}
-	pool->cur = pool->min = range->min;
+	pool->min = range->min;
 	pool->max = range->max;
 
 	return (pool);
@@ -2157,46 +2157,30 @@ get_free_address_from_pool(pool, addr)
 	struct pool_conf *pool;
 	struct in6_addr *addr;
 {
-	int found = 0;
-	int round = 0;
-	struct in6_addr first;
-
+	struct in6_addr cur;
 	if (!pool || !addr)
 		return (0);
 
 	dprintf(LOG_DEBUG, FNAME, "called (pool=%s)", pool->name);
 
-	memcpy(&first, &pool->cur, sizeof(first));
-
-	while (!found) {
-		if (!is_leased(&pool->cur) &&
-			!IN6_IS_ADDR_MULTICAST(&pool->cur) &&
-			!IN6_IS_ADDR_LINKLOCAL(&pool->cur) &&
-			!IN6_IS_ADDR_SITELOCAL(&pool->cur)) {
-			memcpy(addr, &pool->cur, sizeof(*addr));
-			found = 1;
+	for (cur = pool->min; in6_addr_cmp(&cur, &pool->max) <= 0;
+	    in6_addr_inc(&cur)) {
+		if (!is_leased(&cur) &&
+		    !IN6_IS_ADDR_MULTICAST(&cur) &&
+		    !IN6_IS_ADDR_LINKLOCAL(&cur) &&
+		    !IN6_IS_ADDR_SITELOCAL(&cur)) {
 			dprintf(LOG_DEBUG, FNAME, "found %s",
-				in6addr2str(addr, 0));
-		}
-
-		if (in6_addr_cmp(&pool->cur, &pool->max) == 0) {
-			memcpy(&pool->next, &pool->min, sizeof(pool->next));
-			round = 1;
-		} else {
-			in6_addr_inc(&pool->cur);
+				in6addr2str(&cur, 0));
+			*addr= cur;
+			return 1;
 		}
 
 		dprintf(LOG_DEBUG, FNAME, "next address %s",
-			in6addr2str(&pool->cur, 0));
-
-		if (round && !found &&
-			in6_addr_cmp(&pool->cur, &first) == 0) {
-			dprintf(LOG_NOTICE, FNAME, "no available address");
-			break;
-		}
+			in6addr2str(&cur, 0));
 	}
 
-	return (found);
+	dprintf(LOG_NOTICE, FNAME, "no available address");
+	return 0;
 }
 
 int

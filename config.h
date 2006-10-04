@@ -51,7 +51,6 @@ struct pool_conf {
 
 	struct in6_addr min;
 	struct in6_addr max;
-	struct in6_addr cur;
 };
 
 /* per-interface information */
