@@ -1,3 +1,7 @@
+2006-10-08  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.conf.sample: corrected a misleading comment (pointed out by
+	Hajimu UMEMOTO)
+
 2006-10-04  SUZUKI, Shinsuke <suz@kame.net>
 	* config.c: fixed a improper memory access when there is no free
 	  address in an address pool.  (Bug-ID 1563232)
