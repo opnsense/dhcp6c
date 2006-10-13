@@ -1,3 +1,7 @@
+2006-10-13  SUZUKI, Shinsuke <suz@kame.net>
+	* Makefile.in: creates the target directory in "make install" 
+	(suggested by Masahide NAKAMURA)
+
 2006-10-08  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s.conf.sample: corrected a misleading comment (pointed out by
 	Hajimu UMEMOTO)

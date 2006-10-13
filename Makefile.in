@@ -94,6 +94,7 @@ $(srcdir)/ianaopts.h: gentab.pl bootp-dhcp-parameters
 	expand bootp-dhcp-parameters | perl gentab.pl > ianaopts.h
 
 install::
+	-mkdir -p $(sbindir) $(mandir)
 	$(INSTALL_PROGRAM) -s -o bin -g bin $(TARGET) $(sbindir)
 	$(INSTALL_DATA) -o bin -g bin dhcp6c.8 $(mandir)/man8
 	$(INSTALL_DATA) -o bin -g bin dhcp6s.8 $(mandir)/man8
