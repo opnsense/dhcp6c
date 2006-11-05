@@ -279,6 +279,7 @@ main(argc, argv)
 			break;
 		case 'P':
 			pid_file = optarg;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */

@@ -1,4 +1,7 @@
 2006-11-05  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.c: dhcp6s recognizes "-P" option.
+	(patch submitted by Masahide NAKAMURA)
+
 	* dhcp6relay.c: accepts ULA (Bug-ID 1584704)
 
 	* Makefile.in: fixed a compilation error on SuSE and Debian Linux.
