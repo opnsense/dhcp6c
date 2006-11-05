@@ -100,6 +100,7 @@ TAILQ_HEAD(, prefix_list) global_prefixes; /* list of non-link-local prefixes */
 static char *global_strings[] = {
 	/* "fec0::/10",	site-local unicast addresses were deprecated */
 	"2000::/3",
+	"FC00::/7",  /* Unique Local Address (RFC4193) */
 	NULL
 };
 
