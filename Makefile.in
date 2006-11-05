@@ -38,7 +38,7 @@ CFLAGS=	@CFLAGS@ @DEFS@ -DSYSCONFDIR=\"${sysconfdir}\" \
 	-DLOCALDBDIR=\"${localdbdir}\"
 LDFLAGS=@LDFLAGS@
 LIBOBJS=@LIBOBJS@
-LIBS=	@LIBS@ -ly -ll
+LIBS=	@LIBS@ @LEXLIB@
 CC=	@CC@
 TARGET=	dhcp6c dhcp6s dhcp6relay dhcp6ctl
 
