@@ -2501,13 +2501,12 @@ make_ia(spec, conflist, retlist, client_conf, do_binding)
 		    bia = TAILQ_NEXT(bia, link)) {
 			if ((v = dhcp6_find_listval(conflist,
 			    bia->type, &bia->uv, 0)) != NULL) {
-				found++;
 				TAILQ_REMOVE(conflist, v, link);
 				dhcp6_clear_listval(v);
 			}
 		}
 
-		return (found);
+		return (1);
 	}
 
 	/*
