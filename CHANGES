@@ -1,6 +1,8 @@
 2006-11-15  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s.c: fixed an IA allocation failure from pool when it doubly
 	requested by the same client.  (patch submitted by Hajimu UMEMOTO)
+	* Makefile.in: creates man/man[58] in "make install" 
+	(suggested by Masahide NAKAMURA)
 
 2006-11-05  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s.c: dhcp6s recognizes "-P" option.
