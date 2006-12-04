@@ -74,7 +74,19 @@ usually prints warning, debugging, or error messages to
 it prints the messages to standard error if this option is
 specified.
 .It Fl i
-Info-req mode.  In this mode, stateless DHCPv6 is executed with an automatic configuration, and the obtained info is written to stdout.  After this output, the program is terminated.  (suits for a use in shell-script etc)
+Info-req mode.  In this mode, stateless DHCPv6 is executed with the folllowing configuration, and the obtained info is written to stdout.  After this output,
+.Nm
+is terminated.  (suits for a use in shell-script etc).
+.Bd -literal -offset
+ interface (interface given in the argument) {
+	information-only;
+	script (a script which displays the received information to stdout);
+ };
+.Ed
+.Pp
+Since the configuration is internally generated, you cannot provide a configuration in this mode.  If you want to have different actions for the stateless DHCPv6 information, you should write an appropriate configuration and invoke
+.Nm
+without this option.
 .It Fl p Ar pid-file
 Use
 .Ar pid-file
