@@ -383,7 +383,7 @@ na_ifaddrconf(cmd, sa)
 	addr = &sa->addr;
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
-#ifndef __linux__
+#ifdef HAVE_SA_LEN
 	sin6.sin6_len = sizeof(sin6);
 #endif
 	sin6.sin6_addr = addr->addr;

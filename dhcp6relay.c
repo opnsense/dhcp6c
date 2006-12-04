@@ -270,7 +270,7 @@ make_prefix(pstr0)
 	/* fill in each member of the entry */
 	memset(pent, 0, sizeof (*pent));
 	pent->paddr.sin6_family = AF_INET6;
-#ifndef __linux__
+#ifdef HAVE_SA_LEN
 	pent->paddr.sin6_len = sizeof (struct sockaddr_in6);
 #endif
 	pent->paddr.sin6_addr = paddr;

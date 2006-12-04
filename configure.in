@@ -187,6 +187,21 @@ if test $tailq_foreach = yes ; then
 	 AC_DEFINE(HAVE_TAILQ_FOREACH_REVERSE_OLD)]);
 fi
 
+dnl Checks for other features
+AC_MSG_CHECKING(if you have a length field in struct sockaddr*)
+AC_CACHE_VAL(ts_cv_sa_len, [dnl
+ AC_TRY_COMPILE([
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ ], [ 
+ struct sockaddr a;
+ a.sa_len = 1;
+ ], [ts_cv_sa_len="yes"], [ts_cv_sa_len="no"])])
+AC_MSG_RESULT($ts_cv_sa_len);
+if test "$ts_cv_sa_len" = yes; then
+	AC_DEFINE([HAVE_SA_LEN], 1, [Define to 1 if you have a length field in struct sockaddr])
+fi
+
 AC_CHECK_HEADERS(stdarg.h)
 
 AC_OUTPUT(Makefile)

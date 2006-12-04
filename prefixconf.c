@@ -447,7 +447,7 @@ add_ifprefix(siteprefix, prefix, pconf)
 	ifpfx->ifconf = pconf;
 
 	ifpfx->paddr.sin6_family = AF_INET6;
-#ifndef __linux__
+#ifdef HAVE_SA_LEN
 	ifpfx->paddr.sin6_len = sizeof(struct sockaddr_in6);
 #endif
 	ifpfx->paddr.sin6_addr = prefix->addr;

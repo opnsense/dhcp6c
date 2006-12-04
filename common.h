@@ -103,7 +103,7 @@
 static __inline u_int8_t
 sysdep_sa_len (const struct sockaddr *sa)
 {
-#ifdef __linux__
+#ifndef HAVE_SA_LEN
   switch (sa->sa_family)
     {
     case AF_INET:

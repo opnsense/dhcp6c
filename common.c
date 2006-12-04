@@ -703,7 +703,7 @@ getifaddr(addr, ifnam, prefix, plen, strong, ignoreflags)
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
-#ifndef __linux__
+#ifdef HAVE_SA_LEN
 		if (ifa->ifa_addr->sa_len > sizeof(sin6))
 			continue;
 #endif
@@ -868,7 +868,7 @@ sa6_plen2mask(sa6, plen)
 
 	memset(sa6, 0, sizeof(*sa6));
 	sa6->sin6_family = AF_INET6;
-#ifndef __linux__
+#ifdef HAVE_SA_LEN
 	sa6->sin6_len = sizeof(*sa6);
 #endif
 
@@ -905,7 +905,7 @@ in6addr2str(in6, scopeid)
 
 	memset(&sa6, 0, sizeof(sa6));
 	sa6.sin6_family = AF_INET6;
-#ifndef __linux__
+#ifdef HAVE_SA_LEN
 	sa6.sin6_len = sizeof(sa6);
 #endif
 	sa6.sin6_addr = *in6;
