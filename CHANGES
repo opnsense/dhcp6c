@@ -1,3 +1,5 @@
+2007-01-11  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.conf.5: fixed an incorrect descrption regarding NTP option.
 2006-12-04  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6c.8: clarified the behavior of the Info-req mode.
 	* addrconf.c, common.[ch], configure, configure.in, dhcp6relay.c,
