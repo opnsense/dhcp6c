@@ -33,6 +33,8 @@ prefix=	@prefix@
 srcdir=	@srcdir@
 sysconfdir= @sysconfdir@
 localdbdir= @localdbdir@
+user= @user@
+group= @group@
 
 CFLAGS=	@CFLAGS@ @DEFS@ -DSYSCONFDIR=\"${sysconfdir}\" \
 	-DLOCALDBDIR=\"${localdbdir}\"
@@ -95,13 +97,13 @@ $(srcdir)/ianaopts.h: gentab.pl bootp-dhcp-parameters
 
 install::
 	-mkdir -p $(sbindir) $(mandir)/man5 $(mandir)/man8
-	$(INSTALL_PROGRAM) -s -o bin -g bin $(TARGET) $(sbindir)
-	$(INSTALL_DATA) -o bin -g bin dhcp6c.8 $(mandir)/man8
-	$(INSTALL_DATA) -o bin -g bin dhcp6s.8 $(mandir)/man8
-	$(INSTALL_DATA) -o bin -g bin dhcp6relay.8 $(mandir)/man8
-	$(INSTALL_DATA) -o bin -g bin dhcp6ctl.8 $(mandir)/man8
-	$(INSTALL_DATA) -o bin -g bin dhcp6c.conf.5 $(mandir)/man5
-	$(INSTALL_DATA) -o bin -g bin dhcp6s.conf.5 $(mandir)/man5
+	$(INSTALL_PROGRAM) -s -o $(user) -g $(group) $(TARGET) $(sbindir)
+	$(INSTALL_DATA) -o $(user) -g $(group) dhcp6c.8 $(mandir)/man8
+	$(INSTALL_DATA) -o $(user) -g $(group) dhcp6s.8 $(mandir)/man8
+	$(INSTALL_DATA) -o $(user) -g $(group) dhcp6relay.8 $(mandir)/man8
+	$(INSTALL_DATA) -o $(user) -g $(group) dhcp6ctl.8 $(mandir)/man8
+	$(INSTALL_DATA) -o $(user) -g $(group) dhcp6c.conf.5 $(mandir)/man5
+	$(INSTALL_DATA) -o $(user) -g $(group) dhcp6s.conf.5 $(mandir)/man5
 
 includes::
 
