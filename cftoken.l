@@ -104,7 +104,7 @@ hexdigit	[0-9A-Fa-f]
 hexpair		{hexdigit}{hexdigit}
 hexstring	0[xX]{hexpair}+
 duid 		{hexpair}(:{hexpair})*
-ifname		[a-zA-Z]+[0-9]+
+ifname		{string}
 slash		\/
 bcl		\{
 ecl		\}
