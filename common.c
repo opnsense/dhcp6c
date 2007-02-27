@@ -55,6 +55,13 @@
 #include <linux/if_packet.h>
 #endif
 #include <net/if_arp.h>
+#ifdef __sun__
+#include <sys/sockio.h>
+#include <sys/dlpi.h>
+#include <stropts.h>
+#include <fcntl.h>
+#include <libdevinfo.h>
+#endif
 
 #ifdef __KAME__
 #include <netinet6/in6_var.h>
@@ -71,13 +78,7 @@
 #include <string.h>
 #include <err.h>
 #include <netdb.h>
-
-#ifdef HAVE_GETIFADDRS 
-# ifdef HAVE_IFADDRS_H
-#  define USE_GETIFADDRS
-#  include <ifaddrs.h>
-# endif
-#endif
+#include <ifaddrs.h>
 
 #include <dhcp6.h>
 #include <config.h>
@@ -1081,6 +1082,137 @@ get_duid(idfile, duid)
 	return (-1);
 }
 
+#ifdef __sun__
+struct hwparms {
+	char *buf;
+	u_int16_t *hwtypep;
+	ssize_t retval;
+};
+
+static ssize_t
+getifhwaddr(const char *ifname, char *buf, u_int16_t *hwtypep, int ppa)
+{
+	int fd, flags;
+	char fname[MAXPATHLEN], *cp;
+	struct strbuf putctl;
+	struct strbuf getctl;
+	long getbuf[1024];
+	dl_info_req_t dlir;
+	dl_phys_addr_req_t dlpar;
+	dl_phys_addr_ack_t *dlpaa;
+
+	dprintf(LOG_DEBUG, FNAME, "trying %s ppa %d", ifname, ppa);
+
+	if (ifname[0] == '\0')
+		return (-1);
+	if (ppa >= 0 && !isdigit(ifname[strlen(ifname) - 1]))
+		(void) snprintf(fname, sizeof (fname), "/dev/%s%d", ifname,
+		    ppa);
+	else
+		(void) snprintf(fname, sizeof (fname), "/dev/%s", ifname);
+	getctl.maxlen = sizeof (getbuf);
+	getctl.buf = (char *)getbuf;
+	if ((fd = open(fname, O_RDWR)) == -1) {
+		dl_attach_req_t dlar;
+
+		cp = fname + strlen(fname) - 1;
+		if (!isdigit(*cp))
+			return (-1);
+		while (cp > fname) {
+			if (!isdigit(*cp))
+				break;
+			cp--;
+		}
+		if (cp == fname)
+			return (-1);
+		cp++;
+		dlar.dl_ppa = atoi(cp);
+		*cp = '\0';
+		if ((fd = open(fname, O_RDWR)) == -1)
+			return (-1);
+		dlar.dl_primitive = DL_ATTACH_REQ;
+		putctl.len = sizeof (dlar);
+		putctl.buf = (char *)&dlar;
+		if (putmsg(fd, &putctl, NULL, 0) == -1) {
+			(void) close(fd);
+			return (-1);
+		}
+		flags = 0;
+		if (getmsg(fd, &getctl, NULL, &flags) == -1) {
+			(void) close(fd);
+			return (-1);
+		}
+		if (getbuf[0] != DL_OK_ACK) {
+			(void) close(fd);
+			return (-1);
+		}
+	}
+	dlir.dl_primitive = DL_INFO_REQ;
+	putctl.len = sizeof (dlir);
+	putctl.buf = (char *)&dlir;
+	if (putmsg(fd, &putctl, NULL, 0) == -1) {
+		(void) close(fd);
+		return (-1);
+	}
+	flags = 0;
+	if (getmsg(fd, &getctl, NULL, &flags) == -1) {
+		(void) close(fd);
+		return (-1);
+	}
+	if (getbuf[0] != DL_INFO_ACK) {
+		(void) close(fd);
+		return (-1);
+	}
+	switch (((dl_info_ack_t *)getbuf)->dl_mac_type) {
+	case DL_CSMACD:
+	case DL_ETHER:
+	case DL_100VG:
+	case DL_ETH_CSMA:
+	case DL_100BT:
+		*hwtypep = ARPHRD_ETHER;
+		break;
+	default:
+		(void) close(fd);
+		return (-1);
+	}
+	dlpar.dl_primitive = DL_PHYS_ADDR_REQ;
+	dlpar.dl_addr_type = DL_CURR_PHYS_ADDR;
+	putctl.len = sizeof (dlpar);
+	putctl.buf = (char *)&dlpar;
+	if (putmsg(fd, &putctl, NULL, 0) == -1) {
+		(void) close(fd);
+		return (-1);
+	}
+	flags = 0;
+	if (getmsg(fd, &getctl, NULL, &flags) == -1) {
+		(void) close(fd);
+		return (-1);
+	}
+	if (getbuf[0] != DL_PHYS_ADDR_ACK) {
+		(void) close(fd);
+		return (-1);
+	}
+	dlpaa = (dl_phys_addr_ack_t *)getbuf;
+	if (dlpaa->dl_addr_length != 6) {
+		(void) close(fd);
+		return (-1);
+	}
+	(void) memcpy(buf, (char *)getbuf + dlpaa->dl_addr_offset,
+	    dlpaa->dl_addr_length);
+	return (dlpaa->dl_addr_length);
+}
+
+static int
+devfs_handler(di_node_t node, di_minor_t minor, void *arg)
+{
+	struct hwparms *parms = arg;
+
+	parms->retval = getifhwaddr(di_minor_name(minor), parms->buf,
+	    parms->hwtypep, di_instance(node));
+	return (parms->retval == -1 ? DI_WALK_CONTINUE : DI_WALK_TERMINATE);
+}
+#endif
+
 static ssize_t
 gethwid(buf, len, ifname, hwtypep)
 	char *buf;
@@ -1096,6 +1228,28 @@ gethwid(buf, len, ifname, hwtypep)
 	struct sockaddr_ll *sll;
 #endif
 	ssize_t l;
+
+#ifdef __sun__
+	if (ifname == NULL) {
+		di_node_t root;
+		struct hwparms parms;
+
+		if ((root = di_init("/", DINFOSUBTREE | DINFOMINOR |
+		    DINFOPROP)) == DI_NODE_NIL) {
+			dprintf(LOG_INFO, FNAME, "di_init failed");
+			return (-1);
+		}
+		parms.buf = buf;
+		parms.hwtypep = hwtypep;
+		parms.retval = -1;
+		(void) di_walk_minor(root, DDI_NT_NET, DI_CHECK_ALIAS, &parms,
+		    devfs_handler);
+		di_fini(root);
+		return (parms.retval);
+	} else {
+		return (getifhwaddr(ifname, buf, hwtypep, -1));
+	}
+#endif
 
 	if (getifaddrs(&ifap) < 0)
 		return (-1);
@@ -3094,6 +3248,9 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 	struct in6_ifreq req;
 	struct ifreq ifr;
 #endif
+#ifdef __sun__
+	struct lifreq req;
+#endif
 	unsigned long ioctl_cmd;
 	char *cmdstr;
 	int s;			/* XXX overhead */
@@ -3107,6 +3264,9 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 #ifdef __linux__
 		ioctl_cmd = SIOCSIFADDR;
 #endif
+#ifdef __sun__
+		ioctl_cmd = SIOCLIFADDIF;
+#endif
 		break;
 	case IFADDRCONF_REMOVE:
 		cmdstr = "remove";
@@ -3115,6 +3275,9 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 #endif
 #ifdef __linux__
 		ioctl_cmd = SIOCDIFADDR;
+#endif
+#ifdef __sun__
+		ioctl_cmd = SIOCLIFREMOVEIF;
 #endif
 		break;
 	default:
@@ -3149,6 +3312,9 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 	req.ifr6_prefixlen = plen;
 	req.ifr6_ifindex = ifr.ifr_ifindex;
 #endif
+#ifdef __sun__
+	strncpy(req.lifr_name, ifname, sizeof (req.lifr_name));
+#endif
 
 	if (ioctl(s, ioctl_cmd, &req)) {
 		dprintf(LOG_NOTICE, FNAME, "failed to %s an address on %s: %s",
@@ -3156,6 +3322,16 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 		close(s);
 		return (-1);
 	}
+
+#ifdef __sun__
+	memcpy(&req.lifr_addr, addr, sizeof (*addr));
+	if (ioctl(s, SIOCSLIFADDR, &req) == -1) {
+		dprintf(LOG_NOTICE, FNAME, "failed to %s new address on %s: %s",
+		    cmdstr, ifname, strerror(errno));
+		close(s);
+		return (-1);
+	}
+#endif
 
 	dprintf(LOG_DEBUG, FNAME, "%s an address %s/%d on %s", cmdstr,
 	    addr2str((struct sockaddr *)addr), plen, ifname);

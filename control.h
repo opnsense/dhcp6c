@@ -29,6 +29,17 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __sun__
+#ifndef	U_INT16_T_DEFINED
+#define	U_INT16_T_DEFINED
+typedef uint16_t u_int16_t;
+#endif
+#ifndef	U_INT32_T_DEFINED
+#define	U_INT32_T_DEFINED
+typedef uint32_t u_int32_t;
+#endif
+#endif
+
 #define DEFAULT_SERVER_CONTROL_ADDR "::1" /* default IPv6 address for server
 					   * control socket */
 #define DEFAULT_SERVER_CONTROL_PORT "5547" /* default TCP port for server

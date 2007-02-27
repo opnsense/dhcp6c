@@ -1,9 +1,6 @@
-/*	$KAME: arc4random.h,v 1.1 2003/01/22 01:30:36 jinmei Exp $	*/
-
 /*
- * Copyright (C) 2000 WIDE Project.
- * All rights reserved.
- * 
+ * Copyright (c) 2006 WIDE Project. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,9 +26,9 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __sun__
-#define	__P(x)	x
-typedef uint32_t u_int32_t;
-#endif
-
-extern u_int32_t arc4random __P((void));
+extern void err(int, const char *);
+/* PRINTFLIKE2 */
+extern void errx(int, const char *, ...);
+/* PRINTFLIKE1 */
+extern void warnx(const char *, ...);
+#define warn warnx

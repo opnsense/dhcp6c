@@ -1,9 +1,6 @@
-/*	$KAME: arc4random.h,v 1.1 2003/01/22 01:30:36 jinmei Exp $	*/
-
 /*
- * Copyright (C) 2000 WIDE Project.
- * All rights reserved.
- * 
+ * Copyright (c) 2006 WIDE Project. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,9 +26,25 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __sun__
-#define	__P(x)	x
-typedef uint32_t u_int32_t;
-#endif
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
 
-extern u_int32_t arc4random __P((void));
+int
+daemon(int nochdir, int noclose)
+{
+	if (fork() != 0)
+		_exit(0);
+	if (nochdir == 0)
+		(void) chdir("/");
+	if (noclose == 0) {
+		(void) close(0);
+		(void) open("/dev/null", O_RDWR);
+		(void) dup2(0, 1);
+		(void) dup2(0, 2);
+	}
+	(void) setsid();
+	if (fork() != 0)
+		_exit(0);
+	return (0);
+}

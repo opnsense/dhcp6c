@@ -50,12 +50,25 @@ dnl 	exit 1])
 
 CFLAGS="$CFLAGS -I\$(srcdir)"
 
-AC_MSG_CHECKING(for getaddrinfo/getnameinfo library)
+dnl On Sun systems, we need to use the standards-compliant 3XNET functions
+if test -x /usr/bin/sun && /usr/bin/sun; then
+	CFLAGS="$CFLAGS -D_XOPEN_SOURCE=500 -D__EXTENSIONS__"
+	LDFLAGS="-lxnet -ldevinfo -lnsl -lsocket -lrt"
+fi
+
+AC_MSG_CHECKING(for sys/queue.h)
+AC_TRY_COMPILE([#include <sys/queue.h>],
+	[TAILQ_HEAD(test, none);],
+	[AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(no)
+	CFLAGS="$CFLAGS -I\$(srcdir)/missing"])
+
 AC_EGREP_CPP(yes,
 [#include <netinet/in.h>
 #ifdef __KAME__
  yes
-#endif], [result=kame])
+#endif], [result=kame], [result=regular])
+AC_MSG_CHECKING(for getaddrinfo/getnameinfo library)
 AC_MSG_RESULT($result)
 case $result in
 kame)	AC_DEFINE(INET6)
@@ -68,11 +81,11 @@ esac
 
 AC_REPLACE_FUNCS(getaddrinfo)
 AC_REPLACE_FUNCS(getnameinfo)
-AC_CHECK_FUNC(getifaddrs, AC_DEFINE(HAVE_GETIFADDRS), [dnl
-	echo FATAL: getifaddrs is required
-	exit 1])
+AC_REPLACE_FUNCS(getifaddrs)
 AC_CHECK_FUNCS(if_nametoindex)
 AC_REPLACE_FUNCS(strlcpy strlcat)
+AC_REPLACE_FUNCS(daemon)
+AC_REPLACE_FUNCS(warnx)
 
 dnl Checks for header files.
 AC_HEADER_STDC

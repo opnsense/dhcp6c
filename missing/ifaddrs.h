@@ -1,9 +1,6 @@
-/*	$KAME: arc4random.h,v 1.1 2003/01/22 01:30:36 jinmei Exp $	*/
-
 /*
- * Copyright (C) 2000 WIDE Project.
- * All rights reserved.
- * 
+ * Copyright (c) 2006 WIDE Project. All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,9 +26,19 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __sun__
-#define	__P(x)	x
-typedef uint32_t u_int32_t;
-#endif
+#include <sys/types.h>
 
-extern u_int32_t arc4random __P((void));
+#undef ifa_broadaddr
+#undef ifa_dstaddr
+struct ifaddrs {
+	struct ifaddrs	*ifa_next;	/* Pointer to next struct */
+	char		*ifa_name;	/* Interface name */
+	uint64_t	ifa_flags;	/* Interface flags */
+	struct sockaddr	*ifa_addr;	/* Interface address */
+	struct sockaddr	*ifa_netmask;	/* Interface netmask */
+	struct sockaddr	*ifa_dstaddr;	/* P2P interface destination */
+};
+#define	ifa_broadaddr	ifa_dstaddr
+
+extern int getifaddrs(struct ifaddrs **);
+extern void freeifaddrs(struct ifaddrs *);

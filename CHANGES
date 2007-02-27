@@ -1,3 +1,9 @@
+2007-02-27  SUZUKI, Shinsuke <suz@kame.net>
+	* Makefile.in, configure.in, configure, auth.h, common.c, control.h, dhcp6.h,
+	  dhcp6s.c, missing/{arc4random.h, daemon.c, err.h, getifaddrs.c, ifaddrs.h,
+	  sys/queue.h, warnx.c}
+	  supported compilation on Solaris (contributed by James Carlson)
+
 2007-02-12  SUZUKI, Shinsuke <suz@kame.net>
 	* cftoken.l: accepts interface names, such as eth0.100(Linux VLAN interface)
 	  or foobar (named by "ifconfig name" command).  (Bug-ID 1644637)

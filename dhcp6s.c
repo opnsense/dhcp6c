@@ -441,12 +441,14 @@ server6_init()
 		exit(1);
 	}
 #endif
+#ifdef IPV6_V6ONLY
 	if (setsockopt(insock, IPPROTO_IPV6, IPV6_V6ONLY,
 	    &on, sizeof(on)) < 0) {
 		dprintf(LOG_ERR, FNAME,
 		    "setsockopt(inbound, IPV6_V6ONLY): %s", strerror(errno));
 		exit(1);
 	}
+#endif
 	if (bind(insock, res->ai_addr, res->ai_addrlen) < 0) {
 		dprintf(LOG_ERR, FNAME, "bind(insock): %s", strerror(errno));
 		exit(1);
@@ -517,7 +519,7 @@ server6_init()
 		    strerror(errno));
 		exit(1);
 	}
-#ifndef __linux__
+#if !defined(__linux__) && !defined(__sun__)
 	/* make the socket write-only */
 	if (shutdown(outsock, 0)) {
 		dprintf(LOG_ERR, FNAME, "shutdown(outbound, 0): %s",

@@ -317,12 +317,14 @@ client6_init()
 		    strerror(errno));
 		exit(1);
 	}
+#ifdef IPV6_V6ONLY
 	if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
 	    &on, sizeof(on)) < 0) {
 		dprintf(LOG_ERR, FNAME, "setsockopt(IPV6_V6ONLY): %s",
 		    strerror(errno));
 		exit(1);
 	}
+#endif
 
 	/*
 	 * According RFC3315 2.2, only the incoming port should be bound to UDP

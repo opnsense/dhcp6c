@@ -90,6 +90,12 @@ strlcat.o:	$(srcdir)/missing/strlcat.c
 strlcpy.o:	$(srcdir)/missing/strlcpy.c
 	$(CC) -c $(srcdir)/missing/$*.c
 arc4random.o:	$(srcdir)/missing/arc4random.c
+	$(CC) $(CFLAGS) -c $(srcdir)/missing/$*.c
+getifaddrs.o:	$(srcdir)/missing/getifaddrs.c
+	$(CC) -c $(srcdir)/missing/$*.c
+daemon.o:	$(srcdir)/missing/daemon.c
+	$(CC) -c $(srcdir)/missing/$*.c
+warnx.o:	$(srcdir)/missing/warnx.c
 	$(CC) -c $(srcdir)/missing/$*.c
 
 $(srcdir)/ianaopts.h: gentab.pl bootp-dhcp-parameters
@@ -122,4 +128,7 @@ package:
 		$(srcdir)/configure $(srcdir)/configure.in \
 		$(srcdir)/install-sh  $(srcdir)/*.sample \
 		$(srcdir)/missing/arc4random.?  $(srcdir)/missing/strlcat.c \
-		$(srcdir)/missing/strlcpy.c
+		$(srcdir)/missing/strlcpy.c $(srcdir)/missing/daemon.c \
+		$(srcdir)/missing/err.h $(srcdir)/missing/warnx.c \
+		$(srcdir)/missing/ifaddrs.h $(srcdir)/missing/getifaddrs.c \
+		$(srcdir)/missing/sys/queue.h

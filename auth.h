@@ -29,6 +29,14 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __sun__
+#define	__P(x)	x
+#ifndef	U_INT32_T_DEFINED
+#define	U_INT32_T_DEFINED
+typedef uint32_t u_int32_t;
+#endif
+#endif
+
 #define MD5_DIGESTLENGTH 16
 
 /* secret key information for delayed authentication */

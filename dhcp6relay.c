@@ -360,12 +360,14 @@ relay6_init(int ifnum, char *iflist[])
 		    strerror(errno));
 		goto failexit;
 	}
+#ifdef IPV6_V6ONLY
 	if (setsockopt(csock, IPPROTO_IPV6, IPV6_V6ONLY,
 	    &on, sizeof (on)) < 0) {
 		dprintf(LOG_ERR, FNAME, "setsockopt(csock, IPV6_V6ONLY): %s",
 		    strerror(errno));
 		goto failexit;
 	}
+#endif
 	if (bind(csock, res->ai_addr, res->ai_addrlen) < 0) {
 		dprintf(LOG_ERR, FNAME, "bind(csock): %s", strerror(errno));
 		goto failexit;
@@ -470,12 +472,14 @@ relay6_init(int ifnum, char *iflist[])
 		goto failexit;
 	}
 	on = 1;
+#ifdef IPV6_V6ONLY
 	if (setsockopt(ssock, IPPROTO_IPV6, IPV6_V6ONLY,
 	    &on, sizeof (on)) < 0) {
 		dprintf(LOG_ERR, FNAME, "setsockopt(ssock, IPV6_V6ONLY): %s",
 		    strerror(errno));
 		goto failexit;
 	}
+#endif
 	if (bind(ssock, res->ai_addr, res->ai_addrlen) < 0) {
 		dprintf(LOG_ERR, FNAME, "bind(ssock): %s", strerror(errno));
 		goto failexit;

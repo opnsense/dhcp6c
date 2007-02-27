@@ -31,6 +31,28 @@
 #ifndef __DHCP6_H_DEFINED
 #define __DHCP6_H_DEFINED
 
+#ifdef __sun__
+#define	__P(x)	x
+typedef uint8_t u_int8_t;
+#ifndef	U_INT16_T_DEFINED
+#define	U_INT16_T_DEFINED
+typedef uint16_t u_int16_t;
+#endif
+#ifndef	U_INT32_T_DEFINED
+#define	U_INT32_T_DEFINED
+typedef uint32_t u_int32_t;
+#endif
+typedef uint64_t u_int64_t;
+#ifndef CMSG_SPACE
+#define	CMSG_SPACE(l) \
+	((unsigned int)_CMSG_HDR_ALIGN(sizeof (struct cmsghdr) + (l)))
+#endif
+#ifndef CMSG_LEN
+#define	CMSG_LEN(l) \
+	((unsigned int)_CMSG_DATA_ALIGN(sizeof (struct cmsghdr)) + (l))
+#endif
+#endif
+
 /* Error Values */
 #define DH6ERR_FAILURE		16
 #define DH6ERR_AUTHFAIL		17
