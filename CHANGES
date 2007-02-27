@@ -1,4 +1,8 @@
 2007-02-27  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6relay.c, dhcp6relay_script.c, common.[ch], dhcp6c_script.c,
+	  Makefile.in, dhcp6relay.8:
+	  supported script execution for dhcp6relay (contributed by Bruno STEVANT)
+
 	* Makefile.in, configure.in, configure, auth.h, common.c, control.h, dhcp6.h,
 	  dhcp6s.c, missing/{arc4random.h, daemon.c, err.h, getifaddrs.c, ifaddrs.h,
 	  sys/queue.h, warnx.c}

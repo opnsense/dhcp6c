@@ -75,6 +75,7 @@ static u_long sig_flags = 0;
 static char *relaydevice;
 static char *boundaddr;
 static char *serveraddr = DH6ADDR_ALLSERVER;
+static char *scriptpath;
 
 static char *rmsgctlbuf;
 static socklen_t rmsgctllen;
@@ -117,13 +118,16 @@ static void relay_to_server __P((struct dhcp6 *, ssize_t,
     struct sockaddr_in6 *, char *, unsigned int));
 static void relay_to_client __P((struct dhcp6_relay *, ssize_t,
     struct sockaddr *));
+extern int relay6_script __P((char *, struct sockaddr_in6 *,
+    struct dhcp6 *, int));
+
 
 static void
 usage()
 {
 	fprintf(stderr,
 	    "usage: dhcp6relay [-dDf] [-b boundaddr] [-H hoplim] "
-	    "[-r relay-IF] [-s serveraddr] [-p pidfile] IF ...\n");
+	    "[-r relay-IF] [-s serveraddr] [-p pidfile] [-S script] IF ...\n");
 	exit(0);
 }
 
@@ -142,7 +146,7 @@ main(argc, argv)
 	else
 		progname++;
 
-	while((ch = getopt(argc, argv, "b:dDfH:r:s:p:")) != -1) {
+	while((ch = getopt(argc, argv, "b:dDfH:r:s:S:p:")) != -1) {
 		switch(ch) {
 		case 'b':
 			boundaddr = optarg;
@@ -173,6 +177,9 @@ main(argc, argv)
 			break;
 		case 's':
 			serveraddr = optarg;
+			break;
+		case 'S':
+			scriptpath = optarg;
 			break;
 		case 'p':
 			pid_file = optarg;
@@ -916,6 +923,8 @@ relay_to_client(dh6relay, len, from)
 	unsigned int ifid;
 	char ifnamebuf[IFNAMSIZ];
 	int cc;
+	int relayed = 0;
+	struct dhcp6 *dh6;
 	struct msghdr mh;
 	struct in6_pktinfo pktinfo;
 	static struct iovec iov[2];
@@ -997,6 +1006,10 @@ relay_to_client(dh6relay, len, from)
 	}
 
 	peer = sa6_client;
+	dh6 = (struct dhcp6 *) optinfo.relaymsg_msg;
+	if (dh6->dh6_msgtype != DH6_RELAY_REPLY) {
+		relayed++;
+	}
 	memcpy(&peer.sin6_addr, &dh6relay->dh6relay_peeraddr,
 	    sizeof (peer.sin6_addr));
 	if (IN6_IS_ADDR_LINKLOCAL(&peer.sin6_addr))
@@ -1032,6 +1045,9 @@ relay_to_client(dh6relay, len, from)
 		    "relay a message to a client %s",
 		    addr2str((struct sockaddr *)&peer));
 	}
+
+	if (relayed && scriptpath != NULL)
+		relay6_script(scriptpath, &peer, dh6, optinfo.relaymsg_len);
 
   out:
 	dhcp6_clear_options(&optinfo);

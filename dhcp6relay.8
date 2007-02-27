@@ -41,6 +41,7 @@
 .Op Fl H Ar hoplim
 .Op Fl r Ar relay-IF
 .Op Fl s Ar serveraddr
+.Op Fl S Ar script-file
 .Op Fl p Ar pid-file
 .Ar interface ...
 .\"
@@ -87,6 +88,12 @@ are specified, this option cannot be omitted.
 .It Fl s Ar serveraddr
 Specifies the DHCPv6 server address to relay packets to.
 If not specified, packets are relayed to ff05::1:3 (All DHCPv6 servers).
+.It Fl S Ar script-file
+Specifies the script file to be executed when
+.Nm
+receives a RELAY-REPLY message from a DHCPv6 server.  Further detail of the
+script file syntax is available in
+.Xr dhcp6c 8
 .It Fl p Ar pid-file
 Use
 .Ar pid-file

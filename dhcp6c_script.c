@@ -72,8 +72,6 @@ static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
 
-static int safefile __P((const char *));
-
 int
 client6_script(scriptpath, state, optinfo)
 	char *scriptpath;
@@ -436,43 +434,4 @@ client6_script(scriptpath, state, optinfo)
 	free(envp);
 
 	return ret;
-}
-
-static int
-safefile(path)
-	const char *path;
-{
-	struct stat s;
-	uid_t myuid;
-
-	/* no setuid */
-	if (getuid() != geteuid()) {
-		dprintf(LOG_NOTICE, FNAME,
-		    "setuid'ed execution not allowed");
-		return (-1);
-	}
-
-	if (lstat(path, &s) != 0) {
-		dprintf(LOG_NOTICE, FNAME, "lstat failed: %s",
-		    strerror(errno));
-		return (-1);
-	}
-
-	/* the file must be owned by the running uid */
-	myuid = getuid();
-	if (s.st_uid != myuid) {
-		dprintf(LOG_NOTICE, FNAME, "%s has invalid owner uid", path);
-		return (-1);
-	}
-
-	switch (s.st_mode & S_IFMT) {
-	case S_IFREG:
-		break;
-	default:
-		dprintf(LOG_NOTICE, FNAME, "%s is an invalid file type 0x%o",
-		    path, (s.st_mode & S_IFMT));
-		return (-1);
-	}
-
-	return (0);
 }
