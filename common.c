@@ -1847,7 +1847,7 @@ dhcp6_get_options(p, ep, optinfo)
 			    ia.iaid, ia.t1, ia.t2);
 
 			/* duplication check */
-			if (dhcp6_find_listval(&optinfo->iapd_list,
+			if (dhcp6_find_listval(&optinfo->iana_list,
 			    DHCP6_LISTVAL_IANA, &ia, 0)) {
 				dprintf(LOG_INFO, FNAME,
 				    "duplicated IA_NA %lu", ia.iaid);

@@ -1,3 +1,10 @@
+2007-03-20  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a bug that IA-PD/IA-NA cannot coexist in one DHCP message
+	  when they have the same IA-ID.
+
+2007-02-28  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c: fixed a typo.
+
 2007-02-27  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6relay.c, dhcp6relay_script.c, common.[ch], dhcp6c_script.c,
 	  Makefile.in, dhcp6relay.8:
