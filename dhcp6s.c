@@ -178,6 +178,9 @@ static int react_rebind __P((struct dhcp6_if *, struct dhcp6 *, ssize_t,
 static int react_release __P((struct dhcp6_if *, struct in6_pktinfo *,
     struct dhcp6 *, ssize_t, struct dhcp6_optinfo *, struct sockaddr *, int,
     struct relayinfolist *));
+static int react_confirm __P((struct dhcp6_if *, struct in6_pktinfo *,
+    struct dhcp6 *, ssize_t,
+    struct dhcp6_optinfo *, struct sockaddr *, int, struct relayinfolist *));
 static int react_informreq __P((struct dhcp6_if *, struct dhcp6 *, ssize_t,
     struct dhcp6_optinfo *, struct sockaddr *, int, struct relayinfolist *));
 static int server6_send __P((int, struct dhcp6_if *, struct dhcp6 *,
@@ -978,6 +981,10 @@ server6_recv(s)
 		break;
 	case DH6_RELEASE:
 		(void)react_release(ifp, pi, dh6, len, &optinfo,
+		    (struct sockaddr *)&from, fromlen, &relayinfohead);
+		break;
+	case DH6_CONFIRM:
+		(void)react_confirm(ifp, pi, dh6, len, &optinfo,
 		    (struct sockaddr *)&from, fromlen, &relayinfohead);
 		break;
 	case DH6_INFORM_REQ:
@@ -1981,6 +1988,171 @@ react_release(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 
   fail:
 	dhcp6_clear_options(&roptinfo);
+	return (-1);
+}
+
+static int
+react_confirm(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
+	struct dhcp6_if *ifp;
+	struct in6_pktinfo *pi;
+	struct dhcp6 *dh6;
+	ssize_t len;
+	struct dhcp6_optinfo *optinfo;
+	struct sockaddr *from;
+	int fromlen;
+	struct relayinfolist *relayinfohead;
+{
+	struct dhcp6_optinfo roptinfo;
+	struct dhcp6_list conflist;
+	struct dhcp6_listval *iana, *iaaddr;
+	struct host_conf *client_conf;
+	u_int16_t stcode = DH6OPT_STCODE_SUCCESS;
+	int error;
+
+	/* message validation according to Section 15.5 of RFC3315 */
+
+	/* the message may not include a Server Identifier option */
+	if (optinfo->serverID.duid_len) {
+		dprintf(LOG_INFO, FNAME, "server ID option found");
+		return (-1);
+	}
+	/* the message must include a Client Identifier option */
+	if (optinfo->clientID.duid_len == 0) {
+		dprintf(LOG_INFO, FNAME, "no client ID option");
+		return (-1);
+	}
+
+	dhcp6_init_options(&roptinfo);
+
+	/* server identifier option */
+	if (duidcpy(&roptinfo.serverID, &server_duid)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy server ID");
+		goto fail;
+	}
+	/* copy client information back */
+	if (duidcpy(&roptinfo.clientID, &optinfo->clientID)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy client ID");
+		goto fail;
+	}
+
+	/* get per-host configuration for the client, if any. */
+	if ((client_conf = find_hostconf(&optinfo->clientID))) {
+		dprintf(LOG_DEBUG, FNAME,
+		    "found a host configuration named %s", client_conf->name);
+	}
+
+	/* process authentication */
+	if (process_auth(dh6, len, client_conf, optinfo, &roptinfo)) {
+		dprintf(LOG_INFO, FNAME, "failed to process authentication "
+		    "information for %s",
+		    clientstr(client_conf, &optinfo->clientID));
+		goto fail;
+	}
+
+	if (client_conf == NULL && ifp->pool.name) {
+		if ((client_conf = create_dynamic_hostconf(&optinfo->clientID,
+			&ifp->pool)) == NULL) {
+			dprintf(LOG_NOTICE, FNAME,
+		    	"failed to make host configuration");
+			goto fail;
+		}
+	}
+	TAILQ_INIT(&conflist);
+	/* make a local copy of the configured addresses */
+	if (dhcp6_copy_list(&conflist, &client_conf->addr_list)) {
+		dprintf(LOG_NOTICE, FNAME,
+		    "failed to make local data");
+		goto fail;
+	}
+
+	/*
+	 * the message must include an IPv6 address to be confirmed
+	 * [RFC3315 18.2]. (IA-PD is just ignored [RFC3633 12.1])
+	 */
+	if (TAILQ_EMPTY(&optinfo->iana_list)) {
+		dprintf(LOG_INFO, FNAME, "no IA-NA option found");
+		goto fail;
+	}
+	for (iana = TAILQ_FIRST(&optinfo->iana_list); iana;
+	    iana = TAILQ_NEXT(iana, link)) {
+		if (TAILQ_EMPTY(&iana->sublist)) {
+			dprintf(LOG_INFO, FNAME,
+			    "no IA-ADDR option found in IA-NA %d",
+			    iana->val_ia.iaid);
+			goto fail;
+		}
+
+		/*
+		 * check whether the confirmed prefix matches 
+		 * the prefix from where the message originates.
+		 * XXX: prefix length is assumed to be 64
+		 */
+		for (iaaddr = TAILQ_FIRST(&iana->sublist); iaaddr;
+		    iaaddr = TAILQ_NEXT(iaaddr, link)) {
+		
+			struct in6_addr *confaddr = &iaaddr->val_statefuladdr6.addr;
+			struct in6_addr *linkaddr;
+			struct sockaddr_in6 *src = (struct sockaddr_in6 *)from;
+
+			if (!IN6_IS_ADDR_LINKLOCAL(&src->sin6_addr)) {
+				/* CONFIRM is relayed via a DHCP-relay */
+				struct relayinfo *relayinfo;
+
+				if (relayinfohead == NULL) {
+					dprintf(LOG_INFO, FNAME,
+					    "no link-addr found");
+					goto fail;
+				}
+				relayinfo = TAILQ_LAST(relayinfohead, relayinfolist);
+
+				/* XXX: link-addr is supposed to be a global address */
+				linkaddr = &relayinfo->linkaddr;
+			} else {
+				/* CONFIRM is directly arrived */
+				linkaddr = &ifp->addr;
+			}
+
+			if (memcmp(linkaddr, confaddr, 8) != 0) {
+				dprintf(LOG_INFO, FNAME,
+				    "%s does not seem to belong to %s's link",
+				    in6addr2str(confaddr, 0),
+				    in6addr2str(linkaddr, 0));
+				stcode = DH6OPT_STCODE_NOTONLINK;
+				goto send_reply;
+			}
+		}
+	}
+
+	/* 
+	 * even when the given address seems to be on the appropriate link,
+	 * the confirm should be ignore if there's no corrensponding IA-NA
+	 * configuration.
+	 */
+	for (iana = TAILQ_FIRST(&optinfo->iana_list); iana;
+	    iana = TAILQ_NEXT(iana, link)) {
+		if (make_ia(iana, &conflist, &roptinfo.iana_list,
+		    client_conf, 1) == 0) {
+			dprintf(LOG_DEBUG, FNAME,
+			    "IA-NA configuration not found");
+			goto fail;
+		}
+	}
+
+send_reply:
+	if (dhcp6_add_listval(&roptinfo.stcode_list,
+	    DHCP6_LISTVAL_STCODE, &stcode, NULL) == NULL)
+		goto fail;
+	error = server6_send(DH6_REPLY, ifp, dh6, optinfo, from, fromlen,
+			     &roptinfo, relayinfohead, client_conf);
+
+	dhcp6_clear_options(&roptinfo);
+	dhcp6_clear_list(&conflist);
+
+	return (error);
+
+  fail:
+	dhcp6_clear_options(&roptinfo);
+	dhcp6_clear_list(&conflist);
 	return (-1);
 }
 

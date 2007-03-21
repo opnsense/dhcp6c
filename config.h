@@ -67,6 +67,8 @@ struct dhcp6_if {
 	char *ifname;
 	unsigned int ifid;
 	u_int32_t linkid;	/* to send link-local packets */
+	/* multiple global address configuration is not supported now */
+	struct in6_addr addr; 	/* global address */
 
 	/* configuration parameters */
 	u_long send_flags;

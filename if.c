@@ -87,6 +87,34 @@ ifinit(ifname)
 	ifp->authalgorithm = DHCP6_AUTHALG_UNDEF;
 	ifp->authrdm = DHCP6_AUTHRDM_UNDEF;
 
+	{
+		struct ifaddrs *ifa, *ifap;
+		struct sockaddr_in6 *sin6;
+
+		if (getifaddrs(&ifap) < 0) {
+			dprintf(LOG_ERR, FNAME, "getifaddrs failed: %s",
+			    strerror(errno));
+			goto fail;
+		}
+
+		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+			if (strcmp(ifa->ifa_name, ifname) != 0)
+				continue;
+			if (ifa->ifa_addr == NULL)
+				continue;
+			if (ifa->ifa_addr->sa_family != AF_INET6)
+				continue;
+
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				continue;
+
+			ifp->addr = sin6->sin6_addr;
+		}
+
+		freeifaddrs(ifap);
+	}
+
 	ifp->next = dhcp6_if;
 	dhcp6_if = ifp;
 	return (ifp);
