@@ -5,6 +5,7 @@
 	* dhcp6s.c, lease.c: implemented DHCPv6 Decline message processing on DHCPv6 server.
 	* dhcp6s.c: fixed a Solicitation message validation as stated in RFC3315 15.2.
 	* dhcp6s.c: fixed a bug that Rebind does not work for IA-NA.
+	* config.c: supported an address pool that has only one entry.
 
 2007-03-20  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a bug that IA-PD/IA-NA cannot coexist in one DHCP message

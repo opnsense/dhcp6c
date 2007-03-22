@@ -2108,7 +2108,7 @@ create_pool(name, range)
 	dprintf(LOG_DEBUG, FNAME, "name=%s, range=%s->%s", name,
 		in6addr2str(&range->min, 0), in6addr2str(&range->max, 0));
 
-	if (in6_addr_cmp(&range->min, &range->max) >= 0) {
+	if (in6_addr_cmp(&range->min, &range->max) > 0) {
 		dprintf(LOG_ERR, FNAME, "invalid address range %s->%s",
 			in6addr2str(&range->min, 0),
 			in6addr2str(&range->max, 0));
