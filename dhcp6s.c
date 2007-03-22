@@ -1850,15 +1850,16 @@ react_rebind(ifp, dh6, len, optinfo, from, fromlen, relayinfohead)
 	}
 
 	/*
-	 * If the returned iapd_list is empty, we do not have an explicit
-	 * knowledge about validity nor invalidity for any IA_PD information
+	 * If the returned iana/pd_list is empty, we do not have an explicit
+	 * knowledge about validity nor invalidity for any IA_NA/PD information
 	 * in the Rebind message.  In this case, we should rather ignore the
 	 * message than to send a Reply with empty information back to the
 	 * client, which may annoy the recipient.  However, if we have at least
 	 * one useful information, either positive or negative, based on some
 	 * explicit knowledge, we should reply with the responsible part.
 	 */
-	if (TAILQ_EMPTY(&roptinfo.iapd_list)) {
+	if (TAILQ_EMPTY(&roptinfo.iapd_list) &&
+	    TAILQ_EMPTY(&roptinfo.iana_list)) {
 		dprintf(LOG_INFO, FNAME, "no useful information for a rebind");
 		goto fail;	/* discard the rebind */
 	}
