@@ -1448,7 +1448,7 @@ react_request(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 	}
 	/* the message must include a Client Identifier option */
 	if (optinfo->clientID.duid_len == 0) {
-		dprintf(LOG_INFO, FNAME, "no server ID option");
+		dprintf(LOG_INFO, FNAME, "no client ID option");
 		return (-1);
 	}
 
@@ -1681,7 +1681,7 @@ react_renew(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 	}
 	/* the message must include a Client Identifier option */
 	if (optinfo->clientID.duid_len == 0) {
-		dprintf(LOG_INFO, FNAME, "no server ID option");
+		dprintf(LOG_INFO, FNAME, "no client ID option");
 		return (-1);
 	}
 
@@ -1793,7 +1793,7 @@ react_rebind(ifp, dh6, len, optinfo, from, fromlen, relayinfohead)
 
 	/* the message must include a Client Identifier option */
 	if (optinfo->clientID.duid_len == 0) {
-		dprintf(LOG_INFO, FNAME, "no server ID option");
+		dprintf(LOG_INFO, FNAME, "no client ID option");
 		return (-1);
 	}
 
@@ -1912,7 +1912,7 @@ react_release(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 	}
 	/* the message must include a Client Identifier option */
 	if (optinfo->clientID.duid_len == 0) {
-		dprintf(LOG_INFO, FNAME, "no server ID option");
+		dprintf(LOG_INFO, FNAME, "no client ID option");
 		return (-1);
 	}
 
@@ -2041,7 +2041,7 @@ react_decline(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 	}
 	/* the message must include a Client Identifier option */
 	if (optinfo->clientID.duid_len == 0) {
-		dprintf(LOG_INFO, FNAME, "no server ID option");
+		dprintf(LOG_INFO, FNAME, "no client ID option");
 		return (-1);
 	}
 
