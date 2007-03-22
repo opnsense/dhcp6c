@@ -56,7 +56,11 @@
 struct hash_entry {
 	LIST_ENTRY(hash_entry) list;
 	char *val;
+	char flag;	/* 0x01: DHCP6_LEASE_DECLINED */
 };
+
+/* marked as declined (e.g. someone has been using the same address) */
+#define	DHCP6_LEASE_DECLINED	0x01	
 
 LIST_HEAD(hash_head, hash_entry);
 
@@ -139,6 +143,27 @@ release_address(addr)
 	if (hash_table_remove(&dhcp6_lease_table, addr) != 0) {
 		dprintf(LOG_WARNING, FNAME, "not found: %s", in6addr2str(addr, 0));
 	}
+}
+
+void
+decline_address(addr)
+	struct in6_addr *addr;
+{
+	struct hash_entry *entry;
+
+	if (!addr)
+		return;
+
+	dprintf(LOG_DEBUG, FNAME, "addr=%s", in6addr2str(addr, 0));
+
+	entry = hash_table_find(&dhcp6_lease_table, addr);
+	if (entry == NULL) {
+		dprintf(LOG_WARNING, FNAME, "not found: %s",
+			in6addr2str(addr, 0));
+		return;
+	}
+
+	entry->flag |= DHCP6_LEASE_DECLINED;
 }
 
 int

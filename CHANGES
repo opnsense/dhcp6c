@@ -1,6 +1,7 @@
 2007-03-21  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s.c, config.h, if.c: implemented DHCPv6 Confirm message processing
 	on DHCPv6 server.
+	* dhcp6s.c, lease.c: implemented DHCPv6 Decline message processing on DHCPv6 server.
 
 2007-03-20  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a bug that IA-PD/IA-NA cannot coexist in one DHCP message

@@ -178,6 +178,9 @@ static int react_rebind __P((struct dhcp6_if *, struct dhcp6 *, ssize_t,
 static int react_release __P((struct dhcp6_if *, struct in6_pktinfo *,
     struct dhcp6 *, ssize_t, struct dhcp6_optinfo *, struct sockaddr *, int,
     struct relayinfolist *));
+static int react_decline __P((struct dhcp6_if *, struct in6_pktinfo *,
+    struct dhcp6 *, ssize_t, struct dhcp6_optinfo *, struct sockaddr *, int,
+    struct relayinfolist *));
 static int react_confirm __P((struct dhcp6_if *, struct in6_pktinfo *,
     struct dhcp6 *, ssize_t,
     struct dhcp6_optinfo *, struct sockaddr *, int, struct relayinfolist *));
@@ -191,6 +194,8 @@ static int make_ia_stcode __P((int, u_int32_t, u_int16_t,
 static int update_ia __P((int, struct dhcp6_listval *,
     struct dhcp6_list *, struct dhcp6_optinfo *));
 static int release_binding_ia __P((struct dhcp6_listval *, struct dhcp6_list *,
+    struct dhcp6_optinfo *));
+static int decline_binding_ia __P((struct dhcp6_listval *, struct dhcp6_list *,
     struct dhcp6_optinfo *));
 static int make_ia __P((struct dhcp6_listval *, struct dhcp6_list *,
     struct dhcp6_list *, struct host_conf *, int));
@@ -981,6 +986,10 @@ server6_recv(s)
 		break;
 	case DH6_RELEASE:
 		(void)react_release(ifp, pi, dh6, len, &optinfo,
+		    (struct sockaddr *)&from, fromlen, &relayinfohead);
+		break;
+	case DH6_DECLINE:
+		(void)react_decline(ifp, pi, dh6, len, &optinfo,
 		    (struct sockaddr *)&from, fromlen, &relayinfohead);
 		break;
 	case DH6_CONFIRM:
@@ -1992,6 +2001,131 @@ react_release(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 }
 
 static int
+react_decline(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
+	struct dhcp6_if *ifp;
+	struct in6_pktinfo *pi;
+	struct dhcp6 *dh6;
+	ssize_t len;
+	struct dhcp6_optinfo *optinfo;
+	struct sockaddr *from;
+	int fromlen;
+	struct relayinfolist *relayinfohead;
+{
+	struct dhcp6_optinfo roptinfo;
+	struct dhcp6_listval *ia;
+	struct host_conf *client_conf;
+	u_int16_t stcode;
+
+	/* message validation according to Section 15.8 of RFC3315 */
+
+	/* the message must include a Server Identifier option */
+	if (optinfo->serverID.duid_len == 0) {
+		dprintf(LOG_INFO, FNAME, "no server ID option");
+		return (-1);
+	}
+	/* the contents of the Server Identifier option must match ours */
+	if (duidcmp(&optinfo->serverID, &server_duid)) {
+		dprintf(LOG_INFO, FNAME, "server ID mismatch");
+		return (-1);
+	}
+	/* the message must include a Client Identifier option */
+	if (optinfo->clientID.duid_len == 0) {
+		dprintf(LOG_INFO, FNAME, "no server ID option");
+		return (-1);
+	}
+
+	/*
+	 * configure necessary options based on the options in request.
+	 */
+	dhcp6_init_options(&roptinfo);
+
+	/* server identifier option */
+	if (duidcpy(&roptinfo.serverID, &server_duid)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy server ID");
+		goto fail;
+	}
+	/* copy client information back */
+	if (duidcpy(&roptinfo.clientID, &optinfo->clientID)) {
+		dprintf(LOG_ERR, FNAME, "failed to copy client ID");
+		goto fail;
+	}
+
+	/* get per-host configuration for the client, if any. */
+	if ((client_conf = find_hostconf(&optinfo->clientID))) {
+		dprintf(LOG_DEBUG, FNAME,
+		    "found a host configuration named %s", client_conf->name);
+	}
+
+	/* process authentication */
+	if (process_auth(dh6, len, client_conf, optinfo, &roptinfo)) {
+		dprintf(LOG_INFO, FNAME, "failed to process authentication "
+		    "information for %s",
+		    clientstr(client_conf, &optinfo->clientID));
+		goto fail;
+	}
+
+	/*
+	 * When the server receives a Decline message via unicast from a
+	 * client to which the server has not sent a unicast option, the server
+	 * discards the Decline message and responds with a Reply message
+	 * containing a Status Code option with value UseMulticast, a Server
+	 * Identifier option containing the server's DUID, the Client
+	 * Identifier option from the client message and no other options.
+	 * [RFC3315 18.2.6]
+	 * (Our current implementation never sends a unicast option.)
+	 */
+	if (!IN6_IS_ADDR_MULTICAST(&pi->ipi6_addr) &&
+	    TAILQ_EMPTY(relayinfohead)) {
+		stcode = DH6OPT_STCODE_USEMULTICAST;
+
+		dprintf(LOG_INFO, FNAME, "unexpected unicast message from %s",
+		    addr2str(from));
+		if (dhcp6_add_listval(&roptinfo.stcode_list,
+		    DHCP6_LISTVAL_STCODE, &stcode, NULL) == NULL) {
+			dprintf(LOG_ERR, FNAME, "failed to add a status code");
+			goto fail;
+		}
+		server6_send(DH6_REPLY, ifp, dh6, optinfo, from,
+		    fromlen, &roptinfo, relayinfohead, client_conf);
+		goto end;
+	}
+
+	/*
+	 * Locates the client's binding on IA-NA and verifies that the
+	 * information from the client matches the information stored
+	 * for that client.  (IA-PD is just ignored [RFC3633 12.1])
+	 */
+	for (ia = TAILQ_FIRST(&optinfo->iana_list); ia;
+	    ia = TAILQ_NEXT(ia, link)) {
+		if (decline_binding_ia(ia, &roptinfo.iana_list, optinfo))
+			goto fail;
+	}
+
+	/*
+	 * After all the addresses have been processed, the server generates a
+	 * Reply message and includes a Status Code option with value Success.
+	 * [RFC3315 Section 18.2.7]
+	 */
+	stcode = DH6OPT_STCODE_SUCCESS;
+	if (dhcp6_add_listval(&roptinfo.stcode_list,
+	    DHCP6_LISTVAL_STCODE, &stcode, NULL) == NULL) {
+		dprintf(LOG_NOTICE, FNAME, "failed to add a status code");
+		goto fail;
+	}
+
+	(void)server6_send(DH6_REPLY, ifp, dh6, optinfo, from, fromlen,
+	    &roptinfo, relayinfohead, client_conf);
+
+  end:
+	dhcp6_clear_options(&roptinfo);
+	return (0);
+
+  fail:
+	dhcp6_clear_options(&roptinfo);
+	return (-1);
+}
+
+static int
 react_confirm(ifp, pi, dh6, len, optinfo, from, fromlen, relayinfohead)
 	struct dhcp6_if *ifp;
 	struct in6_pktinfo *pi;
@@ -2459,6 +2593,73 @@ release_binding_ia(iap, retlist, optinfo)
 					return (0);
 				}
 			}
+		}
+	}
+
+	return (0);
+}
+
+static int
+decline_binding_ia(iap, retlist, optinfo)
+	struct dhcp6_listval *iap;
+	struct dhcp6_list *retlist;
+	struct dhcp6_optinfo *optinfo;
+{
+	struct dhcp6_binding *binding;
+	struct dhcp6_listval *lv, *lvia;
+
+	if ((binding = find_binding(&optinfo->clientID, DHCP6_BINDING_IA,
+	    iap->type, iap->val_ia.iaid)) == NULL) {
+		/*
+		 * For each IA in the Decline message for which the server has
+		 * no binding information, the server adds an IA option using
+		 * the IAID from the Release message and includes a Status Code
+		 * option with the value NoBinding in the IA option.
+		 */
+		if (make_ia_stcode(iap->type, iap->val_ia.iaid,
+		    DH6OPT_STCODE_NOBINDING, retlist)) {
+			dprintf(LOG_NOTICE, FNAME,
+			    "failed to make an option list");
+			return (-1);
+		}
+
+		return (0);
+	}
+
+	/*
+	 * If the IAs in the message are in a binding for the client and the 
+	 * addresses in the IAs have been assigned by the server to those IAs,
+	 * the server deletes the addresses from the IAs and makes the addresses
+	 * available for assignment to other clients. [RFC3315 Section 18.2.7]
+	 */
+	for (lv = TAILQ_FIRST(&iap->sublist); lv;
+	    lv = TAILQ_NEXT(lv, link)) {
+		if (binding->iatype != DHCP6_LISTVAL_IANA) {
+			/* should never reach here */
+			continue;
+		}
+
+		if ((lvia = find_binding_ia(lv, binding)) == NULL) {
+			dprintf(LOG_DEBUG, FNAME, "no binding found "
+			    "for address %s",
+			    in6addr2str(&lvia->val_prefix6.addr, 0));
+			continue;
+		}
+
+		dprintf(LOG_DEBUG, FNAME,
+		    "bound address %s has been marked as declined",
+		    in6addr2str(&lvia->val_prefix6.addr, 0));
+		decline_address(&lvia->val_prefix6.addr);
+
+		TAILQ_REMOVE(&binding->val_list, lvia, link);
+		dhcp6_clear_listval(lvia);
+		if (TAILQ_EMPTY(&binding->val_list)) {
+			/*
+			 * if the binding has become empty,
+			 * stop procedure.
+			 */
+			remove_binding(binding);
+			return (0);
 		}
 	}
 
