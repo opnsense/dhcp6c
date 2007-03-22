@@ -1240,6 +1240,16 @@ react_solicit(ifp, dh6, len, optinfo, from, fromlen, relayinfohead)
 		    duidstr(&optinfo->clientID));
 	}
 
+	/*
+	 * Servers MUST discard any Solicit messages that do include a
+	 * Server Identifier option.
+	 * [RFC3315 Section 15.2]
+	 */
+	if (optinfo->serverID.duid_len == 0) {
+		dprintf(LOG_INFO, FNAME, "server ID option found");
+		return (-1);
+	}
+
 	/* get per-host configuration for the client, if any. */
 	if ((client_conf = find_hostconf(&optinfo->clientID))) {
 		dprintf(LOG_DEBUG, FNAME, "found a host configuration for %s",
