@@ -1133,8 +1133,6 @@ client6_signal(sig)
 	int sig;
 {
 
-	dprintf(LOG_INFO, FNAME, "received a signal (%d)", sig);
-
 	switch (sig) {
 	case SIGTERM:
 		sig_flags |= SIGF_TERM;
