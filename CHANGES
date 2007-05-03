@@ -1,3 +1,7 @@
+2007-05-03  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.c: fixed a Solicitation message validation error (introduced 
+	  on Mar 21 2007)
+
 2007-03-23  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6relay.c,dhcp6.c: in signal-receiving procedure, not uses 
 	a function that is not always designed to be signal-safe 

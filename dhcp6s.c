@@ -1245,7 +1245,7 @@ react_solicit(ifp, dh6, len, optinfo, from, fromlen, relayinfohead)
 	 * Server Identifier option.
 	 * [RFC3315 Section 15.2]
 	 */
-	if (optinfo->serverID.duid_len == 0) {
+	if (optinfo->serverID.duid_len) {
 		dprintf(LOG_INFO, FNAME, "server ID option found");
 		return (-1);
 	}
