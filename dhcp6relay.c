@@ -1007,6 +1007,12 @@ relay_to_client(dh6relay, len, from)
 	dh6 = (struct dhcp6 *) optinfo.relaymsg_msg;
 	if (dh6->dh6_msgtype != DH6_RELAY_REPLY) {
 		relayed++;
+	} else {
+		/* 
+		 * change dst port to server/relay port, since it's a
+		 * reply to relay, not to a client
+		 */
+		peer.sin6_port = htons(547);	/* DH6PORT_UPSTREAM */
 	}
 	memcpy(&peer.sin6_addr, &dh6relay->dh6relay_peeraddr,
 	    sizeof (peer.sin6_addr));

@@ -1,4 +1,8 @@
 2007-05-03  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6relay.c: changes the destination port of a relayed DHCP packet
+	  from 546 to 547, when it is supposed to be bound for a relay,
+	  instead of a client.  (the situation occurs when DHCPv6-relays are
+	  cascased in a row)
 	* dhcp6s.c: fixed a Solicitation message validation error (introduced 
 	  on Mar 21 2007)
 
