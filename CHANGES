@@ -1,3 +1,4 @@
+	--- 20070507 tar ball released ---
 2007-05-03  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6relay.c: changes the destination port of a relayed DHCP packet
 	  from 546 to 547, when it is supposed to be bound for a relay,
