@@ -1550,19 +1550,6 @@ add_options(opcode, ifc, cfl0)
 	struct ia_conf *iac;
 
 	for (cfl = cfl0; cfl; cfl = cfl->next) {
-		if (opcode ==  DHCPOPTCODE_REQUEST) {
-			for (opt = TAILQ_FIRST(&ifc->reqopt_list); opt;
-			     opt = TAILQ_NEXT(opt, link)) {
-				if (opt->val_num == cfl->type) {
-					dprintf(LOG_INFO, FNAME,
-					    "duplicated requested"
-					    " option: %s",
-					    dhcp6optstr(cfl->type));
-					goto next; /* ignore it */
-				}
-			}
-		}
-
 		switch(cfl->type) {
 		case DHCPOPT_RAPID_COMMIT:
 			switch (opcode) {
@@ -1706,6 +1693,14 @@ add_options(opcode, ifc, cfl0)
 			}
 			switch(opcode) {
 			case DHCPOPTCODE_REQUEST:
+				if (dhcp6_find_listval(&ifc->reqopt_list,
+					DHCP6_LISTVAL_NUM, &opttype, 0)
+				    != NULL) {
+					dprintf(LOG_INFO, FNAME,
+					    "duplicated requested option: %s",
+					    dhcp6optstr(opttype));
+					goto next; /* ignore it */
+				}
 				if (dhcp6_add_listval(&ifc->reqopt_list,
 				    DHCP6_LISTVAL_NUM, &opttype, NULL)
 				    == NULL) {
