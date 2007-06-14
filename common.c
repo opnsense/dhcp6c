@@ -1485,8 +1485,8 @@ dhcp6_get_options(p, ep, optinfo)
 	struct dhcp6_optinfo *optinfo;
 {
 	struct dhcp6opt *np, opth;
-	int i, opt, optlen, reqopts;
-	u_int16_t num;
+	int i, opt, optlen, reqopts, num;
+	u_int16_t num16;
 	char *bp, *cp, *val;
 	u_int16_t val16;
 	u_int32_t val32;
@@ -1548,14 +1548,14 @@ dhcp6_get_options(p, ep, optinfo)
 			if (optlen < sizeof(u_int16_t))
 				goto malformed;
 			memcpy(&val16, cp, sizeof(val16));
-			num = ntohs(val16);
+			num16 = ntohs(val16);
 			dprintf(LOG_DEBUG, "", "  status code: %s",
-			    dhcp6_stcodestr(num));
+			    dhcp6_stcodestr(num16));
 
 			/* need to check duplication? */
 
 			if (dhcp6_add_listval(&optinfo->stcode_list,
-			    DHCP6_LISTVAL_STCODE, &num, NULL) == NULL) {
+			    DHCP6_LISTVAL_STCODE, &num16, NULL) == NULL) {
 				dprintf(LOG_ERR, FNAME, "failed to copy "
 				    "status code");
 				goto fail;
@@ -1571,7 +1571,7 @@ dhcp6_get_options(p, ep, optinfo)
 				u_int16_t opttype;
 
 				memcpy(&opttype, val, sizeof(u_int16_t));
-				num = ntohs(opttype);
+				num = (int)ntohs(opttype);
 
 				dprintf(LOG_DEBUG, "",
 					"  requested option: %s",
