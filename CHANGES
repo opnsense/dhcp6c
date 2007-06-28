@@ -1,3 +1,7 @@
+2007-06-28  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.8: fixed a typo in a manual (program name "dhcp6sctl" should
+	  be "dhcp6ctl")
+
 	--- 20070507 tar ball released ---
 2007-05-03  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6relay.c: changes the destination port of a relayed DHCP packet
