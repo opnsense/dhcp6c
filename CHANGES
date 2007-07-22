@@ -1,3 +1,7 @@
+2007-07-10  SUZUKI, Shinsuke <suz@kame.net>
+	* common.c: fixed a singular-point detection failure in replay check.
+	  (Bug-ID 1714644)
+
 2007-06-28  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s.8: fixed a typo in a manual (program name "dhcp6sctl" should
 	  be "dhcp6ctl")
