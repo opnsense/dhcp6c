@@ -69,7 +69,7 @@ static int csock;		/* socket for clients */
 static int maxfd;		/* maxi file descriptor for select(2) */
 
 static int debug = 0;
-static u_long sig_flags = 0;
+static sig_atomic_t sig_flags = 0;
 #define SIGF_TERM 0x1
 
 static char *relaydevice;

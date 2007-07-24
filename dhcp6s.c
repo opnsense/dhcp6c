@@ -124,7 +124,7 @@ struct relayinfo {
 TAILQ_HEAD(relayinfolist, relayinfo);
 
 static int debug = 0;
-static u_long sig_flags = 0;
+static sig_atomic_t sig_flags = 0;
 #define SIGF_TERM 0x1
 
 const dhcp6_mode_t dhcp6_mode = DHCP6_MODE_SERVER;

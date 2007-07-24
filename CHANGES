@@ -1,4 +1,6 @@
 2007-07-24  SUZUKI, Shinsuke <suz@kame.net>
+	* dhcp6s.c, dhcp6c.c, dhcp6relay.c, configure*: use sig_atomic_t for
+	  a signal-handler variable (Bug-ID 1678874)
 	* common.c: fixed a buffer overrun in sprint_uint64()
 	  (Bug-ID 1714648)
 

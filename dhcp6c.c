@@ -81,7 +81,7 @@
 
 static int debug = 0;
 static int exit_ok = 0;
-static u_long sig_flags = 0;
+static sig_atomic_t sig_flags = 0;
 #define SIGF_TERM 0x1
 #define SIGF_HUP 0x2
 
