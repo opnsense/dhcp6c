@@ -2149,11 +2149,12 @@ sprint_uint64(buf, buflen, i64)
 	u_int64_t i64;
 {
 	u_int16_t rd0, rd1, rd2, rd3;
+	u_int16_t *ptr = (u_int16_t *)&i64;
 
-	rd0 = ntohs(*(u_int16_t *)(void *)&i64);
-	rd1 = ntohs(*((u_int16_t *)(void *)(&i64 + 1)));
-	rd2 = ntohs(*((u_int16_t *)(void *)(&i64 + 2)));
-	rd3 = ntohs(*((u_int16_t *)(void *)(&i64 + 3)));
+	rd0 = ntohs(*ptr++);
+	rd1 = ntohs(*ptr++);
+	rd2 = ntohs(*ptr++);
+	rd3 = ntohs(*ptr);
 
 	snprintf(buf, buflen, "%04x %04x %04x %04x", rd0, rd1, rd2, rd3);
 
