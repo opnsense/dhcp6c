@@ -359,7 +359,6 @@ dhcp6_get_addr(optlen, cp, type, list)
 	struct dhcp6_list *list;
 {
 	void *val;
-	int option;
 
 	if (optlen % sizeof(struct in6_addr) || optlen == 0) {
 		dprintf(LOG_INFO, FNAME,
@@ -1493,7 +1492,6 @@ dhcp6_get_options(p, ep, optinfo)
 	char *bp, *cp, *val;
 	u_int16_t val16;
 	u_int32_t val32;
-	struct in6_addr valaddr;
 	struct dhcp6opt_ia optia;
 	struct dhcp6_ia ia;
 	struct dhcp6_list sublist;
@@ -2149,7 +2147,7 @@ sprint_uint64(buf, buflen, i64)
 	u_int64_t i64;
 {
 	u_int16_t rd0, rd1, rd2, rd3;
-	u_int16_t *ptr = (u_int16_t *)&i64;
+	u_int16_t *ptr = (u_int16_t *)(void *)&i64;
 
 	rd0 = ntohs(*ptr++);
 	rd1 = ntohs(*ptr++);
@@ -2247,7 +2245,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 	struct dhcp6_optinfo *optinfo;
 {
 	struct dhcp6opt *p = optbp;
-	struct dhcp6_listval *stcode, *op, *d;
+	struct dhcp6_listval *stcode, *op;
 	int len = 0, optlen;
 	char *tmpbuf = NULL;
 

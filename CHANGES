@@ -1,3 +1,6 @@
+2007-07-25  SUZUKI, Shinsuke <suz@kame.net>
+	* config.c, lease.h, common.c: removed compilation warnings
+
 2007-07-24  SUZUKI, Shinsuke <suz@kame.net>
 	* dhcp6s.c, dhcp6c.c, dhcp6relay.c, configure*: use sig_atomic_t for
 	  a signal-handler variable (Bug-ID 1678874)

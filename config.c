@@ -974,8 +974,6 @@ configure_authinfo(authlist)
 int
 configure_global_option()
 {
-	struct cf_list *cl;
-
 	/* SIP Server address */
 	if (configure_addr(cf_sip_list, &siplist0, "SIP") < 0)
 		goto bad;
@@ -1543,7 +1541,6 @@ add_options(opcode, ifc, cfl0)
 	struct dhcp6_ifconf *ifc;
 	struct cf_list *cfl0;
 {
-	struct dhcp6_listval *opt;
 	struct cf_list *cfl;
 	int opttype;
 	struct authinfo *ainfo;

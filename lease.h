@@ -34,6 +34,7 @@ extern int lease_init __P((void));
 extern void lease_cleanup __P((void));
 extern int lease_address __P((struct in6_addr *));
 extern void release_address __P((struct in6_addr *));
-extern int is_addr_leased __P((struct in6_addr *));
+extern void decline_address __P((struct in6_addr *));
+extern int is_leased __P((struct in6_addr *));
 
 #endif
