@@ -2289,6 +2289,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		}
 		memcpy(p, tmpbuf, optlen);
 		free(tmpbuf);
+		tmpbuf = NULL;
 		p = (struct dhcp6opt *)((char *)p + optlen);
 		len += optlen;
 	}
@@ -2369,6 +2370,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 			goto fail;
 		}
 		free(tmpbuf);
+		tmpbuf = NULL;
 	}
 
 	if (dhcp6_set_domain(DH6OPT_SIP_SERVER_D, &optinfo->sipname_list,
@@ -2441,6 +2443,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		}
 		memcpy(p, tmpbuf, optlen);
 		free(tmpbuf);
+		tmpbuf = NULL;
 		p = (struct dhcp6opt *)((char *)p + optlen);
 		len += optlen;
 	}
