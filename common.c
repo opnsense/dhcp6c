@@ -1518,7 +1518,7 @@ dhcp6_get_options(p, ep, optinfo)
 		/* option length field overrun */
 		if (np > ep) {
 			dprintf(LOG_INFO, FNAME, "malformed DHCP options");
-			return (-1);
+			goto fail;
 		}
 
 		switch (opt) {
