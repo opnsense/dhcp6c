@@ -955,6 +955,7 @@ server6_recv(s)
 			goto end;
 		}
 		/* dh6 and optend should have been updated. */
+		len = (ssize_t)((char *)optend - (char *)dh6);
 	}
 
 	/*

@@ -1,6 +1,8 @@
 2007-12-06  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a possible memory leak. (Bug-ID 1844676)
 	* common.c: fixed a possible double free. (Bug-ID 1844683)
+	* dhcp6s.c: fixed a bugthat dhcp6s cannot accept a relayed
+	  request message with authentication option. (Bug-ID 1814287)
 
 2007-07-25  SUZUKI, Shinsuke <suz@kame.net>
 	* config.c, lease.h, common.c: removed compilation warnings
