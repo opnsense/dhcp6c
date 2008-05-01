@@ -2503,7 +2503,7 @@ update_ia(msgtype, iap, retlist, optinfo)
 					saddr.pltime =
 					    blv->val_statefuladdr6.pltime;
 					saddr.vltime =
-					    blv->val_statefuladdr6.pltime;
+					    blv->val_statefuladdr6.vltime;
 				}
 
 				if (dhcp6_add_listval(&ialist,
