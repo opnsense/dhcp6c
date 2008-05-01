@@ -2021,7 +2021,7 @@ create_dynamic_hostconf(duid, pool)
 
 	if ((host = malloc(sizeof(*host))) == NULL) {
 		dprintf(LOG_ERR, FNAME, "memory allocation failed");
-		return (NULL);
+		goto bad;
 	}
 	memset(host, 0, sizeof(*host));
 	TAILQ_INIT(&host->prefix_list);
@@ -2113,6 +2113,7 @@ create_pool(name, range)
 	}
 	if ((pool->name = strdup(name)) == NULL) {
 		dprintf(LOG_ERR, FNAME, "memory allocation failed");
+		free(pool);
 		return (NULL);
 	}
 	pool->min = range->min;
