@@ -6,6 +6,8 @@
 	* config.c: fixed a possible memory leak. (Bug-ID 1847588)
 	* dhcp6s.c: fixed a lifetime calculation failure in RENEW/REBIND 
 		    process for stateful-address. (Bug-ID: 1850457)
+	* common.c: fixed a improper handling of a domain-name ending with '.'.
+		    (Bug-ID: 1852869)
 
 2007-12-06  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a possible memory leak. (Bug-ID 1844676)

@@ -513,7 +513,7 @@ dhcp6_set_domain(type, list, p, optep, len)
 		memcpy(cp, name, nlen);
 		cp += nlen;
 	}
-	if (copy_option(type, optlen, tmpbuf, p, optep, len) != 0) {
+	if (copy_option(type, cp - tmpbuf, tmpbuf, p, optep, len) != 0) {
 		free(tmpbuf);
 		return -1;
 	}
