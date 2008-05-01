@@ -2545,6 +2545,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 			default:
 				dprintf(LOG_ERR, FNAME,
 				    "unexpected authentication protocol");
+				free(auth);
 				goto fail;
 			}
 		}
@@ -2553,6 +2554,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		    &auth->dh6_auth_proto, &p, optep, &len) != 0) {
 			goto fail;
 		}
+		free(auth);
 	}
 
 	return (len);
