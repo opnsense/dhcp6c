@@ -2654,14 +2654,14 @@ decline_binding_ia(iap, retlist, optinfo)
 		if ((lvia = find_binding_ia(lv, binding)) == NULL) {
 			dprintf(LOG_DEBUG, FNAME, "no binding found "
 			    "for address %s",
-			    in6addr2str(&lvia->val_prefix6.addr, 0));
+			    in6addr2str(&lv->val_statefuladdr6.addr, 0));
 			continue;
 		}
 
 		dprintf(LOG_DEBUG, FNAME,
 		    "bound address %s has been marked as declined",
-		    in6addr2str(&lvia->val_prefix6.addr, 0));
-		decline_address(&lvia->val_prefix6.addr);
+		    in6addr2str(&lvia->val_statefuladdr6.addr, 0));
+		decline_address(&lvia->val_statefuladdr6.addr);
 
 		TAILQ_REMOVE(&binding->val_list, lvia, link);
 		dhcp6_clear_listval(lvia);

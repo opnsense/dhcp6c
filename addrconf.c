@@ -87,7 +87,7 @@ struct statefuladdr {
 
 static struct statefuladdr *find_addr __P((struct statefuladdr_list *,
     struct dhcp6_statefuladdr *));
-static void remove_addr __P((struct statefuladdr *));
+static int remove_addr __P((struct statefuladdr *));
 static int isvalid_addr __P((struct iactl *));
 static u_int32_t duration_addr __P((struct iactl *));
 static void cleanup_addr __P((struct iactl *));
@@ -174,7 +174,8 @@ update_address(ia, addr, dhcpifp, ctlp, callback)
 	    in6addr2str(&addr->addr, 0), addr->pltime, addr->vltime);
 
 	if (sa->addr.vltime != 0)
-		na_ifaddrconf(IFADDRCONF_ADD, sa);
+		if (na_ifaddrconf(IFADDRCONF_ADD, sa) < 0)
+			return (-1);
 
 	/*
 	 * If the new vltime is 0, this address immediately expires.
@@ -182,7 +183,8 @@ update_address(ia, addr, dhcpifp, ctlp, callback)
 	 */
 	switch (sa->addr.vltime) {
 	case 0:
-		remove_addr(sa);
+		if (remove_addr(sa) < 0)
+			return (-1);
 		break;
 	case DHCP6_DURATION_INFINITE:
 		if (sa->timer)
@@ -225,10 +227,12 @@ find_addr(head, addr)
 	return (NULL);
 }
 
-static void
+static int
 remove_addr(sa)
 	struct statefuladdr *sa;
 {
+	int ret;
+
 	dprintf(LOG_DEBUG, FNAME, "remove an address %s",
 	    in6addr2str(&sa->addr.addr, 0));
 
@@ -236,8 +240,10 @@ remove_addr(sa)
 		dhcp6_remove_timer(&sa->timer);
 
 	TAILQ_REMOVE(&sa->ctl->statefuladdr_head, sa, link);
-	na_ifaddrconf(IFADDRCONF_REMOVE, sa);
+	ret = na_ifaddrconf(IFADDRCONF_REMOVE, sa);
 	free(sa);
+
+	return (ret);
 }
 
 static int

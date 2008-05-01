@@ -1,6 +1,8 @@
 2008-05-01  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a memory leak (Bug-ID: 1847587)
-
+	* dhcp6s.c: fixed a potential NULL pointer access (Bug-ID: 1848304).
+		    used a val_statefuladdr, instead of val_prefix, to access 
+		    an address in IA in DHCP DECLINE handling.
 2007-12-06  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a possible memory leak. (Bug-ID 1844676)
 	* common.c: fixed a possible double free. (Bug-ID 1844683)
