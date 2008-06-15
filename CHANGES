@@ -1,3 +1,4 @@
+	--- 20080615 tar ball released ---
 2008-05-01  SUZUKI, Shinsuke <suz@kame.net>
 	* common.c: fixed a memory leak (Bug-ID: 1847587)
 	* dhcp6s.c: fixed a potential NULL pointer access (Bug-ID: 1848304).
