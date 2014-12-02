@@ -1761,12 +1761,6 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 		    &optinfo->serverID, ev->authparam);
 	}
 
-	/*
-	 * Call the configuration script, if specified, to handle various
-	 * configuration parameters.
-	 */
-	client6_script(ifp->scriptpath, state, optinfo);
-
 	dhcp6_remove_event(ev);
 
 	if (state == DHCP6S_RELEASE) {
@@ -1779,6 +1773,12 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 		 */
 		check_exit();
 	}
+
+	/*
+	 * Call the configuration script, if specified, to handle various
+	 * configuration parameters.
+	 */
+	client6_script(ifp->scriptpath, state, optinfo);
 
 	d_printf(LOG_DEBUG, FNAME, "got an expected reply, sleeping.");
 
