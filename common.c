@@ -1808,6 +1808,15 @@ dhcp6_get_options(p, ep, optinfo)
 			memcpy(optinfo->ifidopt_id, cp, optlen);
 			optinfo->ifidopt_len = optlen;
 			break;
+		case DH6OPT_RECONF_ACCEPT:
+			/* Debian Bug: #562079 */
+			if (optlen != 0)
+				goto malformed;
+			d_printf(LOG_INFO, FNAME,
+			    "received option: \"%s\" (len %d), however "
+			    "reconfigure negotiation is not supported yet",
+			    dhcp6optstr(opt), optlen);
+			break;
 		case DH6OPT_SIP_SERVER_D:
 			if (dhcp6_get_domain(optlen, cp, opt,
 			    &optinfo->sipname_list) == -1)
@@ -3118,6 +3127,8 @@ dhcp6optstr(type)
 		return ("interface ID");
 	case DH6OPT_RECONF_MSG:
 		return ("reconfigure message");
+	case DH6OPT_RECONF_ACCEPT:
+		return ("reconfigure accept");
 	case DH6OPT_SIP_SERVER_D:
 		return ("SIP domain name");
 	case DH6OPT_SIP_SERVER_A:
