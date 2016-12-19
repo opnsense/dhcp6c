@@ -1,3 +1,17 @@
+This is patched version of WIDE-DHCPv6 maintained by hrs@FreeBSD.org.
+
+Improvements include the follwowing:
+
+- Increased log verbosity.
+- Fix socket leakage by setting FD_CLOEXEC.
+- Call a configuration script after addresses and prefixes are set
+  on an interface.
+- Update ifid on interface restart, it may have changed.
+- "-n" flag to prevent address release from being sent to the DHCP server
+  upon restart.
+
+Original README:
+
 $KAME: README,v 1.3 2005/01/12 06:06:10 suz Exp $
 
 WIDE-DHCPv6
