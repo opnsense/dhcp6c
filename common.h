@@ -120,6 +120,7 @@ sysdep_sa_len (const struct sockaddr *sa)
 extern int foreground;
 extern int debug_thresh;
 extern char *device;
+extern int opt_norelease;
 
 /* search option for dhcp6_find_listval() */
 #define MATCHLIST_PREFIXLEN 0x1
