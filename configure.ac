@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(dhcp6c.c)
+AC_INIT([wide-dhcpv6],[20080615])
 
 dnl Checks for programs.
 AC_PROG_INSTALL
