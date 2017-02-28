@@ -3173,6 +3173,8 @@ char *dhcp6_event_statestr(ev)
 		return ("RELEASE");
 	case DHCP6S_IDLE:
 		return ("IDLE");
+	case DHCP6S_EXIT:
+		return ("EXIT");
 	default:
 		return ("???"); /* XXX */
 	}

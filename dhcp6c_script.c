@@ -108,6 +108,8 @@ client6_script(scriptpath, state, optinfo)
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
 	envc = 2;     /* we at least include the reason and the terminator */
+	if (state == DHCP6S_EXIT)
+		goto setenv;
 
 	/* count the number of variables */
 	for (v = TAILQ_FIRST(&optinfo->dns_list); v; v = TAILQ_NEXT(v, link))
@@ -157,6 +159,7 @@ client6_script(scriptpath, state, optinfo)
 	}
 	envc += bcmcsnamelen ? 1 : 0;
 
+setenv:
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
 		d_printf(LOG_NOTICE, FNAME,
@@ -178,6 +181,9 @@ client6_script(scriptpath, state, optinfo)
 		ret = -1;
 		goto clean;
 	}
+	if (state == DHCP6S_EXIT)
+		goto launch;
+
 	/* "var=addr1 addr2 ... addrN" + null char for termination */
 	if (dnsservers) {
 		elen = sizeof (dnsserver_str) +
@@ -384,7 +390,7 @@ client6_script(scriptpath, state, optinfo)
 			strlcat(s, " ", elen);
 		}
 	}
-
+launch:
 	/* launch the script */
 	pid = fork();
 	if (pid < 0) {

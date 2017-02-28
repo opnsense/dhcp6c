@@ -500,6 +500,8 @@ check_exit()
 		if (!TAILQ_EMPTY(&ifp->event_list))
 			return;
 	}
+	for (ifp = dhcp6_if; ifp; ifp = ifp->next)
+		client6_script(ifp->scriptpath, DHCP6S_EXIT, NULL);
 
 	/* We have no existing event.  Do exit. */
 	d_printf(LOG_INFO, FNAME, "exiting");
