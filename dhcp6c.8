@@ -106,18 +106,27 @@ or
 .Fl i
 option is specified.
 .Pp
-Upon receipt of the
-.Dv SIGHUP
+Upon receipt of a
+.Dv SIGHUP ,
+.Dv SIGTERM ,
 or
-.Dv SIGTERM
-signals,
+.Dv SIGUSR1
+signal,
 .Nm
 will remove all stateful resources from the system.
-In the former case the daemon will then reinvoke itself,
-while it will stop running in the latter case.
-In either case,
-.Nm
-will send DHCPv6 Release messages to release resources assigned from servers.
+After that,
+.Dv SIGHUP
+reinitializes the daemon,
+and
+.Dv SIGTERM
+stops the daemon.
+In both cases,
+DHCPv6 Release message will be sent to release resources
+assigned from servers.
+.Dv SIGUSR1
+stops the daemon as
+.Dv SIGTERM
+does though DHCPv6 Release message will not be sent.
 .\"
 .Sh FILES
 .Bl -tag -width /usr/local/etc/dhcp6c.conf -compact
@@ -168,6 +177,10 @@ message.
 The client sent a
 .Li RELEASE
 message.
+.It Li EXIT
+This happens when
+.Nm
+exits.
 .El
 .It Ic new_domain_name_servers
 A list of available DNS servers,
