@@ -1948,10 +1948,7 @@ client6_recvreply(ifp, dh6, len, optinfo)
 	 * Call the configuration script, if specified, to handle various
 	 * configuration parameters.
 	 */
-	if (ifp->scriptpath != NULL && strlen(ifp->scriptpath) != 0) {
-		d_printf(LOG_DEBUG, FNAME, "executes %s", ifp->scriptpath);
-		client6_script(ifp->scriptpath, state, optinfo);
-	}
+	client6_script(ifp->scriptpath, state, optinfo);
 
 	dhcp6_remove_event(ev);
 

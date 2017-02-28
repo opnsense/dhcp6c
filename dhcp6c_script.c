@@ -92,6 +92,7 @@ client6_script(scriptpath, state, optinfo)
 	/* if a script is not specified, do nothing */
 	if (scriptpath == NULL || strlen(scriptpath) == 0)
 		return -1;
+	d_printf(LOG_DEBUG, FNAME, "executes %s", scriptpath);
 
 	ev.state = state;
 
