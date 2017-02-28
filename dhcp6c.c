@@ -498,6 +498,7 @@ check_exit()
 	/* We have no existing event.  Do exit. */
 	d_printf(LOG_INFO, FNAME, "exiting");
 
+	unlink(pid_file);
 	exit(0);
 }
 
@@ -507,7 +508,6 @@ process_signals()
 	if ((sig_flags & SIGF_TERM)) {
 		exit_ok = 1;
 		free_resources(NULL);
-		unlink(pid_file);
 		check_exit();
 	}
 	if ((sig_flags & SIGF_HUP)) {
@@ -707,7 +707,6 @@ client6_do_ctlcommand(buf, len)
 		if (commandlen == 0) {
 			exit_ok = 1;
 			free_resources(NULL);
-			unlink(pid_file);
 			check_exit();
 		} else {
 			if (get_val32(&bp, &commandlen, &p32))
@@ -1954,7 +1953,6 @@ client6_recvreply(ifp, dh6, len, optinfo)
 	if (infreq_mode) {
 		exit_ok = 1;
 		free_resources(NULL);
-		unlink(pid_file);
 		check_exit();
 	}
 	return (0);
