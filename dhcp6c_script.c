@@ -84,13 +84,16 @@ client6_script(scriptpath, state, optinfo)
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
-	char reason[] = "REASON=NBI";
+	char reason[32];
 	struct dhcp6_listval *v;
+	struct dhcp6_event ev;
 	pid_t pid, wpid;
 
 	/* if a script is not specified, do nothing */
 	if (scriptpath == NULL || strlen(scriptpath) == 0)
 		return -1;
+
+	ev.state = state;
 
 	/* initialize counters */
 	dnsservers = 0;
@@ -165,6 +168,8 @@ client6_script(scriptpath, state, optinfo)
 	/*
 	 * Copy the parameters as environment variables
 	 */
+	snprintf(reason, sizeof(reason), "REASON=%s",
+	    dhcp6_event_statestr(&ev));
 	i = 0;
 	/* reason */
 	if ((envp[i++] = strdup(reason)) == NULL) {
