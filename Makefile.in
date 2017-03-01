@@ -73,12 +73,13 @@ dhcp6relay: $(RELAYOBJS) $(LIBOBJS)
 dhcp6ctl: $(CTLOBJS)
 	$(CC) $(LDFLAGS) -o $@ $(CTLOBJS) $(LIBOBJS) $(LIBS)
 
-cfparse.c y.tab.h: cfparse.y
+y.tab.c y.tab.h: cfparse.y
 	@YACC@ -d cfparse.y
-	mv y.tab.c cfparse.c
-
-cftoken.c: cftoken.l y.tab.h
+cfparse.c: y.tab.c
+	mv y.tab.c $@
+lex.yy.c: cftoken.l y.tab.h
 	@LEX@ cftoken.l
+cftoken.c: lex.yy.c
 	mv lex.yy.c $@	
 
 getaddrinfo.o:	$(srcdir)/missing/getaddrinfo.c
