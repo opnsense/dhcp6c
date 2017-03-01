@@ -78,9 +78,7 @@ struct dhcp6_commandctx {
 };
 
 int
-dhcp6_ctl_init(addr, port, max, sockp)
-	char *addr, *port;
-	int max, *sockp;
+dhcp6_ctl_init(char *addr, char *port, int max, int *sockp)
 {
 	struct addrinfo hints, *res = NULL;
 	int on;
@@ -145,10 +143,7 @@ dhcp6_ctl_init(addr, port, max, sockp)
 }
 
 int
-dhcp6_ctl_authinit(keyfile, keyinfop, digestlenp)
-	char *keyfile;
-	struct keyinfo **keyinfop;
-	int *digestlenp;
+dhcp6_ctl_authinit(char *keyfile, struct keyinfo **keyinfop, int *digestlenp)
 {
 	FILE *fp = NULL;
 	struct keyinfo *ctlkey = NULL;
@@ -202,9 +197,7 @@ dhcp6_ctl_authinit(keyfile, keyinfop, digestlenp)
 }
 
 int
-dhcp6_ctl_acceptcommand(sl, callback)
-	int sl;
-	int (*callback) __P((char *, ssize_t));
+dhcp6_ctl_acceptcommand(int sl, int (*callback)(char *, ssize_t))
 {
 	int s;
 	struct sockaddr_storage from_ss;
@@ -264,8 +257,7 @@ dhcp6_ctl_acceptcommand(sl, callback)
 }
 
 void
-dhcp6_ctl_closecommand(ctx)
-	struct dhcp6_commandctx *ctx;
+dhcp6_ctl_closecommand(struct dhcp6_commandctx *ctx)
 {
 	close(ctx->s);
 	free(ctx);
@@ -281,8 +273,7 @@ dhcp6_ctl_closecommand(ctx)
 }
 
 int
-dhcp6_ctl_readcommand(read_fds)
-	fd_set *read_fds;
+dhcp6_ctl_readcommand(fd_set *read_fds)
 {
 	struct dhcp6_commandctx *ctx, *ctx_next;
 	char *cp;
@@ -348,9 +339,7 @@ dhcp6_ctl_readcommand(read_fds)
 }
 
 int
-dhcp6_ctl_setreadfds(read_fds, maxfdp)
-	fd_set *read_fds;
-	int *maxfdp;
+dhcp6_ctl_setreadfds(fd_set *read_fds, int *maxfdp)
 {
 	int maxfd = *maxfdp;
 	struct dhcp6_commandctx *ctx;
