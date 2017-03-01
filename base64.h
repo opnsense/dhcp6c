@@ -29,4 +29,9 @@
  * SUCH DAMAGE.
  */
 
-extern int base64_decodestring __P((const char *, char *, size_t));
+#ifndef	_BASE64_H_
+#define	_BASE64_H_
+
+int base64_decodestring(const char *, char *, size_t);
+
+#endif

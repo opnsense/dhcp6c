@@ -58,6 +58,7 @@
 
 #include "dhcp6.h"
 #include "config.h"
+#include "dhcp6c.h"
 #include "common.h"
 
 static char sipserver_str[] = "new_sip_servers";
@@ -71,6 +72,8 @@ static char nispserver_str[] = "new_nisp_servers";
 static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
+
+int client6_script(char *, int, struct dhcp6_optinfo *);
 
 int
 client6_script(scriptpath, state, optinfo)

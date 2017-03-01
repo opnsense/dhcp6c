@@ -28,17 +28,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifdef __sun__
-#ifndef	U_INT16_T_DEFINED
-#define	U_INT16_T_DEFINED
-typedef uint16_t u_int16_t;
-#endif
-#ifndef	U_INT32_T_DEFINED
-#define	U_INT32_T_DEFINED
-typedef uint32_t u_int32_t;
-#endif
-#endif
+#ifndef	_CONTROL_H_
+#define	_CONTROL_H_
 
 #define DEFAULT_SERVER_CONTROL_ADDR "::1" /* default IPv6 address for server
 					   * control socket */
@@ -75,17 +66,19 @@ enum { DHCP6CTL_AUTHALG_UNDEF = -1, DHCP6CTL_AUTHALG_HMACMD5 = 1 };
  * Packet formats of command protocol
  */
 struct dhcp6ctl {
-	u_int16_t command;
-	u_int16_t len;
-	u_int16_t version;
-	u_int16_t reserved;
-	u_int32_t timestamp;
+	uint16_t command;
+	uint16_t len;
+	uint16_t version;
+	uint16_t reserved;
+	uint32_t timestamp;
 } __attribute__ ((__packed__));
 
 struct dhcp6ctl_iaspec {
-	u_int32_t flags;
-	u_int32_t type;
-	u_int32_t id;
-	u_int32_t duidlen;
+	uint32_t flags;
+	uint32_t type;
+	uint32_t id;
+	uint32_t duidlen;
 	/* variable length of DUID follows */
 } __attribute__ ((__packed__));
+
+#endif

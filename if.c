@@ -45,11 +45,9 @@
 #include <ifaddrs.h>
 #include <errno.h>
 
-#include <dhcp6.h>
-#include <config.h>
-#include <common.h>
-
-extern int errno;
+#include "dhcp6.h"
+#include "config.h"
+#include "common.h"
 
 struct dhcp6_if *dhcp6_if;
 
@@ -105,7 +103,7 @@ ifinit(ifname)
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 
-			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			sin6 = (struct sockaddr_in6 *)(void *)ifa->ifa_addr;
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				continue;
 
@@ -131,7 +129,7 @@ ifreset(ifp)
 	struct dhcp6_if *ifp;
 {
 	unsigned int ifid;
-	u_int32_t linkid;
+	uint32_t linkid;
 
 	if ((ifid = if_nametoindex(ifp->ifname)) == 0) {
 		d_printf(LOG_ERR, FNAME, "invalid interface(%s): %s",

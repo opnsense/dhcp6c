@@ -53,13 +53,13 @@
 #include <netdb.h>
 #include <errno.h>
 
-#include <dhcp6.h>
-#include <config.h>
-#include <common.h>
-#include <auth.h>
-#include <base64.h>
-#include <control.h>
-#include <dhcp6_ctl.h>
+#include "dhcp6.h"
+#include "config.h"
+#include "common.h"
+#include "auth.h"
+#include "base64.h"
+#include "control.h"
+#include "dhcp6_ctl.h"
 
 TAILQ_HEAD(dhcp6_commandqueue, dhcp6_commandctx);
 
@@ -74,11 +74,11 @@ struct dhcp6_commandctx {
 	char inputbuf[1024];	/* input buffer */
 	ssize_t input_len;
 	ssize_t input_filled;
-	int (*callback) __P((char *, ssize_t));
+	int (*callback)(char *, ssize_t);
 };
 
 int
-dhcp6_ctl_init(char *addr, char *port, int max, int *sockp)
+dhcp6_ctl_init(const char *addr, const char *port, int max, int *sockp)
 {
 	struct addrinfo hints, *res = NULL;
 	int on;
@@ -143,7 +143,7 @@ dhcp6_ctl_init(char *addr, char *port, int max, int *sockp)
 }
 
 int
-dhcp6_ctl_authinit(char *keyfile, struct keyinfo **keyinfop, int *digestlenp)
+dhcp6_ctl_authinit(const char *keyfile, struct keyinfo **keyinfop, int *digestlenp)
 {
 	FILE *fp = NULL;
 	struct keyinfo *ctlkey = NULL;
@@ -320,7 +320,8 @@ dhcp6_ctl_readcommand(fd_set *read_fds)
 				default:
 					break;
 				}
-			} else if (ctx->input_len > sizeof(ctx->inputbuf)) {
+			} else if ((size_t)ctx->input_len >
+			    sizeof(ctx->inputbuf)) {
 				d_printf(LOG_INFO, FNAME,
 				    "too large command (%d bytes)",
 				    ctx->input_len);

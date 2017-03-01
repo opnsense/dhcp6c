@@ -57,12 +57,13 @@
 #include <err.h>
 #include <string.h>
 
-#include <dhcp6.h>
-#include <config.h>
-#include <common.h>
+#include "dhcp6.h"
+#include "config.h"
+#include "dhcp6relay.h"
+#include "common.h"
 
 #define DHCP6RELAY_PIDFILE "/var/run/dhcp6relay.pid"
-static char *pid_file = DHCP6RELAY_PIDFILE;
+static const char *pid_file = DHCP6RELAY_PIDFILE;
 
 static int ssock;		/* socket for relaying to servers */
 static int csock;		/* socket for clients */
@@ -74,7 +75,7 @@ static sig_atomic_t sig_flags = 0;
 
 static char *relaydevice;
 static char *boundaddr;
-static char *serveraddr = DH6ADDR_ALLSERVER;
+static const char *serveraddr = DH6ADDR_ALLSERVER;
 static char *scriptpath;
 
 static char *rmsgctlbuf;
@@ -91,36 +92,33 @@ struct ifid_list {
 	TAILQ_ENTRY(ifid_list) ilink;
 	unsigned int ifid;
 };
-TAILQ_HEAD(, ifid_list) ifid_list;
+static TAILQ_HEAD(, ifid_list) ifid_list;
 struct prefix_list {
 	TAILQ_ENTRY(prefix_list) plink;
 	struct sockaddr_in6 paddr; /* contains meaningless but enough members */
 	int plen;
 };
-TAILQ_HEAD(, prefix_list) global_prefixes; /* list of non-link-local prefixes */
-static char *global_strings[] = {
+static TAILQ_HEAD(, prefix_list) global_prefixes; /* list of non-link-local prefixes */
+static const char *global_strings[] = {
 	/* "fec0::/10",	site-local unicast addresses were deprecated */
 	"2000::/3",
 	"FC00::/7",  /* Unique Local Address (RFC4193) */
 	NULL
 };
 
-static void usage __P((void));
-static struct prefix_list *make_prefix __P((char *));
-static void relay6_init __P((int, char *[]));
-static void relay6_loop __P((void));
-static void relay6_recv __P((int, int));
-static void process_signals __P((void));
-static void relay6_signal __P((int));
-static int make_msgcontrol __P((struct msghdr *, void *, socklen_t,
-    struct in6_pktinfo *, int));
-static void relay_to_server __P((struct dhcp6 *, ssize_t,
-    struct sockaddr_in6 *, char *, unsigned int));
-static void relay_to_client __P((struct dhcp6_relay *, ssize_t,
-    struct sockaddr *));
-extern int relay6_script __P((char *, struct sockaddr_in6 *,
-    struct dhcp6 *, int));
-
+static void usage(void);
+static struct prefix_list *make_prefix(const char *);
+static void relay6_init(int, char *[]);
+static void relay6_loop(void);
+static void relay6_recv(int, int);
+static void process_signals(void);
+static void relay6_signal(int);
+static int make_msgcontrol(struct msghdr *, void *, socklen_t,
+    struct in6_pktinfo *, int);
+static void relay_to_server(struct dhcp6 *, ssize_t,
+    struct sockaddr_in6 *, char *, unsigned int);
+static void relay_to_client(struct dhcp6_relay *, ssize_t,
+    struct sockaddr *);
 
 static void
 usage()
@@ -229,8 +227,7 @@ main(argc, argv)
 }
 
 static struct prefix_list *
-make_prefix(pstr0)
-	char *pstr0;
+make_prefix(const char *pstr0)
 {
 	struct prefix_list *pent;
 	char *p, *ep;
@@ -406,7 +403,7 @@ relay6_init(int ifnum, char *iflist[])
 	}
 	memset(&mreq6, 0, sizeof (mreq6));
 	memcpy(&mreq6.ipv6mr_multiaddr,
-	    &((struct sockaddr_in6 *)res2->ai_addr)->sin6_addr,
+	    &((struct sockaddr_in6 *)(void *)res2->ai_addr)->sin6_addr,
 	    sizeof (mreq6.ipv6mr_multiaddr));
 
 	TAILQ_INIT(&ifid_list);
@@ -621,7 +618,7 @@ relay6_recv(s, fromclient)
 
 		switch(cm->cmsg_type) {
 		case IPV6_PKTINFO:
-			pi = (struct in6_pktinfo *)CMSG_DATA(cm);
+			pi = (struct in6_pktinfo *)(void *)CMSG_DATA(cm);
 			break;
 		}
 	}
@@ -640,7 +637,7 @@ relay6_recv(s, fromclient)
 	 * interface, when a DHCPv6 server is running on that interface.
 	 * This check prevents such reception.
 	 */
-	if (ifd == NULL && pi->ipi6_ifindex != relayifid)
+	if (ifd == NULL && pi->ipi6_ifindex != (u_int)relayifid)
 		return;
 	if (if_indextoname(pi->ipi6_ifindex, ifname) == NULL) {
 		d_printf(LOG_WARNING, FNAME,
@@ -650,7 +647,7 @@ relay6_recv(s, fromclient)
 	}
 
 	/* packet validation */
-	if (len < sizeof (*dh6)) {
+	if ((size_t)len < sizeof (*dh6)) {
 		d_printf(LOG_INFO, FNAME, "short packet (%d bytes)", len);
 		return;
 	}
@@ -745,7 +742,7 @@ make_msgcontrol(mh, ctlbuf, buflen, pktinfo, hlim)
 		cm->cmsg_len = CMSG_LEN(sizeof (hlim));
 		cm->cmsg_level = IPPROTO_IPV6;
 		cm->cmsg_type = IPV6_HOPLIMIT;
-		*(int *)CMSG_DATA((struct cmsghdr *)cm) = hlim;
+		*(int *)(void *)CMSG_DATA((struct cmsghdr *)cm) = hlim;
 
 		cm = CMSG_NXTHDR(mh, cm); /* just in case */
 	}
@@ -952,7 +949,7 @@ relay_to_client(dh6relay, len, from)
 	}
 
 	/* minimum validation for the inner message */
-	if (optinfo.relaymsg_len < sizeof (struct dhcp6)) {
+	if ((size_t)optinfo.relaymsg_len < sizeof(struct dhcp6)) {
 		d_printf(LOG_INFO, FNAME, "short relay message from %s",
 		    addr2str(from));
 		goto out;

@@ -58,16 +58,18 @@
 #define DEFAULT_SERVER_KEYFILE SYSCONFDIR "/dhcp6sctlkey"
 #define DEFAULT_CLIENT_KEYFILE SYSCONFDIR "/dhcp6cctlkey"
 
-static char *ctladdr;
-static char *ctlport;
+static const char *ctladdr;
+static const char *ctlport;
 
 static enum { CTLCLIENT, CTLSERVER } ctltype = CTLCLIENT;
 
+#if 0
 static inline int put16(char **, int *, uint16_t);
+#endif
 static inline int put32(char **, int *, uint32_t);
 static inline int putval(char **, int *, void *, size_t);
 
-static int setup_auth(char *, struct keyinfo *, int *);
+static int setup_auth(const char *, struct keyinfo *, int *);
 static int make_command(int, char **, char **, size_t *,
     struct keyinfo *, int);
 static int make_remove_command(int, char **, char **, int *);
@@ -88,7 +90,7 @@ main(int argc, char *argv[])
 	size_t clen;
 	struct addrinfo hints, *res0, *res;
 	int digestlen;
-	char *keyfile = NULL;
+	const char *keyfile = NULL;
 	struct keyinfo key;
 
 	while ((ch = getopt(argc, argv, "CSa:k:p:")) != -1) {
@@ -190,7 +192,7 @@ main(int argc, char *argv[])
 	cc = write(s, cbuf, clen);
 	if (cc < 0)
 		err(1, "write command");
-	if (cc != clen)
+	if ((size_t)cc != clen)
 		errx(1, "failed to send complete command");
 
 	close(s);
@@ -200,7 +202,7 @@ main(int argc, char *argv[])
 }
 
 static int
-setup_auth(char *keyfile, struct keyinfo *key, int *digestlenp)
+setup_auth(const char *keyfile, struct keyinfo *key, int *digestlenp)
 {
 	FILE *fp = NULL;
 	char line[1024], secret[1024];
@@ -243,11 +245,12 @@ setup_auth(char *keyfile, struct keyinfo *key, int *digestlenp)
 	return (-1);
 }
 
+#if 0
 static inline int
 put16(char **bpp, int *lenp, uint16_t val)
 {
 	char *bp = *bpp;
-	int len = *lenp;
+	size_t len = (size_t)*lenp;
 
 	if (len < sizeof(val))
 		return (-1);
@@ -262,12 +265,13 @@ put16(char **bpp, int *lenp, uint16_t val)
 
 	return (0);
 }
+#endif
 
 static inline int
 put32(char **bpp, int *lenp, uint32_t val)
 {
 	char *bp = *bpp;
-	int len = *lenp;
+	size_t len = (size_t)*lenp;
 
 	if (len < sizeof(val))
 		return (-1);
@@ -287,7 +291,7 @@ static inline int
 putval(char **bpp, int *lenp, void *val, size_t valsize)
 {
 	char *bp = *bpp;
-	int len = *lenp;
+	size_t len = (size_t)*lenp;
 
 	if (len < valsize)
 		return (-1);
@@ -367,7 +371,7 @@ make_command(int argc, char **argv, char **bufp, size_t *lenp,
 		warn("failed to get current time");
 		return (-1);
 	}
-	ctl.timestamp = htonl((u_int32_t)now);
+	ctl.timestamp = htonl((uint32_t)now);
 
 	memcpy(commandbuf, &ctl, sizeof(ctl));
 
@@ -507,7 +511,7 @@ make_interface_object(int argc, char **argv, char **bpp, int *lenp)
 	argc_passed++;
 
 	iflen = strlen(argv[0]) + 1;
-	if (put32(bpp, lenp, (u_int32_t)iflen))
+	if (put32(bpp, lenp, (uint32_t)iflen))
 		goto fail;
 	if (putval(bpp, lenp, argv[0], strlen(argv[0]) + 1))
 		goto fail;
@@ -581,7 +585,7 @@ make_ia_object(int argc, char **argv, char **bpp, int *lenp)
 		return (-1);
 	}
 
-	iaspec.id = htonl((u_int32_t)strtol(argv[1], NULL, 10));
+	iaspec.id = htonl((uint32_t)strtol(argv[1], NULL, 10));
 
 	if (parse_duid(argv[2], &duidlen, &dummy, &dummylen))
 		goto fail;

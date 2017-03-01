@@ -58,13 +58,14 @@
 
 #include "dhcp6.h"
 #include "config.h"
+#include "dhcp6relay.h"
 #include "common.h"
 
 static char client_str[] = "client";
 static char buf[BUFSIZ];
 
-static char *iapd2str __P((int, struct dhcp6_listval *));
-static char *iana2str __P((int, struct dhcp6_listval *));
+static char *iapd2str(int, struct dhcp6_listval *);
+static char *iana2str(int, struct dhcp6_listval *);
 
 int
 relay6_script(scriptpath, client, dh6, len)
@@ -228,7 +229,8 @@ iapd2str(num, iav)
 	struct dhcp6_listval *iav;
 {
 	struct dhcp6_listval *siav;
-	char *s, *r, *comma;
+	char *s, *r;
+	const char *comma;
 
 	s = buf;
 	memset(s, 0, BUFSIZ);
@@ -269,7 +271,8 @@ iana2str(num, iav)
 	struct dhcp6_listval *iav;
 {
 	struct dhcp6_listval *siav;
-	char *s, *r, *comma;
+	char *s, *r;
+	const char *comma;
 
 	s = buf;
 	memset(s, 0, BUFSIZ);

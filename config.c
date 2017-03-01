@@ -53,12 +53,12 @@
 #include <time.h>
 #endif
 
-#include <dhcp6.h>
-#include <config.h>
-#include <common.h>
-#include <auth.h>
-#include <base64.h>
-#include <lease.h>
+#include "dhcp6.h"
+#include "config.h"
+#include "common.h"
+#include "auth.h"
+#include "base64.h"
+#include "lease.h"
 
 extern int errno;
 
@@ -70,7 +70,7 @@ struct dhcp6_list bcmcslist, bcmcsnamelist;
 long long optrefreshtime;
 
 static struct dhcp6_ifconf *dhcp6_ifconflist;
-struct ia_conflist ia_conflist0;
+static struct ia_conflist ia_conflist0;
 static struct host_conf *host_conflist0, *host_conflist;
 static struct keyinfo *key_list, *key_list0;
 static struct authinfo *auth_list, *auth_list0;
@@ -123,26 +123,27 @@ extern struct cf_list *cf_bcmcs_list, *cf_bcmcs_name_list;
 extern long long cf_refreshtime;
 extern char *configfilename;
 
-static struct keyinfo *find_keybyname __P((struct keyinfo *, char *));
-static int add_pd_pif __P((struct iapd_conf *, struct cf_list *));
-static int add_options __P((int, struct dhcp6_ifconf *, struct cf_list *));
-static int add_prefix __P((struct dhcp6_list *, char *, int,
-    struct dhcp6_prefix *));
-static void clear_pd_pif __P((struct iapd_conf *));
-static void clear_ifconf __P((struct dhcp6_ifconf *));
-static void clear_iaconf __P((struct ia_conflist *));
-static void clear_hostconf __P((struct host_conf *));
-static void clear_keys __P((struct keyinfo *));
-static void clear_authinfo __P((struct authinfo *));
-static int configure_duid __P((char *, struct duid *));
-static int configure_addr __P((struct cf_list *, struct dhcp6_list *, char *));
-static int configure_domain __P((struct cf_list *, struct dhcp6_list *, char *));
-static int get_default_ifid __P((struct prefix_ifconf *));
-static void clear_poolconf __P((struct pool_conf *));
-static struct pool_conf *create_pool __P((char *, struct dhcp6_range *));
-struct host_conf *find_dynamic_hostconf __P((struct duid *));
-static int in6_addr_cmp __P((struct in6_addr *, struct in6_addr *));
-static void in6_addr_inc __P((struct in6_addr *));
+static struct keyinfo *find_keybyname(struct keyinfo *, char *);
+static int add_pd_pif(struct iapd_conf *, struct cf_list *);
+static int add_options(int, struct dhcp6_ifconf *, struct cf_list *);
+static int add_prefix(struct dhcp6_list *, const char *, int,
+    struct dhcp6_prefix *);
+static void clear_pd_pif(struct iapd_conf *);
+static void clear_ifconf(struct dhcp6_ifconf *);
+static void clear_iaconf(struct ia_conflist *);
+static void clear_hostconf(struct host_conf *);
+static void clear_keys(struct keyinfo *);
+static void clear_authinfo(struct authinfo *);
+static int configure_duid(char *, struct duid *);
+static int configure_addr(struct cf_list *, struct dhcp6_list *, const char *);
+static int configure_domain(struct cf_list *, struct dhcp6_list *,
+    const char *);
+static int get_default_ifid(struct prefix_ifconf *);
+static void clear_poolconf(struct pool_conf *);
+static struct pool_conf *create_pool(char *, struct dhcp6_range *);
+struct host_conf *find_dynamic_hostconf(struct duid *);
+static int in6_addr_cmp(struct in6_addr *, struct in6_addr *);
+static void in6_addr_inc(struct in6_addr *);
 
 int
 configure_interface(iflist)
@@ -355,7 +356,7 @@ configure_ia(ialist, iatype)
 
 		/* common initialization */
 		iac->type = iatype;
-		iac->iaid = (u_int32_t)atoi(iap->name);
+		iac->iaid = (uint32_t)atoi(iap->name);
 		TAILQ_INIT(&iac->iadata);
 		TAILQ_INSERT_TAIL(&ia_conflist0, iac, link);
 
@@ -480,7 +481,7 @@ add_pd_pif(iapdc, cfl0)
 	for (cfl = cfl0->list; cfl; cfl = cfl->next) {
 		switch(cfl->type) {
 		case IFPARAM_SLA_ID:
-			pif->sla_id = (u_int32_t)cfl->num;
+			pif->sla_id = (uint32_t)cfl->num;
 			break;
 		case IFPARAM_SLA_LEN:
 			pif->sla_len = (int)cfl->num;
@@ -1033,7 +1034,7 @@ static int
 configure_addr(cf_addr_list, list0, optname)
 	struct cf_list *cf_addr_list;
 	struct dhcp6_list *list0;
-	char *optname;
+	const char *optname;
 {
 	struct cf_list *cl;
 
@@ -1071,7 +1072,7 @@ static int
 configure_domain(cf_name_list, list0, optname)
 	struct cf_list *cf_name_list;
 	struct dhcp6_list *list0;
-	char *optname;
+	const char *optname;
 {
 	struct cf_list *cl;
 
@@ -1087,7 +1088,7 @@ configure_domain(cf_name_list, list0, optname)
 		char *name, *cp;
 		struct dhcp6_vbuf name_vbuf;
 
-		name = strdup(cl->ptr + 1);
+		name = strdup((char *)cl->ptr + 1);
 		if (name == NULL) {
 			d_printf(LOG_ERR, FNAME,
 			    "failed to copy a %s domain name",
@@ -1216,7 +1217,7 @@ get_default_ifid(pif)
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 
-		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		sdl = (struct sockaddr_dl *)(void *)ifa->ifa_addr;
 		if (sdl->sdl_alen < 6) {
 			d_printf(LOG_NOTICE, FNAME,
 			    "link layer address is too short (%s)",
@@ -1592,7 +1593,7 @@ add_options(opcode, ifc, cfl0)
 			switch (opcode) {
 			case DHCPOPTCODE_SEND:
 				iac = find_iaconf(&ia_conflist0, IATYPE_PD,
-				    (u_int32_t)cfl->num);
+				    (uint32_t)cfl->num);
 				if (iac == NULL) {
 					d_printf(LOG_ERR, FNAME, "%s:%d "
 					    "IA_PD (%lu) is not defined",
@@ -1617,7 +1618,7 @@ add_options(opcode, ifc, cfl0)
 			switch (opcode) {
 			case DHCPOPTCODE_SEND:
 				iac = find_iaconf(&ia_conflist0, IATYPE_NA,
-				    (u_int32_t)cfl->num);
+				    (uint32_t)cfl->num);
 				if (iac == NULL) {
 					d_printf(LOG_ERR, FNAME, "%s:%d "
 					    "IA_NA (%lu) is not defined",
@@ -1730,7 +1731,7 @@ add_options(opcode, ifc, cfl0)
 static int
 add_prefix(head, name, type, prefix0)
 	struct dhcp6_list *head;
-	char *name;
+	const char *name;
 	int type;
 	struct dhcp6_prefix *prefix0;
 {
@@ -1806,7 +1807,7 @@ struct ia_conf *
 find_iaconf(head, type, iaid)
 	struct ia_conflist *head;
 	int type;
-	u_int32_t iaid;
+	uint32_t iaid;
 {
 	struct ia_conf *iac;
 
@@ -1874,7 +1875,7 @@ struct keyinfo *
 find_key(realm, realmlen, id)
 	char *realm;
 	size_t realmlen;
-	u_int32_t id;
+	uint32_t id;
 {
 	struct keyinfo *key;
 
@@ -1987,7 +1988,7 @@ create_dynamic_hostconf(duid, pool)
 {
 	struct dynamic_hostconf *dynconf = NULL;
 	struct host_conf *host;
-	char* strid = NULL;
+	const char *strid = NULL;
 	static int init = 1;
 
 	if (init) {
