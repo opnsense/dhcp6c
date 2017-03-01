@@ -1766,27 +1766,9 @@ client6_recvreply(ifp, dh6, len, optinfo)
 		return (-1);
 	}
 
-	switch (state) {
-	case DHCP6S_INFOREQ:
-		d_printf(LOG_INFO, FNAME, "dhcp6c Received INFOREQ");
-		break;  
-	case DHCP6S_REQUEST:
-		d_printf(LOG_INFO, FNAME, "dhcp6c Received REQUEST");
-		break;
-	case DHCP6S_RENEW:
-		d_printf(LOG_INFO, FNAME, "dhcp6c Received INFO");
-		break;
-	case DHCP6S_REBIND:
-		d_printf(LOG_INFO, FNAME, "dhcp6c Received REBIND");
-		break;
-	case DHCP6S_RELEASE:
-		d_printf(LOG_INFO, FNAME, "dhcp6c Received RELEASE");
-		break;
-	case DHCP6S_SOLICIT:
-		d_printf(LOG_INFO, FNAME, "dhcp6c Received SOLICIT");
-		break;          
-	}
-
+	d_printf(LOG_INFO, FNAME, "Received REPLY for %s",
+	    dhcp6_event_statestr(ev));
+	
 	/* A Reply message must contain a Server ID option */
 	if (optinfo->serverID.duid_len == 0) {
 		d_printf(LOG_INFO, FNAME, "no server ID option");
