@@ -3366,3 +3366,39 @@ safefile(path)
 
 	return (0);
 }
+
+int
+get_val32(char **bpp, int *lenp, uint32_t *valp)
+{
+	char *bp = *bpp;
+	size_t len = (size_t)*lenp;
+	uint32_t i32;
+
+	if (len < sizeof(*valp))
+		return (-1);
+
+	memcpy(&i32, bp, sizeof(i32));
+	*valp = ntohl(i32);
+
+	*bpp = bp + sizeof(*valp);
+	*lenp = len - sizeof(*valp);
+
+	return (0);
+}
+
+int
+get_val(char **bpp, int *lenp, void *valp, size_t vallen)
+{
+	char *bp = *bpp;
+	size_t len = (size_t)*lenp;
+
+	if (len < vallen)
+		return (-1);
+
+	memcpy(valp, bp, vallen);
+
+	*bpp = bp + vallen;
+	*lenp = len - vallen;
+
+	return (0);
+}
