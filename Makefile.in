@@ -42,7 +42,7 @@ LDFLAGS=@LDFLAGS@
 LIBOBJS=@LIBOBJS@
 LIBS=	@LIBS@ @LEXLIB@
 CC=	@CC@
-TARGET=	dhcp6c dhcp6ctl
+TARGET=	dhcp6c
 
 INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
@@ -55,16 +55,13 @@ mandir=	@mandir@
 
 GENSRCS=cfparse.c cftoken.c
 CLIENTOBJS=	dhcp6c.o common.o config.o prefixconf.o dhcp6c_ia.o timer.o \
-	dhcp6c_script.o if.o base64.o auth.o dhcp6_ctl.o addrconf.o lease.o \
+	dhcp6c_script.o if.o base64.o auth.o addrconf.o lease.o \
 	$(GENSRCS:%.c=%.o)
-CTLOBJS= dhcp6_ctlclient.o base64.o auth.o
 CLEANFILES+=	y.tab.h
 
 all:	$(TARGET)
 dhcp6c:	$(CLIENTOBJS) $(LIBOBJS)
 	$(CC) $(LDFLAGS) -o dhcp6c $(CLIENTOBJS) $(LIBOBJS) $(LIBS)
-dhcp6ctl: $(CTLOBJS)
-	$(CC) $(LDFLAGS) -o $@ $(CTLOBJS) $(LIBOBJS) $(LIBS)
 
 y.tab.c y.tab.h: cfparse.y
 	@YACC@ -d cfparse.y
@@ -99,7 +96,6 @@ install::
 	-mkdir -p $(DESTDIR)$(sbindir) $(DESTDIR)$(mandir)/man5 $(DESTDIR)$(mandir)/man8
 	$(INSTALL_PROGRAM) $(TARGET) $(DESTDIR)$(sbindir)
 	$(INSTALL_DATA) dhcp6c.8 $(DESTDIR)$(mandir)/man8
-	$(INSTALL_DATA) dhcp6ctl.8 $(DESTDIR)$(mandir)/man8
 	$(INSTALL_DATA) dhcp6c.conf.5 $(DESTDIR)$(mandir)/man5
 
 includes::
