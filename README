@@ -1,4 +1,12 @@
-This is patched version of WIDE-DHCPv6 maintained by hrs@FreeBSD.org.
+This is the WIDE-DHCPv6 client maintained by the OPNsense project.
+
+Improvements include the following:
+
+- Reload the client configuration on SIGHUP
+- Removed all unused binaries except dhcp6c
+- Experimental raw option patch
+
+It is based on a patched version of WIDE-DHCPv6 maintained by hrs@FreeBSD.org.
 
 Improvements include the follwowing:
 
