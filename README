@@ -4,7 +4,7 @@ Improvements include the following:
 
 - Reload the client configuration on SIGHUP
 - Removed all unused binaries except dhcp6c
-- Experimental raw option patch
+- Raw option support (experimental)
 
 It is based on a patched version of WIDE-DHCPv6 maintained by hrs@FreeBSD.org.
 
