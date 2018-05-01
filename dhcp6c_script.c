@@ -72,6 +72,7 @@ static char nispserver_str[] = "new_nisp_servers";
 static char nispname_str[] = "new_nisp_name";
 static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
+static char raw_dhcp_option_str[] = "raw_dhcp_option";
 
 int client6_script(char *, int, struct dhcp6_optinfo *);
 
@@ -90,6 +91,7 @@ client6_script(scriptpath, state, optinfo)
 	char reason[32];
 	struct dhcp6_listval *v;
 	struct dhcp6_event ev;
+	struct rawoption *rawop;
 	pid_t pid, wpid;
 
 	/* if a script is not specified, do nothing */
@@ -393,6 +395,30 @@ setenv:
 			strlcat(s, v->val_vbuf.dv_buf, elen);
 			strlcat(s, " ", elen);
 		}
+	}
+	/* XXX */
+	for (rawop = TAILQ_FIRST(&optinfo->rawops); rawop; rawop = TAILQ_NEXT(rawop, link)) {
+		// max of 5 numbers after last underscore (seems like max DHCPv6 option could be 65535)
+		elen = sizeof(raw_dhcp_option_str) + 1 /* underscore */ + 1 /* equals sign */ + 5;
+		elen += rawop->datalen * 2;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			d_printf(LOG_NOTICE, FNAME,
+					 "failed to allocate string for DHCPv6 option %d", rawop->opnum);
+			ret = -1;
+			goto clean;
+		}
+
+		// make raw options available as raw_dhcp_option_xyz=hexresponse
+		snprintf(s, elen, "%s_%d=", raw_dhcp_option_str, rawop->opnum);
+		const char * hex = "0123456789abcdef";
+		char * val = (char*)malloc(3);
+		for (int o = 0; o < rawop->datalen; o++) {
+			val[0] = hex[(rawop->data[o]>>4) & 0x0F];
+			val[1] = hex[(rawop->data[o]   ) & 0x0F];
+			val[2] = 0x00;
+			strlcat(s, val, 1);
+		}
+		free(val);
 	}
 launch:
 	/* launch the script */
