@@ -922,7 +922,8 @@ client6_send(struct dhcp6_event *ev)
 	struct dhcp6_optinfo optinfo;
 	ssize_t optlen, len;
 	struct dhcp6_eventdata *evd;
-
+    struct rawoption *rawop;
+    
 	ifp = ev->ifp;
 
 	dh6 = (struct dhcp6 *)buf;
@@ -1081,6 +1082,9 @@ client6_send(struct dhcp6_event *ev)
 		goto end;
 	}
 
+        /* XXX */
+    rawop_clear_list(&optinfo.rawops);
+    rawop_copy_list(&optinfo.rawops, &ifp->rawops);
 	/* set options in the message */
 	if ((optlen = dhcp6_set_options(dh6->dh6_msgtype,
 	    (struct dhcp6opt *)(dh6 + 1),
