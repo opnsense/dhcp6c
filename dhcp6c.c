@@ -922,6 +922,7 @@ client6_send(struct dhcp6_event *ev)
 	struct dhcp6_optinfo optinfo;
 	ssize_t optlen, len;
 	struct dhcp6_eventdata *evd;
+	struct rawoption *rawop;
 
 	ifp = ev->ifp;
 
@@ -1080,6 +1081,10 @@ client6_send(struct dhcp6_event *ev)
 		    "failed to set authentication option");
 		goto end;
 	}
+
+	/* XXX */
+	rawop_clear_list(&optinfo.rawops);
+	rawop_copy_list(&optinfo.rawops, &ifp->rawops);
 
 	/* set options in the message */
 	if ((optlen = dhcp6_set_options(dh6->dh6_msgtype,
