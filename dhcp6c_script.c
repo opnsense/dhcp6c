@@ -403,7 +403,8 @@ setenv:
 		elen += rawop->datalen * 2;
 		if ((s = envp[i++] = malloc(elen)) == NULL) {
 			d_printf(LOG_NOTICE, FNAME,
-					 "failed to allocate string for DHCPv6 option %d", rawop->opnum);
+			    "failed to allocate string for DHCPv6 option %d",
+			    rawop->opnum);
 			ret = -1;
 			goto clean;
 		}
