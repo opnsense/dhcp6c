@@ -74,6 +74,7 @@ static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
 static char raw_dhcp_option_str[] = "raw_dhcp_option";
 
+
 int client6_script(char *, int, struct dhcp6_optinfo *);
 
 int
@@ -89,6 +90,7 @@ client6_script(scriptpath, state, optinfo)
 	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
 	char reason[32];
+    char pd_info[64];
 	struct dhcp6_listval *v;
 	struct dhcp6_event ev;
 	struct rawoption *rawop;
@@ -190,6 +192,19 @@ setenv:
 	if (state == DHCP6S_EXIT)
 		goto launch;
 
+        /* PD Info*/
+
+	snprintf(pd_info, sizeof(pd_info), 
+			"PD_INFO=%s/%d",
+            in6addr2str(&g_iapd_prefix.addr, 0),
+            g_iapd_prefix.plen);
+	
+        if ((envp[i++] = strdup(pd_info)) == NULL) {
+		d_printf(LOG_NOTICE, FNAME,
+		    "failed to allocate PD_info strings");
+		ret = -1;
+		goto clean;
+	}
 	/* "var=addr1 addr2 ... addrN" + null char for termination */
 	if (dnsservers) {
 		elen = sizeof (dnsserver_str) +

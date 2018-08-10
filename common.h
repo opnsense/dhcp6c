@@ -124,6 +124,7 @@ extern int foreground;
 extern int debug_thresh;
 extern char *device;
 extern int opt_norelease;
+extern struct dhcp6_prefix g_iapd_prefix;
 
 /* search option for dhcp6_find_listval() */
 #define MATCHLIST_PREFIXLEN 0x1

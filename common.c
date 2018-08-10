@@ -113,6 +113,7 @@ static int copy_option(uint16_t, uint16_t, void *, struct dhcp6opt **,
 static ssize_t gethwid(char *, int, const char *, uint16_t *);
 static char *sprint_uint64(char *, int, uint64_t);
 static char *sprint_auth(struct dhcp6_optinfo *);
+struct dhcp6_prefix g_iapd_prefix;
 
 /* XXX */
 int
@@ -1085,8 +1086,10 @@ get_duid(idfile, duid)
 	if (fp) {
 		/* decode length */
 		if (fread(&len, sizeof(len), 1, fp) != 1) {
-			d_printf(LOG_ERR, FNAME, "DUID file corrupted");
+			d_printf(LOG_ERR, FNAME, "DUID file corrupted - cannot get length");
 			goto fail;
+		} else {
+			d_printf(LOG_ERR, FNAME, "DUID file size is %d", len);
 		}
 	} else {
 		int l;
@@ -1109,7 +1112,7 @@ get_duid(idfile, duid)
 	/* copy (and fill) the ID */
 	if (fp) {
 		if (fread(duid->duid_id, len, 1, fp) != 1) {
-			d_printf(LOG_ERR, FNAME, "DUID file corrupted");
+			d_printf(LOG_ERR, FNAME, "DUID file corrupted - cannot read");
 			goto fail;
 		}
 
@@ -1126,6 +1129,7 @@ get_duid(idfile, duid)
 		t64 = (uint64_t)(time(NULL) - 946684800);
 		dp->dh6_duid1_time = htonl((u_long)(t64 & 0xffffffff));
 		memcpy((void *)(dp + 1), tmpbuf, (len - sizeof(*dp)));
+
 
 		d_printf(LOG_DEBUG, FNAME, "generated a new DUID: %s",
 		    duidstr(duid));
@@ -1619,8 +1623,7 @@ dhcp6_get_options(p, ep, optinfo)
 				goto malformed;
 			duid0.duid_len = optlen;
 			duid0.duid_id = cp;
-			d_printf(LOG_DEBUG, "",
-				"  DUID: %s", duidstr(&duid0));
+			d_printf(LOG_DEBUG, "","ClientID  DUID: %s", duidstr(&duid0));
 			if (duidcpy(&optinfo->clientID, &duid0)) {
 				d_printf(LOG_ERR, FNAME, "failed to copy DUID");
 				goto fail;
@@ -1631,7 +1634,7 @@ dhcp6_get_options(p, ep, optinfo)
 				goto malformed;
 			duid0.duid_len = optlen;
 			duid0.duid_id = cp;
-			d_printf(LOG_DEBUG, "", "  DUID: %s", duidstr(&duid0));
+			d_printf(LOG_DEBUG, "", "ServerID  DUID: %s", duidstr(&duid0));
 			if (duidcpy(&optinfo->serverID, &duid0)) {
 				d_printf(LOG_ERR, FNAME, "failed to copy DUID");
 				goto fail;
@@ -2122,6 +2125,7 @@ copyin_option(type, p, ep, list)
 			    in6addr2str(&iapd_prefix.addr, 0),
 			    iapd_prefix.plen,
 			    iapd_prefix.pltime, iapd_prefix.vltime);
+			  memcpy(&g_iapd_prefix,&iapd_prefix,sizeof(iapd_prefix));
 
 			if (dhcp6_find_listval(list, DHCP6_LISTVAL_PREFIX6,
 			    &iapd_prefix, 0)) {
