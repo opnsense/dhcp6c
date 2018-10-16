@@ -448,6 +448,15 @@ must be a decimal integer.  It will be combined with the delegated
 prefix and the sla-id to form a complete interface address.  The
 default is to use the EUI-64 address of the
 .Ar interface .
+.It Xo
+.Ic ifid-random ;
+.Xc
+This statement instructs the client to generate a completely random
+interface id. This will override the
+.Ic ifid
+statement, if present. The resulting random interface id will be combined
+with the delegated prefix and the sla-id to form a complete interface
+address.
 .El
 .El
 .\"

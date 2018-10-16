@@ -115,7 +115,7 @@ void cf_init(void);
 %}
 
 %token INTERFACE IFNAME
-%token PREFIX_INTERFACE SLA_ID SLA_LEN IFID DUID_ID
+%token PREFIX_INTERFACE SLA_ID SLA_LEN IFID IFID_RAND DUID_ID
 %token ID_ASSOC IA_PD IAID IA_NA
 %token ADDRESS
 %token REQUEST SEND ALLOW PREFERENCE
@@ -1070,6 +1070,13 @@ ifparam:
 
 			MAKE_CFLIST(l, IFPARAM_IFID, NULL, NULL);
 			l->num = (u_int64_t)$2;
+			$$ = l;
+		}
+	|	IFID_RAND EOS
+		{
+			struct cf_list *l;
+
+			MAKE_CFLIST(l, IFPARAM_IFID_RAND, NULL, NULL);
 			$$ = l;
 		}
 	;
