@@ -145,10 +145,10 @@ rawop_clear_list(head)
 		TAILQ_REMOVE(head, op, link);
 
 		if (op->data != NULL) {
-			d_printf(LOG_INFO, FNAME, "    freeing op data at %p", (void*)op->data);
+			d_printf(LOG_ERROR, FNAME, "    freeing op data at %p", (void*)op->data);
 			free(op->data);
 		}
-		free(op);	// Needed?
+		//free(op);	// Needed?
 	}
 	return;
 }
