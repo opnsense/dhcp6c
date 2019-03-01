@@ -1064,7 +1064,7 @@ client6_send(struct dhcp6_event *ev)
 			if (dhcp6_copy_list(&optinfo.iana_list,
 			    (struct dhcp6_list *)evd->data)) {
 				d_printf(LOG_NOTICE, FNAME,
-				    "failed to add an IAPD");
+				    "failed to add an IANA");
 				goto end;
 			}
 			break;
