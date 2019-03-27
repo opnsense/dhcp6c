@@ -57,6 +57,7 @@
 
 extern char *configfilename;
 extern int lineno;
+extern void cf_init(void);
 
 char *configfilename;
 int lineno = 1;
@@ -112,14 +113,13 @@ number		{integer}|({digit}*\.{integer})
 hexdigit	[0-9A-Fa-f]
 hexpair		{hexdigit}{hexdigit}
 hexstring	0[xX]{hexpair}+
-duid 		{hexpair}(:{hexpair})*
+/* XXX */
+hexdata 	{hexpair}(:{hexpair})*
 ifname		{string}
 slash		\/
 bcl		\{
 ecl		\}
 
-/* XXX */
-hexdata 	{hexpair}(:{hexpair})*
 
 %s S_CNF
 %s S_IFACE
@@ -171,7 +171,7 @@ hexdata 	{hexpair}(:{hexpair})*
 }
 
 <S_CNF>duid { DECHO; BEGIN S_DUID; return (DUID); }
-<S_DUID>{duid} {
+<S_DUID>{hexdata} {
 	DECHO;
 	yylval.str = strdup(yytext);
 	BEGIN S_CNF;
@@ -221,7 +221,7 @@ hexdata 	{hexpair}(:{hexpair})*
 <S_CNF>refreshtime { DECHO; return (REFRESHTIME); }
 	/* XXX */
 <S_CNF>raw-option { DECHO; BEGIN S_RAW; return (RAW); }
-<S_RAW>{integer} { DECHO; yylval.str = strdup(yytext); return(NUMBER); }
+<S_RAW>{integer} { DECHO; yylval.num = strtoll(yytext, NULL, 10); return (NUMBER); }
 <S_RAW>{hexdata} {
 	DECHO;
 	yylval.str = strdup(yytext);
@@ -449,6 +449,8 @@ cfparse(const char *conf)
 	free(configfilename);
 	configfilename = strdup(conf);
 
+	lineno = 1;
+	cf_init();
 	if ((yyin = fopen(configfilename, "r")) == NULL) {
 		d_printf(LOG_ERR, FNAME, "cfparse: fopen(%s): %s",
 			configfilename, strerror(errno));

@@ -93,11 +93,6 @@ static struct cf_namelist *addrpoollist_head;
 static struct cf_namelist *authinfolist_head, *keylist_head;
 static struct cf_namelist *ianalist_head;
 
-extern struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
-extern struct cf_list *cf_sip_list, *cf_sip_name_list;
-extern struct cf_list *cf_nis_list, *cf_nis_name_list;
-extern struct cf_list *cf_nisp_list, *cf_nisp_name_list;
-extern struct cf_list *cf_bcmcs_list, *cf_bcmcs_name_list;
 struct cf_list *cf_dns_list, *cf_dns_name_list, *cf_ntp_list;
 struct cf_list *cf_sip_list, *cf_sip_name_list;
 struct cf_list *cf_nis_list, *cf_nis_name_list;
@@ -109,6 +104,8 @@ long long cf_refreshtime = -1;
 
 int yylex(void);
 int cfswitch_buffer(char *);
+
+struct rawoption *make_rawoption(int opnum, char *datastr);
 static int add_namelist(struct cf_namelist *, struct cf_namelist **);
 static void cleanup(void);
 static void cleanup_namelist(struct cf_namelist *);
@@ -138,6 +135,8 @@ void cf_init(void);
 
 %token NUMBER SLASH EOS BCL ECL STRING QSTRING PREFIX INFINITY
 %token COMMA
+/* XXX */
+%token RAW
 
 %union {
 	long long num;
@@ -160,9 +159,6 @@ void cf_init(void);
 %type <prefix> addressparam prefixparam
 %type <range> rangeparam
 %type <pool> poolparam
-
-/* XXX */
-%token RAW
 
 %%
 statements:
@@ -687,57 +683,10 @@ dhcpoption:
 	|	RAW NUMBER STRING
 		{
 			struct cf_list *l;
-			struct rawoption *rawop;
-			char *tmp, *opstr = $2, *datastr = $3;
-
-			yywarn("Got raw option: %s %s", opstr, datastr);
-
-			if ((rawop = malloc(sizeof(*rawop))) == NULL) {
-				yywarn("can't allocate memory");
-				free(datastr);
-				free(opstr);
-				return (-1);
-			}
-
-			/* convert op num */
-			rawop->opnum = (int)strtol(opstr, NULL, 10);
-
-			/* convert string to lowercase */
-			tmp = datastr;
-			for ( ; *tmp; ++tmp) *tmp = tolower(*tmp);
-
-			/* allocate buffer */
-			int len = strlen(datastr);
-			len -= len / 3; /* remove ':' from length */
-			len = len / 2; /* byte length */
-			rawop->datalen = len;
-
-			if ((rawop->data = malloc(len)) == NULL) {
-				yywarn("can't allocate memory");
-				free(datastr);
-				free(opstr);
-				return (-1);
-			}
-
-			/* convert hex string to byte array */
-			char *h = datastr;
-			char *b = rawop->data;
-			char xlate[] = "0123456789abcdef";
-			int p1, p2, i = 0;
-
-			for ( ; *h; h += 3, ++b) { /* string is xx(:xx)\0 */
-				p1 = (int)(strchr(xlate, *h) - xlate);
-				p2 = (int)(strchr(xlate, *(h+1)) - xlate);
-				*b = (char)((p1 * 16) + p2);
-			}
-			//free(datastr);
-			//free(opstr);
-
-			yywarn("Raw option %d length %d stored at %p with data at %p",
-				rawop->opnum, rawop->datalen, (void*)rawop, (void*)rawop->data);
+			struct rawoption *rawoption = make_rawoption ($2, $3);
 
 			MAKE_CFLIST(l, DHCPOPT_RAW, NULL, NULL);
-			l->ptr = rawop;
+			l->ptr = rawoption;
 			$$ = l;
 		}
 	|	DNS_SERVERS
@@ -1272,6 +1221,59 @@ keyparam:
 
 %%
 /* supplement routines for configuration */
+
+struct rawoption*
+make_rawoption(int opnum, char *datastr)
+{
+			struct rawoption *rawop;
+			char *tmp;
+			yywarn("Got raw option: %i %s", opnum, datastr);
+
+			if ((rawop = malloc(sizeof(*rawop))) == NULL) {
+				yywarn("RAW can't allocate memory");
+				free(datastr);
+				return NULL;
+			}
+
+			/* convert op num */
+			rawop->opnum = opnum;
+
+			/* convert string to lowercase */
+			tmp = datastr;
+			for ( ; *tmp; ++tmp) *tmp = tolower(*tmp);
+
+			/* allocate buffer */
+			int len = strlen(datastr);
+			len -= len / 3; /* remove ':' from length */
+			len = len / 2; /* byte length */
+			rawop->datalen = len;
+
+			if ((rawop->data = malloc(len)) == NULL) {
+				yywarn("can't allocate memory");
+				free(rawop);
+				free(datastr);
+				return NULL;
+			}
+
+			/* convert hex string to byte array */
+			char *h = datastr;
+			char *b = rawop->data;
+			char xlate[] = "0123456789abcdef";
+			int p1, p2;
+
+			for ( ; *h; h += 3, ++b) { /* string is xx(:xx)\0 */
+				p1 = (int)(strchr(xlate, *h) - xlate);
+				p2 = (int)(strchr(xlate, *(h+1)) - xlate);
+				*b = (char)((p1 * 16) + p2);
+			}
+			free(datastr);
+
+			yywarn("Raw option %d length %d stored at %p with data at %p",
+				rawop->opnum, rawop->datalen, (void*)rawop, (void*)rawop->data);
+
+			return rawop;
+}
+
 static int
 add_namelist(struct cf_namelist *new, struct cf_namelist **headp)
 {
@@ -1361,8 +1363,19 @@ cleanup_cflist(struct cf_list *p)
 	if (p->type == DECL_ADDRESSPOOL) {
 		free(((struct dhcp6_poolspec *)p->ptr)->name);
 	}
-	if (p->ptr)
+	/* Need to clean RAWOption data buffer */
+	if (p->ptr){
+		switch (p->type) {
+		case DHCPOPT_RAW:{
+			struct rawoption *rawoption = p->ptr;
+			yywarn ("Releasing raw option num %i datalen %i\n", rawoption->opnum, rawoption->datalen);
+			free (rawoption->data);
+		}
+			break;
+		default:;
+		}
 		free(p->ptr);
+	}
 	if (p->list)
 		cleanup_cflist(p->list);
 	free(p);
@@ -1409,5 +1422,25 @@ cf_post_config(void)
 void
 cf_init(void)
 {
+#if YYDEBUG
+	yydebug = 1;
+#endif
 	iflist_head = NULL;
+	hostlist_head = NULL;
+	iapdlist_head = NULL;
+	ianalist_head = NULL;
+	authinfolist_head = NULL;
+	keylist_head = NULL;
+	addrpoollist_head = NULL;
+	cf_sip_list = NULL;
+	cf_sip_name_list = NULL;
+	cf_dns_list = NULL;
+	cf_dns_name_list = NULL;
+	cf_ntp_list = NULL;
+	cf_nis_list = NULL;
+	cf_nis_name_list = NULL;
+	cf_nisp_list = NULL;
+	cf_nisp_name_list = NULL;
+	cf_bcmcs_list = NULL;
+	cf_bcmcs_name_list = NULL;
 }
