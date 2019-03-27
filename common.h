@@ -130,6 +130,8 @@ extern int opt_norelease;
 
 /* common.c */
 typedef enum { IFADDRCONF_ADD, IFADDRCONF_REMOVE } ifaddrconf_cmd_t;
+int rawop_copy_list(struct rawop_list *, struct rawop_list *);
+void rawop_clear_list(struct rawop_list *);
 int dhcp6_copy_list(struct dhcp6_list *, struct dhcp6_list *);
 void dhcp6_move_list(struct dhcp6_list *, struct dhcp6_list *);
 void dhcp6_clear_list(struct dhcp6_list *);
