@@ -149,6 +149,67 @@ struct host_conf *find_dynamic_hostconf(struct duid *);
 static int in6_addr_cmp(struct in6_addr *, struct in6_addr *);
 static void in6_addr_inc(struct in6_addr *);
 
+/* a debug helper to complete someday if needed... or delete*/
+void list_cfl (char *tag,struct cf_namelist *head)
+{
+	struct cf_namelist *ifp;
+	printf("LIST CFL %s\n",tag);
+
+	for (ifp = head; ifp; ifp = ifp->next) {
+		printf("Do ifp->%s\n", ifp->name);
+		struct cf_list *cfl;
+		for (cfl = ifp->params; cfl; cfl = cfl->next) {
+			printf("Do cfltype->%i  lineconf %i  ptr=%p sublist=%p\n", cfl->type,cfl->line, cfl->ptr, cfl->list);
+			    switch(cfl->type) {
+
+				case DECL_SEND:{
+					struct cf_list *cf0 = (void*)cfl->list;
+					for (; cf0; cf0 = cf0->next) {
+					    //printf("SEND opt type %i\n",cf0->type);
+					    switch (cf0->type) {
+					    case DHCPOPT_RAW:{
+						    struct rawoption *op = cf0->ptr;
+						    printf("rawop %i datalen %i\n", op->opnum, op->datalen);
+						}
+						break;
+					    default:;
+					    }
+					}
+					}
+					break;
+				case DECL_SCRIPT:
+					printf("script %s\n", cfl->ptr);
+					break;
+				default:
+					printf("Unknown option type %i\n", cfl->type);
+			    }
+/*
+		case DHCPOPT_RAW:
+		case DHCPOPT_RAPID_COMMIT:
+		case DHCPOPT_AUTHINFO:
+		case DHCPOPT_IA_PD:
+		case DHCPOPT_IA_NA:
+		case DHCPOPT_SIP:
+		case DHCPOPT_SIPNAME:
+		case DHCPOPT_DNS:
+		case DHCPOPT_DNSNAME:
+		case DHCPOPT_NTP:
+		case DHCPOPT_NIS:
+		case DHCPOPT_NISNAME:
+		case DHCPOPT_NISP:
+		case DHCPOPT_NISPNAME:
+		case DHCPOPT_BCMCS:
+		case DHCPOPT_BCMCSNAME:
+		case DHCPOPT_REFRESHTIME:
+			printf("Known option type %i\n", cfl->type);
+			break;
+		default:
+			printf("Unknown option type %i\n", cfl->type);
+*/
+		}
+	}
+}
+
 int
 configure_interface(iflist)
 	struct cf_namelist *iflist;
@@ -183,7 +244,6 @@ configure_interface(iflist)
 		ifc->server_pref = DH6OPT_PREF_UNDEF;
 		TAILQ_INIT(&ifc->reqopt_list);
 		TAILQ_INIT(&ifc->iaconf_list);
-
 		/* XXX */
 		TAILQ_INIT(&ifc->rawops);
 
@@ -229,7 +289,6 @@ configure_interface(iflist)
 				    "configure DUID for %s: %s",
 				    ifc->ifname, duidstr(&ifc->duid));
 				break;
-
 			case DECL_INFO_ONLY:
 				if (dhcp6_mode != DHCP6_MODE_CLIENT) {
 					d_printf(LOG_INFO, FNAME, "%s:%d "
@@ -1326,10 +1385,6 @@ configure_commit()
 	struct dhcp6_ifconf *ifc;
 	struct dhcp6_if *ifp;
 	struct ia_conf *iac;
-	/* XXX */
-	struct rawoption *rawop;
-
-	static int init = 1;
 
 	/* commit interface configuration */
 	for (ifp = dhcp6_if; ifp; ifp = ifp->next) {
@@ -1337,20 +1392,15 @@ configure_commit()
 		ifp->send_flags = 0;
 		ifp->allow_flags = 0;
 		dhcp6_clear_list(&ifp->reqopt_list);
+		rawop_clear_list(&ifp->rawops);
 		clear_iaconf(&ifp->iaconf_list);
-
-		/* XXX */
-		if (init) {
-			TAILQ_INIT(&ifp->rawops);
-			init = 0;
-		}
 
 		ifp->server_pref = DH6OPT_PREF_UNDEF;
 		if (ifp->scriptpath != NULL)
 			free(ifp->scriptpath);
 		ifp->scriptpath = NULL;
 		ifp->authproto = DHCP6_AUTHPROTO_UNDEF;
-		ifp->authalgorithm = DHCP6_AUTHALG_UNDEF; 
+		ifp->authalgorithm = DHCP6_AUTHALG_UNDEF;
 		ifp->authrdm = DHCP6_AUTHRDM_UNDEF;
 
 		for (ifc = dhcp6_ifconflist; ifc; ifc = ifc->next) {
@@ -1364,6 +1414,8 @@ configure_commit()
 		ifp->send_flags = ifc->send_flags;
 		ifp->allow_flags = ifc->allow_flags;
 		dhcp6_copy_list(&ifp->reqopt_list, &ifc->reqopt_list);
+		/* XXX */
+		rawop_copy_list(&ifp->rawops, &ifc->rawops);
 		while ((iac = TAILQ_FIRST(&ifc->iaconf_list)) != NULL) {
 			TAILQ_REMOVE(&ifc->iaconf_list, iac, link);
 			TAILQ_INSERT_TAIL(&ifp->iaconf_list,
@@ -1381,22 +1433,13 @@ configure_commit()
 		ifp->pool = ifc->pool;
 		ifc->pool.name = NULL;
 
-		/* XXX */
 		if (ifc->duid.duid_id != NULL) {
-			dprintf(LOG_INFO, FNAME, "copying duid");
+			d_printf(LOG_INFO, FNAME, "copying duid");
 			duidcpy(&ifp->duid, &ifc->duid);
+			duidfree(&ifc->duid);
 		}
-
-		dprintf(LOG_DEBUG,
-			"conf_commit: copying %d rawops from %p (ifc) to %p (ifp)",
-			rawop_count_list(&ifc->rawops), &ifc->rawops, &ifp->rawops);
-		rawop_clear_list(&ifp->rawops);
-		rawop_copy_list(&ifp->rawops, &ifc->rawops); // XXX: breaks if move instead of copy
 	}
 
-	/* XXX*/
-	rawop_clear_list(&ifc->rawops);
-	duidfree(&ifc->duid);
 
 	clear_ifconf(dhcp6_ifconflist);
 	dhcp6_ifconflist = NULL;
@@ -1486,6 +1529,8 @@ clear_ifconf(iflist)
 
 		free(ifc->ifname);
 		dhcp6_clear_list(&ifc->reqopt_list);
+		/* XXX */
+		rawop_clear_list(&ifc->rawops);
 
 		clear_iaconf(&ifc->iaconf_list);
 
@@ -1596,9 +1641,6 @@ add_options(opcode, ifc, cfl0)
 	int opttype;
 	struct authinfo *ainfo;
 	struct ia_conf *iac;
-	/* XXX */
-	char *cp;
-	struct rawoption *rawopc;
 
 	for (cfl = cfl0; cfl; cfl = cfl->next) {
 		switch(cfl->type) {
@@ -1696,11 +1738,32 @@ add_options(opcode, ifc, cfl0)
 		/* XXX */
 		case DHCPOPT_RAW:
 			opttype = DHCPOPT_RAW;
-			rawopc = (struct rawoption *) cfl->ptr;
-			dprintf(LOG_INFO, FNAME,
+			struct rawoption *newop, *op;
+			op = (struct rawoption *) cfl->ptr;
+			d_printf(LOG_INFO, FNAME,
 				"add raw option: %d length: %d",
-				rawopc->opnum, rawopc->datalen);
-			TAILQ_INSERT_TAIL(&ifc->rawops, rawopc, link);
+				op->opnum, op->datalen);
+
+			if ((newop = malloc(sizeof(*newop))) == NULL) {
+				d_printf(LOG_ERR, FNAME,
+					"failed to allocate memory for a new raw option");
+				return(-1);
+			}
+
+			memset(newop, 0, sizeof(*newop));
+
+			newop->opnum = op->opnum;
+			newop->datalen = op->datalen;
+
+			/* copy data */
+			if ((newop->data = malloc(newop->datalen)) == NULL) {
+				d_printf(LOG_ERR, FNAME,
+				    "failed to allocate memory for new raw option data");
+				return(-1);
+			}
+			memcpy(newop->data, op->data, newop->datalen);
+
+			TAILQ_INSERT_TAIL(&ifc->rawops, newop, link);
 			break;
 
 		case DHCPOPT_SIP:
