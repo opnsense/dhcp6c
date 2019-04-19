@@ -132,7 +132,6 @@ ecl		\}
 %s S_SECRET
 %s S_ADDRPOOL
 %s S_INCL
-/* XXX */
 %s S_RAW
 
 %%
@@ -219,7 +218,6 @@ ecl		\}
 <S_CNF>bcmcs-server-address { DECHO; return (BCMCS_SERVERS); }
 <S_CNF>bcmcs-server-domain-name { DECHO; return (BCMCS_NAME); }
 <S_CNF>refreshtime { DECHO; return (REFRESHTIME); }
-	/* XXX */
 <S_CNF>raw-option { DECHO; BEGIN S_RAW; return (RAW); }
 <S_RAW>{integer} { DECHO; yylval.num = strtoll(yytext, NULL, 10); return (NUMBER); }
 <S_RAW>{hexdata} {

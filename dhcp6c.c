@@ -1081,7 +1081,6 @@ client6_send(struct dhcp6_event *ev)
 		goto end;
 	}
 
-	/* XXX */
 	rawop_copy_list(&optinfo.rawops, &ifp->rawops);
 
 	/* set options in the message */

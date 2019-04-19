@@ -107,7 +107,6 @@ struct dhcp6_ifconf {
 
 	char *scriptpath;	/* path to config script (client only) */
 
-	/* XXX */
 	struct duid duid;
 	struct rawop_list rawops;
 
@@ -244,7 +243,6 @@ configure_interface(iflist)
 		ifc->server_pref = DH6OPT_PREF_UNDEF;
 		TAILQ_INIT(&ifc->reqopt_list);
 		TAILQ_INIT(&ifc->iaconf_list);
-		/* XXX */
 		TAILQ_INIT(&ifc->rawops);
 
 		for (cfl = ifp->params; cfl; cfl = cfl->next) {
@@ -274,7 +272,6 @@ configure_interface(iflist)
 					goto bad;
 				}
 				break;
-			/* XXX */
 			case DECL_DUID:
 				if ((configure_duid((char *)cfl->ptr,
 						    &ifc->duid)) != 0) {
@@ -1414,7 +1411,6 @@ configure_commit()
 		ifp->send_flags = ifc->send_flags;
 		ifp->allow_flags = ifc->allow_flags;
 		dhcp6_copy_list(&ifp->reqopt_list, &ifc->reqopt_list);
-		/* XXX */
 		rawop_copy_list(&ifp->rawops, &ifc->rawops);
 		while ((iac = TAILQ_FIRST(&ifc->iaconf_list)) != NULL) {
 			TAILQ_REMOVE(&ifc->iaconf_list, iac, link);
@@ -1529,7 +1525,6 @@ clear_ifconf(iflist)
 
 		free(ifc->ifname);
 		dhcp6_clear_list(&ifc->reqopt_list);
-		/* XXX */
 		rawop_clear_list(&ifc->rawops);
 
 		clear_iaconf(&ifc->iaconf_list);
@@ -1735,7 +1730,6 @@ add_options(opcode, ifc, cfl0)
 			}
 			break;
 
-		/* XXX */
 		case DHCPOPT_RAW:
 			opttype = DHCPOPT_RAW;
 			struct rawoption *newop, *op;

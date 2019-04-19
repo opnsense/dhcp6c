@@ -114,7 +114,6 @@ static ssize_t gethwid(char *, int, const char *, uint16_t *);
 static char *sprint_uint64(char *, int, uint64_t);
 static char *sprint_auth(struct dhcp6_optinfo *);
 
-/* XXX */
 int
 rawop_count_list(head)
 	struct rawop_list *head;
@@ -1416,8 +1415,6 @@ dhcp6_init_options(optinfo)
 	TAILQ_INIT(&optinfo->nispname_list);
 	TAILQ_INIT(&optinfo->bcmcs_list);
 	TAILQ_INIT(&optinfo->bcmcsname_list);
-
-	/* XXX */
 	TAILQ_INIT(&optinfo->rawops);
 
 	optinfo->authproto = DHCP6_AUTHPROTO_UNDEF;
@@ -1463,7 +1460,6 @@ dhcp6_clear_options(optinfo)
 	if (optinfo->ifidopt_id != NULL)
 		free(optinfo->ifidopt_id);
 
-	/* XXX */
 	rawop_clear_list(&optinfo->rawops);
 
 	dhcp6_init_options(optinfo);
@@ -1515,7 +1511,6 @@ dhcp6_copy_options(dst, src)
 	dst->refreshtime = src->refreshtime;
 	dst->pref = src->pref;
 
-	/* XXX */
 	rawop_copy_list(&dst->rawops, &src->rawops);
 
 	if (src->relaymsg_msg != NULL) {
@@ -1971,15 +1966,6 @@ dhcp6_get_options(p, ep, optinfo)
 
 			break;
 
-/* FRK  XXX   There is such thing here. RAW is a syntax, not an option !
-		case DHCPOPT_RAW:
-			rawop = (struct rawoption *) cp;
-			d_printf(LOG_DEBUG, FNAME,
-				"raw option: %d",
-				rawop->opnum);
-			TAILQ_INSERT_TAIL(&optinfo->rawops, rawop, link);
-			break;
-*/
 		default:
 			/* no option specific behavior */
 			d_printf(LOG_INFO, FNAME,
@@ -2356,7 +2342,6 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 	struct dhcp6_listval *stcode, *op;
 	int len = 0, optlen;
 	char *tmpbuf = NULL;
-	/* XXX */
 	struct rawoption *rawop;
 
 	if (optinfo->clientID.duid_len) {
@@ -2574,7 +2559,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 			goto fail;
 		}
 	}
-	/* XXX */
+
 	for (rawop = TAILQ_FIRST(&optinfo->rawops); rawop;
 	    rawop = TAILQ_NEXT(rawop, link)) {
 
@@ -2587,7 +2572,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 		    optep, &len) != 0) {
 			goto fail;
 		}
-   }
+	}
 
 	if (optinfo->authproto != DHCP6_AUTHPROTO_UNDEF) {
 		struct dhcp6opt_auth *auth;

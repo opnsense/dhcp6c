@@ -135,7 +135,6 @@ void cf_init(void);
 
 %token NUMBER SLASH EOS BCL ECL STRING QSTRING PREFIX INFINITY
 %token COMMA
-/* XXX */
 %token RAW
 
 %union {
@@ -679,7 +678,6 @@ dhcpoption:
 			/* currently no value */
 			$$ = l;
 		}
-	/* XXX */
 	|	RAW NUMBER STRING
 		{
 			struct cf_list *l;

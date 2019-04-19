@@ -95,7 +95,6 @@
 #define DHCP6_IRT_DEFAULT 86400	/* 1 day */
 #define DHCP6_IRT_MINIMUM 600
 
-/* XXX */
 TAILQ_HEAD(rawop_list, rawoption);
 struct rawoption {
 	TAILQ_ENTRY(rawoption) link;
@@ -195,7 +194,7 @@ struct dhcp6_optinfo {
 	struct dhcp6_list nispname_list; /* NIS+ domain list */
 	struct dhcp6_list bcmcs_list; /* BCMC server list */
 	struct dhcp6_list bcmcsname_list; /* BCMC domain list */
-	struct rawop_list rawops; /* XXX */
+	struct rawop_list rawops; /* Raw option list */
 
 	struct dhcp6_vbuf relay_msg; /* relay message */
 #define relaymsg_len relay_msg.dv_len
