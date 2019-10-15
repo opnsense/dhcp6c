@@ -3306,12 +3306,15 @@ setloglevel(debuglevel)
 		switch(debuglevel) {
 		case 0:
 			setlogmask(LOG_UPTO(LOG_ERR));
+			debug_thresh = LOG_ERR;
 			break;
 		case 1:
 			setlogmask(LOG_UPTO(LOG_INFO));
+			debug_thresh = LOG_INFO;
 			break;
 		case 2:
 			setlogmask(LOG_UPTO(LOG_DEBUG));
+			debug_thresh = LOG_DEBUG;
 			break;
 		}
 	}
@@ -3347,8 +3350,12 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 		    tm_now->tm_hour, tm_now->tm_min, tm_now->tm_sec,
 		    fname, printfname ? ": " : "",
 		    logbuf);
-	} else
+	} else {
+		if (debug_thresh == LOG_DEBUG) {
+			level = LOG_INFO;
+		}
 		syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
+	}
 }
 
 int
