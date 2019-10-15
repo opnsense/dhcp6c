@@ -3306,12 +3306,15 @@ setloglevel(debuglevel)
 		switch(debuglevel) {
 		case 0:
 			setlogmask(LOG_UPTO(LOG_ERR));
+            debug_thresh = LOG_ERR;
 			break;
 		case 1:
 			setlogmask(LOG_UPTO(LOG_INFO));
+            debug_thresh = LOG_INFO;
 			break;
 		case 2:
 			setlogmask(LOG_UPTO(LOG_DEBUG));
+            debug_thresh = LOG_DEBUG;
 			break;
 		}
 	}
@@ -3348,7 +3351,10 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 		    fname, printfname ? ": " : "",
 		    logbuf);
 	} else
-		syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
+		if(debug_thresh == LOG_DEBUG) {
+            level = LOG_INFO;
+        }
+        syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
 }
 
 int
