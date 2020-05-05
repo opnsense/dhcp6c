@@ -3351,7 +3351,8 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 		    fname, printfname ? ": " : "",
 		    logbuf);
 	} else {
-		if (debug_thresh == LOG_DEBUG) {
+		if (debug_thresh == LOG_DEBUG && level == LOG_DEBUG) {
+			/* XXX bump level to appear in system log file */
 			level = LOG_INFO;
 		}
 		syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
