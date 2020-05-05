@@ -3351,9 +3351,12 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 		    fname, printfname ? ": " : "",
 		    logbuf);
 	} else {
-		if (debug_thresh == LOG_DEBUG && level == LOG_DEBUG) {
-			/* XXX bump level to appear in system log file */
-			level = LOG_INFO;
+		/*
+		 * XXX DEBUG/INFO require NOTICE in order to
+		 * to appear in the OPNsense system log file.
+                 */
+		if (debug_thresh <= level && level > LOG_NOTICE) {
+			level = LOG_NOTICE;
 		}
 		syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
 	}
