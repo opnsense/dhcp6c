@@ -135,7 +135,7 @@ static int set_auth(struct dhcp6_event *, struct dhcp6_optinfo *);
 struct dhcp6_timer *client6_timo(void *);
 int client6_start(struct dhcp6_if *);
 static void info_printf(const char *, ...);
-
+struct cf_namelist *ifnames;
 #define MAX_ELAPSED_TIME 0xffff
 
 int
@@ -145,7 +145,8 @@ main(int argc, char *argv[])
 	char *progname;
 	FILE *pidfp;
 	struct dhcp6_if *ifp;
-
+    struct cf_namelist *ifnamep;
+    
 #ifndef HAVE_ARC4RANDOM
 	srandom(time(NULL) & getpid());
 #endif
@@ -183,10 +184,7 @@ main(int argc, char *argv[])
 			exit(0);
 		}
 	}
-	argc -= optind;
-	argv += optind;
-
-	if (argc == 0) {
+	if (conffile == 0) {
 		usage();
 		exit(0);
 	}
@@ -197,19 +195,19 @@ main(int argc, char *argv[])
 	setloglevel(debug);
 
 	client6_init();
-	while (argc-- > 0) {
-		if ((ifp = ifinit(argv[0])) == NULL) {
-			d_printf(LOG_ERR, FNAME, "failed to initialize %s",
-			    argv[0]);
-			exit(1);
-		}
-		argv++;
-	}
 
 	if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
 		d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
 		exit(1);
 	}
+
+    for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
+        if ((ifp = ifinit(ifnamep->name)) == NULL) {
+			d_printf(LOG_ERR, FNAME, "failed to initialize %s",
+			    argv[0]);
+			exit(1);
+		}
+    }
 
 	if (foreground == 0 && infreq_mode == 0) {
 		if (daemon(0, 0) < 0)

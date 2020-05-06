@@ -127,6 +127,7 @@ extern long long cf_refreshtime;
 extern char *configfilename;
 
 static struct keyinfo *find_keybyname(struct keyinfo *, char *);
+
 static int add_pd_pif(struct iapd_conf *, struct cf_list *);
 static int add_options(int, struct dhcp6_ifconf *, struct cf_list *);
 static int add_prefix(struct dhcp6_list *, const char *, int,
@@ -147,6 +148,9 @@ static struct pool_conf *create_pool(char *, struct dhcp6_range *);
 struct host_conf *find_dynamic_hostconf(struct duid *);
 static int in6_addr_cmp(struct in6_addr *, struct in6_addr *);
 static void in6_addr_inc(struct in6_addr *);
+
+
+
 
 /* a debug helper to complete someday if needed... or delete*/
 void list_cfl (char *tag,struct cf_namelist *head)
@@ -217,6 +221,10 @@ configure_interface(iflist)
 	struct dhcp6_ifconf *ifc;
 	char *cp;
 
+    /* xxx pointer back for use by dhcp6c interface names xxx */
+    ifnames = iflist;        
+    
+    
 	for (ifp = iflist; ifp; ifp = ifp->next) {
 		struct cf_list *cfl;
 
