@@ -195,7 +195,10 @@ main(int argc, char *argv[])
 	setloglevel(debug);
 
 	client6_init();
-
+    
+    /* Doing away with the need for command line interfaces */
+    /* We need to read the config file to get the names of the interfaces. */
+    
 	if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
 		d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
 		exit(1);
@@ -208,7 +211,12 @@ main(int argc, char *argv[])
 			exit(1);
 		}
     }
-
+    /* Read again to put stuff into the correct places now we have initialised the interfaces */
+    if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
+		d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
+		exit(1);
+	}
+    
 	if (foreground == 0 && infreq_mode == 0) {
 		if (daemon(0, 0) < 0)
 			err(1, "daemon");
