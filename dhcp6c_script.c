@@ -89,10 +89,12 @@ client6_script(scriptpath, state, optinfo)
 	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
 	char reason[32];
+	char prefixinfo[32];
 	struct dhcp6_listval *v;
 	struct dhcp6_event ev;
 	struct rawoption *rawop;
 	pid_t pid, wpid;
+	struct dhcp6_listval *iav, *siav;
 
 	/* if a script is not specified, do nothing */
 	if (scriptpath == NULL || strlen(scriptpath) == 0)
@@ -113,7 +115,7 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
-	envc = 2;     /* we at least include the reason and the terminator */
+	envc = 3;     /* we at least include the reason, prefix and the terminator */
 	if (state == DHCP6S_EXIT)
 		goto setenv;
 
@@ -189,6 +191,23 @@ setenv:
 	}
 	if (state == DHCP6S_EXIT)
 		goto launch;
+
+	/* prefix delegation */
+	for (iav = TAILQ_FIRST(&optinfo->iapd_list); iav; iav = TAILQ_NEXT(iav, link)) {
+		for (siav = TAILQ_FIRST(&iav->sublist); siav; siav = TAILQ_NEXT(siav, link)) {
+			if (siav->type == DHCP6_LISTVAL_PREFIX6) {
+				snprintf(prefixinfo, sizeof(prefixinfo),
+				    "PINFO=%s/%d",
+				    in6addr2str(&siav->val_prefix6.addr, 0),
+				    siav->val_prefix6.plen);
+				if ((envp[i++] = strdup(prefixinfo)) == NULL) {
+					d_printf(LOG_NOTICE, FNAME, "failed to allocate prefixinfo strings");
+					ret = -1;
+					goto clean;
+				}
+			}
+		}
+	}
 
 	/* "var=addr1 addr2 ... addrN" + null char for termination */
 	if (dnsservers) {

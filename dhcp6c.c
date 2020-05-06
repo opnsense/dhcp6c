@@ -135,6 +135,7 @@ static int set_auth(struct dhcp6_event *, struct dhcp6_optinfo *);
 struct dhcp6_timer *client6_timo(void *);
 int client6_start(struct dhcp6_if *);
 static void info_printf(const char *, ...);
+struct cf_namelist *ifnames;
 
 #define MAX_ELAPSED_TIME 0xffff
 
@@ -145,6 +146,7 @@ main(int argc, char *argv[])
 	char *progname;
 	FILE *pidfp;
 	struct dhcp6_if *ifp;
+	struct cf_namelist *ifnamep;
 
 #ifndef HAVE_ARC4RANDOM
 	srandom(time(NULL) & getpid());
@@ -186,17 +188,31 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc == 0) {
-		usage();
-		exit(0);
-	}
-
 	if (foreground == 0)
 		openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
 	setloglevel(debug);
 
 	client6_init();
+
+	/*
+	 * Doing away with the need for command line interfaces
+	 * We need to read the config file to get the names of the interfaces.
+	 */
+	if (argc == 0) {
+		if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
+			d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
+			exit(1);
+		}
+		for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
+			if ((ifp = ifinit(ifnamep->name)) == NULL) {
+				d_printf(LOG_ERR, FNAME,
+				    "failed to initialize %s", argv[0]);
+				exit(1);
+			}
+		}
+	}
+
 	while (argc-- > 0) {
 		if ((ifp = ifinit(argv[0])) == NULL) {
 			d_printf(LOG_ERR, FNAME, "failed to initialize %s",
@@ -233,7 +249,7 @@ usage()
 {
 
 	fprintf(stderr, "usage: dhcp6c [-c configfile] [-dDfin] "
-	    "[-p pid-file] interface [interfaces...]\n");
+	    "[-p pid-file] [interfaces...]\n");
 }
 
 /*------------------------------------------------------------*/
@@ -474,6 +490,9 @@ check_exit(void)
 static void
 process_signals(void)
 {
+	struct cf_namelist *ifnamep;
+	struct dhcp6_if *ifp;
+
 	if ((sig_flags & SIGF_TERM)) {
 		exit_ok = 1;
 		free_resources(NULL);
@@ -482,7 +501,18 @@ process_signals(void)
 	if ((sig_flags & SIGF_HUP)) {
 		d_printf(LOG_INFO, FNAME, "restarting");
 		free_resources(NULL);
-		if (cfparse(conffile) != 0) {
+		if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
+			d_printf(LOG_WARNING, FNAME,
+			    "failed to reload configuration file");
+		}
+		for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
+			if ((ifp = ifinit(ifnamep->name)) == NULL) {
+				d_printf(LOG_ERR, FNAME,
+				    "failed to initialize %s", argv[0]);
+				exit(1);
+			}
+		}
+		if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
 			d_printf(LOG_WARNING, FNAME,
 			    "failed to reload configuration file");
 		}

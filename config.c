@@ -217,6 +217,9 @@ configure_interface(iflist)
 	struct dhcp6_ifconf *ifc;
 	char *cp;
 
+	/* XXX pointer back for use by dhcp6c interface names */
+	ifnames = iflist;
+
 	for (ifp = iflist; ifp; ifp = ifp->next) {
 		struct cf_list *cfl;
 

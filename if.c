@@ -59,7 +59,7 @@ ifinit(ifname)
 
 	if ((ifp = find_ifconfbyname(ifname)) != NULL) {
 		d_printf(LOG_NOTICE, FNAME, "duplicated interface: %s", ifname);
-		return (NULL);
+		return (ifp);
 	}
 
 	if ((ifp = malloc(sizeof(*ifp))) == NULL) {
