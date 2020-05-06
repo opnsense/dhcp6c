@@ -231,7 +231,7 @@ usage()
 {
 
 	fprintf(stderr, "usage: dhcp6c [-c configfile] [-dDfin] "
-	    "[-p pid-file] interface [interfaces...]\n");
+	    "[-p pid-file]\n");
 }
 
 /*------------------------------------------------------------*/
