@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 		for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
 			if ((ifp = ifinit(ifnamep->name)) == NULL) {
 				d_printf(LOG_ERR, FNAME,
-				    "failed to initialize %s", argv[0]);
+				    "failed to initialize %s", ifnamep->name);
 				exit(1);
 			}
 		}
@@ -508,7 +508,7 @@ process_signals(void)
 		for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
 			if ((ifp = ifinit(ifnamep->name)) == NULL) {
 				d_printf(LOG_ERR, FNAME,
-				    "failed to initialize %s", argv[0]);
+				    "failed to initialize %s", ifnamep->name);
 				exit(1);
 			}
 		}
