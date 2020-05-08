@@ -5,6 +5,8 @@ Improvements include the following:
 - Reload the client configuration on SIGHUP
 - Removed all unused binaries except dhcp6c
 - Raw option send and receive support
+- PINFO delegated prefix environment variable
+- Accept interfaces from the configuration file
 
 It is based on a patched version of WIDE-DHCPv6 maintained by hrs@FreeBSD.org.
 
