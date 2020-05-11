@@ -197,7 +197,7 @@ setenv:
 		for (siav = TAILQ_FIRST(&iav->sublist); siav; siav = TAILQ_NEXT(siav, link)) {
 			if (siav->type == DHCP6_LISTVAL_PREFIX6) {
 				snprintf(prefixinfo, sizeof(prefixinfo),
-				    "PINFO=%s/%d",
+				    "PDINFO=%s/%d",
 				    in6addr2str(&siav->val_prefix6.addr, 0),
 				    siav->val_prefix6.plen);
 				if ((envp[i++] = strdup(prefixinfo)) == NULL) {
