@@ -84,6 +84,7 @@ static sig_atomic_t sig_flags = 0;
 #define SIGF_TERM 0x1
 #define SIGF_HUP 0x2
 #define	SIGF_USR1 0x4
+#define	SIGF_USR2 0x5
 
 const dhcp6_mode_t dhcp6_mode = DHCP6_MODE_CLIENT;
 
@@ -376,6 +377,11 @@ client6_init(void)
 		    strerror(errno));
 		exit(1);
 	}
+    if (signal(SIGUSR2, client6_signal) == SIG_ERR) {
+		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
+		    strerror(errno));
+		exit(1);
+	}
 }
 
 int
@@ -522,6 +528,13 @@ process_signals(void)
 		d_printf(LOG_INFO, FNAME, "exit without release");
 		exit_ok = 1;
 		opt_norelease = 1;
+		free_resources(NULL);
+		check_exit();
+	}
+    if ((sig_flags & SIGF_USR2)) {
+		d_printf(LOG_INFO, FNAME, "exit forced release");
+		exit_ok = 1;
+		opt_norelease = 0;
 		free_resources(NULL);
 		check_exit();
 	}
@@ -938,6 +951,9 @@ client6_signal(int sig)
 		break;
 	case SIGUSR1:
 		sig_flags |= SIGF_USR1;
+		break;
+    case SIGUSR2:
+		sig_flags |= SIGF_USR2;
 		break;
 	}
 }
