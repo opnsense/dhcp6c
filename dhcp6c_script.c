@@ -74,13 +74,14 @@ static char bcmcsserver_str[] = "new_bcmcs_servers";
 static char bcmcsname_str[] = "new_bcmcs_name";
 static char raw_dhcp_option_str[] = "raw_dhcp_option";
 
-int client6_script(char *, int, struct dhcp6_optinfo *);
+int client6_script(char *, int, struct dhcp6_optinfo *, char *);
 
 int
-client6_script(scriptpath, state, optinfo)
+client6_script(scriptpath, state, optinfo, server)
 	char *scriptpath;
 	int state;
-	struct dhcp6_optinfo *optinfo;
+	struct dhcp6_optinfo *optinfo;    
+	char *server;
 {
 	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, ret = 0;
 	int sipservers, sipnamelen;
@@ -89,8 +90,9 @@ client6_script(scriptpath, state, optinfo)
 	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
 	char reason[32];
+	char serveraddress[48];
 	char prefixinfo[32];
-	struct dhcp6_listval *v;
+	struct dhcp6_listval *v; 
 	struct dhcp6_event ev;
 	struct rawoption *rawop;
 	pid_t pid, wpid;
@@ -99,6 +101,7 @@ client6_script(scriptpath, state, optinfo)
 	/* if a script is not specified, do nothing */
 	if (scriptpath == NULL || strlen(scriptpath) == 0)
 		return -1;
+
 	d_printf(LOG_DEBUG, FNAME, "executes %s", scriptpath);
 
 	ev.state = state;
@@ -115,7 +118,7 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
-	envc = 3;     /* we at least include the reason, prefix and the terminator */
+	envc = 4;     /* we at least include the reason, prefix and the terminator */
 	if (state == DHCP6S_EXIT)
 		goto setenv;
 
@@ -191,6 +194,22 @@ setenv:
 	}
 	if (state == DHCP6S_EXIT)
 		goto launch;
+	
+	/* put the address that sent the request response into an env var */
+	if(strstr("REQUEST",dhcp6_event_statestr(&ev))) {
+		/* Only write it if we have a request response */
+		snprintf(serveraddress, sizeof(serveraddress), "SERVER=%s",
+	    server);
+		if ((envp[i++] = strdup(serveraddress)) == NULL) {
+			d_printf(LOG_NOTICE, FNAME,
+				"failed to allocate serveraddress strings");
+			ret = -1;
+			goto clean;
+		}
+	} else {
+		envc--;
+	}
+	
 
 	/* prefix delegation */
 	for (iav = TAILQ_FIRST(&optinfo->iapd_list); iav; iav = TAILQ_NEXT(iav, link)) {
