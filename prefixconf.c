@@ -215,6 +215,7 @@ update_prefix(ia, pinfo, pifc, dhcpifp, ctlp, callback)
 				continue;
 			}
 
+		    sprintf(pinfo->interface,"%s",pif->ifname);
 			add_ifprefix(sp, pinfo, pif);
 		}
 	}
