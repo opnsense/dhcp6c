@@ -128,6 +128,7 @@ struct dhcp6_prefix {		/* IA_PA */
 	uint32_t vltime;
 	struct in6_addr addr;
 	int plen;
+	char interface[5]; // Space for interface name i.e. igb0 + 1 for null terminator.
 };
 
 struct dhcp6_statefuladdr {	/* IA_NA */

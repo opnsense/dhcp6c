@@ -118,7 +118,7 @@ static void client6_recv(void);
 static int client6_recvadvert(struct dhcp6_if *, struct dhcp6 *,
 				   ssize_t, struct dhcp6_optinfo *);
 static int client6_recvreply(struct dhcp6_if *, struct dhcp6 *,
-				  ssize_t, struct dhcp6_optinfo *);
+				  ssize_t, struct dhcp6_optinfo *, char *);
 static void client6_signal(int);
 static struct dhcp6_event *find_event_withid(struct dhcp6_if *,
 						  uint32_t);
@@ -478,7 +478,7 @@ check_exit(void)
 			return;
 	}
 	for (ifp = dhcp6_if; ifp; ifp = ifp->next)
-		client6_script(ifp->scriptpath, DHCP6S_EXIT, NULL);
+		client6_script(ifp->scriptpath, DHCP6S_EXIT, NULL, NULL);
 
 	/* We have no existing event.  Do exit. */
 	d_printf(LOG_INFO, FNAME, "exiting");
@@ -1204,7 +1204,8 @@ client6_recv(void)
 	struct dhcp6 *dh6;
 	struct cmsghdr *cm;
 	struct in6_pktinfo *pi = NULL;
-
+	char server[32];
+	
 	memset(&iov, 0, sizeof(iov));
 	memset(&mhdr, 0, sizeof(mhdr));
 
@@ -1252,6 +1253,11 @@ client6_recv(void)
 	    dhcp6msgstr(dh6->dh6_msgtype),
 	    addr2str((struct sockaddr *)&from), ifp->ifname);
 
+	if(dh6->dh6_msgtype == DH6_REPLY)
+	{
+		sprintf(server,"%s",strtok(addr2str((struct sockaddr *)&from),"%"));
+	}
+	
 	/* get options */
 	dhcp6_init_options(&optinfo);
 	p = (struct dhcp6opt *)(dh6 + 1);
@@ -1266,7 +1272,7 @@ client6_recv(void)
 		(void)client6_recvadvert(ifp, dh6, len, &optinfo);
 		break;
 	case DH6_REPLY:
-		(void)client6_recvreply(ifp, dh6, len, &optinfo);
+		(void)client6_recvreply(ifp, dh6, len, &optinfo,server);
 		break;
 	default:
 		d_printf(LOG_INFO, FNAME, "received an unexpected message (%s) "
@@ -1494,7 +1500,7 @@ find_server(struct dhcp6_event *ev, struct duid *duid)
 
 static int
 client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
-    ssize_t len, struct dhcp6_optinfo *optinfo)
+    ssize_t len, struct dhcp6_optinfo *optinfo, char *server)
 {
 	struct dhcp6_listval *lv;
 	struct dhcp6_event *ev;
@@ -1683,7 +1689,7 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	 * Call the configuration script, if specified, to handle various
 	 * configuration parameters.
 	 */
-	client6_script(ifp->scriptpath, state, optinfo);
+	client6_script(ifp->scriptpath, state, optinfo, server);
 
 	dhcp6_remove_event(ev);
 

@@ -39,6 +39,6 @@ struct dhcp6_timer *client6_timo(void *);
 int client6_start(struct dhcp6_if *);
 void client6_send(struct dhcp6_event *);
 
-int client6_script(char *, int, struct dhcp6_optinfo *);
+int client6_script(char *, int, struct dhcp6_optinfo *, char *);
 
 #endif
