@@ -1405,7 +1405,7 @@ client6_recvadvert(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	 * was included.
 	 */
 	if (have_ia == 0) {
-		debug_printf(LOG_INFO, FNAME, "advertise contains no address/prefix");
+		d_printf(LOG_INFO, FNAME, "advertise contains no address/prefix");
 		return (-1);
 	}
 
