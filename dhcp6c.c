@@ -1287,6 +1287,7 @@ client6_recvadvert(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	struct dhcp6_event *ev;
 	struct dhcp6_eventdata *evd;
 	struct authparam *authparam = NULL, authparam0;
+	int have_ia = -1;
 
 	/* find the corresponding event based on the received xid */
 	ev = find_event_withid(ifp, ntohl(dh6->dh6_xid) & DH6_XIDMASK);
@@ -1332,6 +1333,7 @@ client6_recvadvert(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	 */
 	for (evd = TAILQ_FIRST(&ev->data_list); evd;
 	    evd = TAILQ_NEXT(evd, link)) {
+		struct dhcp6_listval *lv, *slv;
 		uint16_t stcode;
 		const char *stcodestr;
 
@@ -1347,12 +1349,64 @@ client6_recvadvert(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 		default:
 			continue;
 		}
+
 		if (dhcp6_find_listval(&optinfo->stcode_list,
 		    DHCP6_LISTVAL_STCODE, &stcode, 0)) {
 			d_printf(LOG_INFO, FNAME,
 			    "advertise contains %s status", stcodestr);
 			return (-1);
 		}
+
+		if (have_ia > 0 ||
+		    TAILQ_EMPTY((struct dhcp6_list *)evd->data)) {
+			continue;
+		}
+
+		have_ia = 0;
+
+		/* parse list of IA_PD */
+		if (evd->type == DHCP6_EVDATA_IAPD) {
+			TAILQ_FOREACH(lv, (struct dhcp6_list *)evd->data, link) {
+				slv = dhcp6_find_listval(&optinfo->iapd_list,
+				    DHCP6_LISTVAL_IAPD, &lv->val_ia, 0);
+				if (slv == NULL) {
+					continue;
+				}
+				TAILQ_FOREACH(slv, &slv->sublist, link) {
+					if (slv->type == DHCP6_LISTVAL_PREFIX6) {
+						have_ia = 1;
+						break;
+					}
+				}
+			}
+		}
+
+		/* parse list of IA_NA */
+		if (evd->type == DHCP6_EVDATA_IANA) {
+			TAILQ_FOREACH(lv, (struct dhcp6_list *)evd->data, link) {
+				slv = dhcp6_find_listval(&optinfo->iana_list,
+				    DHCP6_LISTVAL_IANA, &lv->val_ia, 0);
+				if (slv == NULL) {
+					continue;
+				}
+				TAILQ_FOREACH(slv, &slv->sublist, link) {
+					if (slv->type == DHCP6_LISTVAL_STATEFULADDR6) {
+						have_ia = 1;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	/*
+	 * Ignore message with none of requested addresses and/or
+	 * a prefixes as if NoAddrsAvail/NoPrefixAvail Status Code
+	 * was included.
+	 */
+	if (have_ia == 0) {
+		debug_printf(LOG_INFO, FNAME, "advertise contains no address/prefix");
+		return (-1);
 	}
 
 	if (ev->state != DHCP6S_SOLICIT ||
