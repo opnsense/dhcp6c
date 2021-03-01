@@ -103,7 +103,7 @@ static int ctldigestlen;
 static int infreq_mode = 0;
 
 int opt_norelease;
-
+int opt_auto;
 static void usage(void);
 static void client6_init(void);
 static void client6_startall(int);
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	else
 		progname++;
 
-	while ((ch = getopt(argc, argv, "c:dDfinp:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:adDfinp:")) != -1) {
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
@@ -173,6 +173,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			infreq_mode = 1;
+			break;
+   case 'a':
+			opt_auto = 1;
 			break;
 		case 'n':
 			opt_norelease = 1;

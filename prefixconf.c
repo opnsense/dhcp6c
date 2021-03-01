@@ -465,8 +465,16 @@ add_ifprefix(siteprefix, prefix, pconf)
 		d_printf(LOG_INFO, FNAME,
 			"invalid prefix length %d + %d + %d",
 			prefix->plen, pconf->sla_len, pconf->ifid_len);
+   if(!opt_auto) {
 		goto bad;
+   }
 	}
+
+  if( prefix->plen + pconf->sla_len != 64 ) {
+    d_printf(LOG_INFO, FNAME,"Prefix obtained (%d) does not match prefix SLA (%d) ( requested prefix %d ), auto changing to match obtained prefix",prefix->plen, pconf->sla_len, 64-pconf->sla_len);
+    pconf->sla_len = 64-prefix->plen;
+    ifpfx->plen = 64;
+  }
 
 	/* copy prefix and SLA ID */
 	a = &ifpfx->paddr.sin6_addr;
