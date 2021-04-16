@@ -366,6 +366,11 @@ client6_init(void)
 		    strerror(errno));
 		exit(1);
 	}
+	if (signal(SIGINT, client6_signal) == SIG_ERR) {
+		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
+		    strerror(errno));
+		exit(1);
+	}
 	if (signal(SIGTERM, client6_signal) == SIG_ERR) {
 		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
 		    strerror(errno));
@@ -484,6 +489,12 @@ check_exit(void)
 	d_printf(LOG_INFO, FNAME, "exiting");
 
 	unlink(pid_file);
+
+	if (foreground) {
+		fflush(stdout);
+		fflush(stderr);
+	}
+
 	exit(0);
 }
 
@@ -930,11 +941,12 @@ client6_signal(int sig)
 {
 
 	switch (sig) {
-	case SIGTERM:
-		sig_flags |= SIGF_TERM;
-		break;
 	case SIGHUP:
 		sig_flags |= SIGF_HUP;
+		break;
+	case SIGINT:
+	case SIGTERM:
+		sig_flags |= SIGF_TERM;
 		break;
 	case SIGUSR1:
 		sig_flags |= SIGF_USR1;

@@ -107,6 +107,7 @@ option is specified.
 .Pp
 Upon receipt of a
 .Dv SIGHUP ,
+.Dv SIGINT ,
 .Dv SIGTERM ,
 or
 .Dv SIGUSR1
@@ -116,14 +117,18 @@ will remove all stateful resources from the system.
 After that,
 .Dv SIGHUP
 reinitializes the daemon,
-and
+and both
+.DV SIGINT
+or
 .Dv SIGTERM
-stops the daemon.
-In both cases,
+stop the daemon.
+In these cases,
 DHCPv6 Release message will be sent to release resources
 assigned from servers.
 .Dv SIGUSR1
 stops the daemon as
+.Dv SIGINT
+or
 .Dv SIGTERM
 does though DHCPv6 Release message will not be sent.
 .\"
