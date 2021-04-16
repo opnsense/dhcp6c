@@ -478,7 +478,7 @@ check_exit(void)
 			return;
 	}
 	for (ifp = dhcp6_if; ifp; ifp = ifp->next)
-		client6_script(ifp->scriptpath, DHCP6S_EXIT, NULL);
+		client6_script(ifp->scriptpath, DHCP6S_EXIT, NULL, ifp);
 
 	/* We have no existing event.  Do exit. */
 	d_printf(LOG_INFO, FNAME, "exiting");
@@ -1737,7 +1737,7 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	 * Call the configuration script, if specified, to handle various
 	 * configuration parameters.
 	 */
-	client6_script(ifp->scriptpath, state, optinfo);
+	client6_script(ifp->scriptpath, state, optinfo, ifp);
 
 	dhcp6_remove_event(ev);
 
