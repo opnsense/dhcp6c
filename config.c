@@ -217,9 +217,6 @@ configure_interface(iflist)
 	struct dhcp6_ifconf *ifc;
 	char *cp;
 
-	/* XXX pointer back for use by dhcp6c interface names */
-	ifnames = iflist;
-
 	for (ifp = iflist; ifp; ifp = ifp->next) {
 		struct cf_list *cfl;
 
@@ -386,6 +383,14 @@ configure_interface(iflist)
 					"invalid interface configuration",
 					configfilename, cfl->line);
 				goto bad;
+			}
+		}
+
+		if (use_all_config_if) {
+			if (ifinit(ifp->name) == NULL) {
+				d_printf(LOG_ERR, FNAME, "failed to initialize %s", ifp->name);
+				/* safe to exit here as still parsing */
+				exit(1);
 			}
 		}
 	}
