@@ -310,7 +310,7 @@ extern struct dhcp6_list nispnamelist;
 extern struct dhcp6_list bcmcslist;
 extern struct dhcp6_list bcmcsnamelist;
 extern long long optrefreshtime;
-extern struct cf_namelist *ifnames;
+extern int use_all_config_if;
 
 struct dhcp6_if *ifinit(char *);
 int ifreset(struct dhcp6_if *);
