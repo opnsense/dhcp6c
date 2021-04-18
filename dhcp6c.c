@@ -371,6 +371,11 @@ client6_init(void)
 		    strerror(errno));
 		exit(1);
 	}
+	if (signal(SIGINT, client6_signal) == SIG_ERR) {
+		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
+		    strerror(errno));
+		exit(1);
+	}
 	if (signal(SIGUSR1, client6_signal) == SIG_ERR) {
 		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
 		    strerror(errno));
@@ -484,6 +489,12 @@ check_exit(void)
 	d_printf(LOG_INFO, FNAME, "exiting");
 
 	unlink(pid_file);
+
+	if (foreground) {
+		fflush(stdout);
+		fflush(stderr);
+	}
+
 	exit(0);
 }
 
@@ -493,11 +504,19 @@ process_signals(void)
 	struct cf_namelist *ifnamep;
 	struct dhcp6_if *ifp;
 
+	if ((sig_flags & SIGF_USR1)) {
+		d_printf(LOG_INFO, FNAME, "exit with%s release",
+			opt_norelease ? "out" : "");
+		opt_norelease ^= 1;
+		/* rest is same as TERM, both flags get set */
+	}
+
 	if ((sig_flags & SIGF_TERM)) {
 		exit_ok = 1;
 		free_resources(NULL);
 		check_exit();
 	}
+
 	if ((sig_flags & SIGF_HUP)) {
 		d_printf(LOG_INFO, FNAME, "restarting");
 		free_resources(NULL);
@@ -517,13 +536,6 @@ process_signals(void)
 			    "failed to reload configuration file");
 		}
 		client6_startall(1);
-	}
-	if ((sig_flags & SIGF_USR1)) {
-		d_printf(LOG_INFO, FNAME, "exit without release");
-		exit_ok = 1;
-		opt_norelease = 1;
-		free_resources(NULL);
-		check_exit();
 	}
 
 	sig_flags = 0;
@@ -930,14 +942,14 @@ client6_signal(int sig)
 {
 
 	switch (sig) {
+	case SIGUSR1:
+		sig_flags |= SIGF_USR1;
 	case SIGTERM:
+	case SIGINT:
 		sig_flags |= SIGF_TERM;
 		break;
 	case SIGHUP:
 		sig_flags |= SIGF_HUP;
-		break;
-	case SIGUSR1:
-		sig_flags |= SIGF_USR1;
 		break;
 	}
 }
