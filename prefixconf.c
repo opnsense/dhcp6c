@@ -113,7 +113,7 @@ static void renew_data_free(struct dhcp6_eventdata *);
 
 static struct dhcp6_timer *siteprefix_timo(void *);
 
-static int add_ifprefix(struct siteprefix *,
+static struct sockaddr_in6 *add_ifprefix(struct siteprefix *,
     struct dhcp6_prefix *, struct prefix_ifconf *);
 
 static int pd_ifaddrconf(ifaddrconf_cmd_t, struct dhcp6_ifprefix *ifpfx);
@@ -215,7 +215,7 @@ update_prefix(ia, pinfo, pifc, dhcpifp, ctlp, callback)
 				continue;
 			}
 
-			add_ifprefix(sp, pinfo, pif);
+			pif->ifaddr = add_ifprefix(sp, pinfo, pif);
 		}
 	}
 
@@ -425,7 +425,7 @@ siteprefix_timo(arg)
 	return (NULL);
 }
 
-static int
+static struct sockaddr_in6 *
 add_ifprefix(siteprefix, prefix, pconf)
 	struct siteprefix *siteprefix;
 	struct dhcp6_prefix *prefix;
@@ -440,7 +440,7 @@ add_ifprefix(siteprefix, prefix, pconf)
 	if ((ifpfx = malloc(sizeof(*ifpfx))) == NULL) {
 		d_printf(LOG_NOTICE, FNAME,
 		    "failed to allocate memory for ifprefix");
-		return (-1);
+		goto bad;
 	}
 	memset(ifpfx, 0, sizeof(*ifpfx));
 
@@ -492,12 +492,12 @@ add_ifprefix(siteprefix, prefix, pconf)
 
 	TAILQ_INSERT_TAIL(&siteprefix->ifprefix_list, ifpfx, plink);
 
-	return (0);
+	return &ifpfx->ifaddr;
 
   bad:
 	if (ifpfx)
 		free(ifpfx);
-	return (-1);
+	return NULL;
 }
 
 #ifndef ND6_INFINITE_LIFETIME

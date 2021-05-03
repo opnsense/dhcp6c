@@ -92,9 +92,9 @@ client6_script(scriptpath, state, optinfo, ifp)
 	char reason[32];
 	/* need space for 32 + 7 : + 1 / + 1-3 prefixlen,
 	 * leave room for scope for %scope even though unused */
-	char prefixinfo[64];
+	static char prefixinfo[64];
 	/* enuough space for ~1.5* a /56 worth of /64 ifs of 8 chars + sla_len:id */
-	char prefixif[4096];
+	static char prefixif[8192];
 	int prefixcount = 0;
 	struct dhcp6_listval *v;
 	struct dhcp6_event ev;
@@ -244,9 +244,10 @@ setenv:
 				for (pif = TAILQ_FIRST(&iapdc->iapd_pif_list); pif && if_left > 1;
 						pif = TAILQ_NEXT(pif, link)) {
 					/* finally the configured if name */
-					ret = snprintf(if_next, if_left, "%c%s:%x:%x",
+					ret = snprintf(if_next, if_left, "%c%s,%s",
 						if_count ? ' ' : '=',
-						pif->ifname, pif->sla_len, pif->sla_id);
+						pif->ifname, pif->ifaddr
+						? addr2str((struct sockaddr *)pif->ifaddr) : "");
 					if_left -= ret;
 					if_next += ret;
 					if_count += 1;
