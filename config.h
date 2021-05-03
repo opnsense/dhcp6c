@@ -181,6 +181,8 @@ struct prefix_ifconf {
 	int ifid_len;		/* interface ID length in bits */
 	int ifid_type;		/* EUI-64 and manual (unused?) */
 	char ifid[16];		/* Interface ID, up to 128bits */
+
+	struct sockaddr_in6 *ifaddr;
 };
 #define IFID_LEN_DEFAULT 64
 #define SLA_LEN_DEFAULT 16
