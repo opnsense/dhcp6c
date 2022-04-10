@@ -1777,10 +1777,9 @@ dhcp6_get_options(p, ep, optinfo)
 				    optinfo->delayedauth_offset,
 				    optinfo->delayedauth_realmlen);
 				break;
-#ifdef notyet
 			case DHCP6_AUTHPROTO_RECONFIG:
+				d_printf(LOG_DEBUG, FNAME, "  ignoring not implemented authentication protocol: reconfig");
 				break;
-#endif
 			/* XXX */
 			case 0:
 				// Discard auth
@@ -1793,7 +1792,7 @@ dhcp6_get_options(p, ep, optinfo)
 			default:
 				d_printf(LOG_INFO, FNAME,
 				    "unsupported authentication protocol: %d",
-				    *cp);
+				    optinfo->authproto);
 				goto fail;
 			}
 			break;
