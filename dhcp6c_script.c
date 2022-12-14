@@ -205,10 +205,12 @@ setenv:
 					ret = -1;
 					goto clean;
 				}
+				goto servers;
 			}
 		}
 	}
 
+servers:
 	/* "var=addr1 addr2 ... addrN" + null char for termination */
 	if (dnsservers) {
 		elen = sizeof (dnsserver_str) +
