@@ -87,6 +87,7 @@ client6_script(scriptpath, state, optinfo)
 	int nisservers, nisnamelen;
 	int nispservers, nispnamelen;
 	int bcmcsservers, bcmcsnamelen;
+	int prefixes;
 	char **envp, *s;
 	char reason[32];
 	char prefixinfo[32] = "\0";
@@ -115,7 +116,8 @@ client6_script(scriptpath, state, optinfo)
 	nispnamelen = 0;
 	bcmcsservers = 0;
 	bcmcsnamelen = 0;
-	envc = 3;     /* we at least include the reason, prefix and the terminator */
+	prefixes = 0;
+	envc = 2;     /* we at least include the reason and the terminator */
 	if (state == DHCP6S_EXIT)
 		goto setenv;
 
@@ -167,6 +169,15 @@ client6_script(scriptpath, state, optinfo)
 	}
 	envc += bcmcsnamelen ? 1 : 0;
 
+	for (iav = TAILQ_FIRST(&optinfo->iapd_list); iav; iav = TAILQ_NEXT(iav, link)) {
+		for (siav = TAILQ_FIRST(&iav->sublist); siav; siav = TAILQ_NEXT(siav, link)) {
+			if (siav->type == DHCP6_LISTVAL_PREFIX6) {
+				prefixes += 1;
+			}
+		}
+	}
+	envc += prefixes ? 1 : 0;
+
 setenv:
 	/* allocate an environments array */
 	if ((envp = malloc(sizeof (char *) * envc)) == NULL) {
@@ -191,28 +202,6 @@ setenv:
 	}
 	if (state == DHCP6S_EXIT)
 		goto launch;
-
-	/* prefix delegation */
-	/* XXX perhaps this should be caught dynamically as well WRT envc requirement */
-	for (iav = TAILQ_FIRST(&optinfo->iapd_list); iav; iav = TAILQ_NEXT(iav, link)) {
-		for (siav = TAILQ_FIRST(&iav->sublist); siav; siav = TAILQ_NEXT(siav, link)) {
-			if (siav->type == DHCP6_LISTVAL_PREFIX6) {
-				if (prefixinfo[0] != '\0') {
-					d_printf(LOG_NOTICE, FNAME, "skipping additional prefix, not yet supported");
-					continue;
-				}
-				snprintf(prefixinfo, sizeof(prefixinfo),
-				    "PDINFO=%s/%d",
-				    in6addr2str(&siav->val_prefix6.addr, 0),
-				    siav->val_prefix6.plen);
-				if ((envp[i++] = strdup(prefixinfo)) == NULL) {
-					d_printf(LOG_NOTICE, FNAME, "failed to allocate prefixinfo strings");
-					ret = -1;
-					goto clean;
-				}
-			}
-		}
-	}
 
 	/* "var=addr1 addr2 ... addrN" + null char for termination */
 	if (dnsservers) {
@@ -420,6 +409,35 @@ setenv:
 			strlcat(s, " ", elen);
 		}
 	}
+
+	if (prefixes) {
+#define PDINFO_MAX	64
+		char *str = "PDINFO";
+		elen = sizeof (str) + PDINFO_MAX * prefixes + 1;
+		if ((s = envp[i++] = malloc(elen)) == NULL) {
+			d_printf(LOG_NOTICE, FNAME,
+			    "failed to allocate prefixinfo strings");
+			ret = -1;
+			goto clean;
+		}
+		memset(s, 0, elen);
+		snprintf(s, elen, "%s=", str);
+		for (iav = TAILQ_FIRST(&optinfo->iapd_list); iav; iav = TAILQ_NEXT(iav, link)) {
+			for (siav = TAILQ_FIRST(&iav->sublist); siav; siav = TAILQ_NEXT(siav, link)) {
+				if (siav->type == DHCP6_LISTVAL_PREFIX6) {
+					char prefixinfo[PDINFO_MAX];
+
+					snprintf(prefixinfo, sizeof(prefixinfo),
+					    "%s/%d", in6addr2str(&siav->val_prefix6.addr, 0),
+					    siav->val_prefix6.plen);
+
+					strlcat(s, prefixinfo, elen);
+					strlcat(s, " ", elen);
+				}
+			}
+		}
+	}
+
 	/* XXX */
 	for (rawop = TAILQ_FIRST(&optinfo->rawops); rawop; rawop = TAILQ_NEXT(rawop, link)) {
 		// max of 5 numbers after last underscore (seems like max DHCPv6 option could be 65535)
