@@ -119,7 +119,7 @@ dhcp6_validate_key(struct keyinfo *key)
 }
 
 int
-dhcp6_calc_mac(char *buf, size_t len, int proto __attribute__((__unused__)), int alg,
+dhcp6_calc_mac(unsigned char *buf, size_t len, int proto __attribute__((__unused__)), int alg,
     size_t off, struct keyinfo *key)
 {
 	hmacmd5_t ctx;
@@ -148,7 +148,7 @@ dhcp6_calc_mac(char *buf, size_t len, int proto __attribute__((__unused__)), int
 }
 
 int
-dhcp6_verify_mac(char *buf, ssize_t len, int proto __attribute__((__unused__)),
+dhcp6_verify_mac(unsigned char *buf, ssize_t len, int proto __attribute__((__unused__)),
     int alg, size_t off, struct keyinfo *key)
 {
 	hmacmd5_t ctx;

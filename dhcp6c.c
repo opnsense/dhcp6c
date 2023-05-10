@@ -1141,7 +1141,7 @@ client6_send(struct dhcp6_event *ev)
 			if (ev->authparam->key == NULL)
 				break;
 
-			if (dhcp6_calc_mac((char *)dh6, len,
+			if (dhcp6_calc_mac((unsigned char *)dh6, len,
 			    optinfo.authproto, optinfo.authalgorithm,
 			    optinfo.delayedauth_offset + sizeof(*dh6),
 			    ev->authparam->key)) {
@@ -1873,7 +1873,7 @@ process_auth(struct authparam *authparam, struct dhcp6 *dh6,
 		}
 
 		/* validate MAC */
-		if (dhcp6_verify_mac((char *)dh6, len, optinfo->authproto,
+		if (dhcp6_verify_mac((unsigned char *)dh6, len, optinfo->authproto,
 		    optinfo->authalgorithm,
 		    optinfo->delayedauth_offset + sizeof(*dh6), key) == 0) {
 			d_printf(LOG_DEBUG, FNAME, "message authentication "

@@ -177,7 +177,7 @@ void list_cfl (char *tag,struct cf_namelist *head)
 					}
 					break;
 				case DECL_SCRIPT:
-					printf("script %s\n", cfl->ptr);
+					printf("script %s\n", (char *)cfl->ptr);
 					break;
 				default:
 					printf("Unknown option type %i\n", cfl->type);
