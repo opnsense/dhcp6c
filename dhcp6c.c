@@ -135,7 +135,12 @@ static int set_auth(struct dhcp6_event *, struct dhcp6_optinfo *);
 struct dhcp6_timer *client6_timo(void *);
 int client6_start(struct dhcp6_if *);
 static void info_printf(const char *, ...);
-struct cf_namelist *ifnames;
+
+static void init_cli_if(int argc, char **argv);
+
+int use_all_config_if;
+static int saved_cli_if_count;
+static char **saved_cli_if;
 
 #define MAX_ELAPSED_TIME 0xffff
 
@@ -145,7 +150,6 @@ main(int argc, char *argv[])
 	int ch, pid;
 	char *progname;
 	FILE *pidfp;
-	struct dhcp6_if *ifp;
 	struct cf_namelist *ifnamep;
 
 #ifndef HAVE_ARC4RANDOM
@@ -196,33 +200,21 @@ main(int argc, char *argv[])
 	client6_init();
 
 	/*
-	 * Doing away with the need for command line interfaces
-	 * We need to read the config file to get the names of the interfaces.
+	 * Doing away with the need for command line interfaces -- if this is set
+	 * config.c initializes the interface after parsing it.	This makes cfparse.y
+	 * have valid entries in dhcp6_if before it invokes configure_commit() at the
+	 * end of it's parse. Only one parse pass needed now.
 	 */
-	if (argc == 0) {
-		if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
-			d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
-			exit(1);
-		}
-		for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
-			if ((ifp = ifinit(ifnamep->name)) == NULL) {
-				d_printf(LOG_ERR, FNAME,
-				    "failed to initialize %s", ifnamep->name);
-				exit(1);
-			}
-		}
+	use_all_config_if = (argc == 0);
+
+	if (!use_all_config_if) {
+		saved_cli_if = argv;
+		saved_cli_if_count = argc;
+		init_cli_if(saved_cli_if_count, saved_cli_if);
+
 	}
 
-	while (argc-- > 0) {
-		if ((ifp = ifinit(argv[0])) == NULL) {
-			d_printf(LOG_ERR, FNAME, "failed to initialize %s",
-			    argv[0]);
-			exit(1);
-		}
-		argv++;
-	}
-
-	if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
+	if (infreq_mode == 0 && cfparse(conffile)) {
 		d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
 		exit(1);
 	}
@@ -253,6 +245,18 @@ usage()
 }
 
 /*------------------------------------------------------------*/
+
+static void
+init_cli_if(int argc, char **argv) {
+	while (argc-- > 0) {
+		if (ifinit(argv[0]) == NULL) {
+			d_printf(LOG_ERR, FNAME, "failed to initialize %s",
+			    argv[0]);
+			exit(1);
+		}
+		argv++;
+	}
+}
 
 void
 client6_init(void)
@@ -362,6 +366,11 @@ client6_init(void)
 	freeaddrinfo(res);
 
 	if (signal(SIGHUP, client6_signal) == SIG_ERR) {
+		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
+		    strerror(errno));
+		exit(1);
+	}
+	if (signal(SIGINT, client6_signal) == SIG_ERR) {
 		d_printf(LOG_WARNING, FNAME, "failed to set signal: %s",
 		    strerror(errno));
 		exit(1);
@@ -484,6 +493,12 @@ check_exit(void)
 	d_printf(LOG_INFO, FNAME, "exiting");
 
 	unlink(pid_file);
+
+	if (foreground) {
+		fflush(stdout);
+		fflush(stderr);
+	}
+
 	exit(0);
 }
 
@@ -501,18 +516,10 @@ process_signals(void)
 	if ((sig_flags & SIGF_HUP)) {
 		d_printf(LOG_INFO, FNAME, "restarting");
 		free_resources(NULL);
-		if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
-			d_printf(LOG_WARNING, FNAME,
-			    "failed to reload configuration file");
+		if (!use_all_config_if) {
+			init_cli_if(saved_cli_if_count, saved_cli_if);
 		}
-		for (ifnamep = ifnames; ifnamep; ifnamep = ifnamep->next) {
-			if ((ifp = ifinit(ifnamep->name)) == NULL) {
-				d_printf(LOG_ERR, FNAME,
-				    "failed to initialize %s", ifnamep->name);
-				exit(1);
-			}
-		}
-		if (infreq_mode == 0 && (cfparse(conffile)) != 0) {
+		if (cfparse(conffile)) {
 			d_printf(LOG_WARNING, FNAME,
 			    "failed to reload configuration file");
 		}
@@ -930,11 +937,12 @@ client6_signal(int sig)
 {
 
 	switch (sig) {
-	case SIGTERM:
-		sig_flags |= SIGF_TERM;
-		break;
 	case SIGHUP:
 		sig_flags |= SIGF_HUP;
+		break;
+	case SIGINT:
+	case SIGTERM:
+		sig_flags |= SIGF_TERM;
 		break;
 	case SIGUSR1:
 		sig_flags |= SIGF_USR1;
@@ -1129,7 +1137,7 @@ client6_send(struct dhcp6_event *ev)
 			if (ev->authparam->key == NULL)
 				break;
 
-			if (dhcp6_calc_mac((char *)dh6, len,
+			if (dhcp6_calc_mac((unsigned char *)dh6, len,
 			    optinfo.authproto, optinfo.authalgorithm,
 			    optinfo.delayedauth_offset + sizeof(*dh6),
 			    ev->authparam->key)) {
@@ -1861,7 +1869,7 @@ process_auth(struct authparam *authparam, struct dhcp6 *dh6,
 		}
 
 		/* validate MAC */
-		if (dhcp6_verify_mac((char *)dh6, len, optinfo->authproto,
+		if (dhcp6_verify_mac((unsigned char *)dh6, len, optinfo->authproto,
 		    optinfo->authalgorithm,
 		    optinfo->delayedauth_offset + sizeof(*dh6), key) == 0) {
 			d_printf(LOG_DEBUG, FNAME, "message authentication "

@@ -177,7 +177,7 @@ void list_cfl (char *tag,struct cf_namelist *head)
 					}
 					break;
 				case DECL_SCRIPT:
-					printf("script %s\n", cfl->ptr);
+					printf("script %s\n", (char *)cfl->ptr);
 					break;
 				default:
 					printf("Unknown option type %i\n", cfl->type);
@@ -216,9 +216,6 @@ configure_interface(iflist)
 	struct cf_namelist *ifp;
 	struct dhcp6_ifconf *ifc;
 	char *cp;
-
-	/* XXX pointer back for use by dhcp6c interface names */
-	ifnames = iflist;
 
 	for (ifp = iflist; ifp; ifp = ifp->next) {
 		struct cf_list *cfl;
@@ -386,6 +383,14 @@ configure_interface(iflist)
 					"invalid interface configuration",
 					configfilename, cfl->line);
 				goto bad;
+			}
+		}
+
+		if (use_all_config_if) {
+			if (ifinit(ifp->name) == NULL) {
+				d_printf(LOG_ERR, FNAME, "failed to initialize %s", ifp->name);
+				/* safe to exit here as still parsing */
+				exit(1);
 			}
 		}
 	}
