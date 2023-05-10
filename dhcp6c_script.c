@@ -89,7 +89,7 @@ client6_script(scriptpath, state, optinfo)
 	int bcmcsservers, bcmcsnamelen;
 	char **envp, *s;
 	char reason[32];
-	char prefixinfo[32];
+	char prefixinfo[32] = "\0";
 	struct dhcp6_listval *v;
 	struct dhcp6_event ev;
 	struct rawoption *rawop;
@@ -193,9 +193,14 @@ setenv:
 		goto launch;
 
 	/* prefix delegation */
+	/* XXX perhaps this should be caught dynamically as well WRT envc requirement */
 	for (iav = TAILQ_FIRST(&optinfo->iapd_list); iav; iav = TAILQ_NEXT(iav, link)) {
 		for (siav = TAILQ_FIRST(&iav->sublist); siav; siav = TAILQ_NEXT(siav, link)) {
 			if (siav->type == DHCP6_LISTVAL_PREFIX6) {
+				if (prefixinfo[0] != '\0') {
+					d_printf(LOG_NOTICE, FNAME, "skipping additional prefix, not yet supported");
+					continue;
+				}
 				snprintf(prefixinfo, sizeof(prefixinfo),
 				    "PDINFO=%s/%d",
 				    in6addr2str(&siav->val_prefix6.addr, 0),
