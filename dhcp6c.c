@@ -107,6 +107,7 @@ int opt_norelease;
 static void usage(void);
 static void client6_init(void);
 static void client6_startall(int);
+static void client6_reset(struct dhcp6_if *);
 static void free_resources(struct dhcp6_if *);
 static void client6_mainloop(void);
 static void check_exit(void);
@@ -423,6 +424,16 @@ client6_start(struct dhcp6_if *ifp)
 	dhcp6_reset_timer(ev);
 
 	return (0);
+}
+
+static void
+client6_reset(struct dhcp6_if *ifp)
+{
+	d_printf(LOG_NOTICE, FNAME, "resetting lease on %s", ifp->ifname);
+
+	free_resources(ifp);
+	ifreset(ifp);
+	client6_start(ifp);
 }
 
 static void
@@ -1632,6 +1643,15 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	     lv = TAILQ_NEXT(lv, link)) {
 		d_printf(LOG_INFO, FNAME, "status code: %s",
 		    dhcp6_stcodestr(lv->val_num16));
+
+		if ((state == DHCP6S_RENEW || state == DHCP6S_REBIND) &&
+		    lv->val_num16 == DH6OPT_STCODE_NOBINDING) {
+			/* server has no memory of our lease :( */
+			client6_reset(ifp);
+			return (0);
+		}
+
+		/* XXX is it wise to continue with an error in the reply? */
 	}
 
 	if (!TAILQ_EMPTY(&optinfo->dns_list)) {
