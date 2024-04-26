@@ -3327,13 +3327,17 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 	char logbuf[LINE_MAX];
 	int printfname = 1;
 
+	if (level > debug_thresh) {
+		return;
+	}
+
 	va_start(ap, fmt);
 	vsnprintf(logbuf, sizeof(logbuf), fmt, ap);
 
 	if (*fname == '\0')
 		printfname = 0;
 
-	if (foreground && debug_thresh >= level) {
+	if (foreground) {
 		time_t now;
 		struct tm *tm_now;
 		const char *month[] = {
@@ -3355,7 +3359,7 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 		 * XXX DEBUG/INFO require NOTICE in order to
 		 * to appear in the OPNsense system log file.
                  */
-		if (debug_thresh <= level && level > LOG_NOTICE) {
+		if (level > LOG_NOTICE) {
 			level = LOG_NOTICE;
 		}
 		syslog(level, "%s%s%s", fname, printfname ? ": " : "", logbuf);
