@@ -201,20 +201,6 @@ update_prefix(ia, pinfo, pifc, dhcpifp, ctlp, callback)
 	if (sp->prefix.vltime != 0 && spcreate) {
 		for (pif = TAILQ_FIRST(iac_pd->pifc_head); pif;
 		    pif = TAILQ_NEXT(pif, link)) {
-			/*
-			 * The requesting router MUST NOT assign any delegated
-			 * prefixes or subnets from the delegated prefix(es) to
-			 * the link through which it received the DHCP message
-			 * from the delegating router.
-			 * [RFC3633 Section 12.1]
-			 */
-			if (strcmp(pif->ifname, dhcpifp->ifname) == 0) {
-				d_printf(LOG_INFO, FNAME,
-				    "skip %s as a prefix interface",
-				    dhcpifp->ifname);
-				continue;
-			}
-
 			add_ifprefix(sp, pinfo, pif);
 		}
 	}
