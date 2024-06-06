@@ -141,7 +141,9 @@ static int configure_duid(char *, struct duid *);
 static int configure_addr(struct cf_list *, struct dhcp6_list *, const char *);
 static int configure_domain(struct cf_list *, struct dhcp6_list *,
     const char *);
-static int get_default_ifid(struct prefix_ifconf *);
+static int set_default_ifid(struct prefix_ifconf *);
+static int set_current_ifid(struct prefix_ifconf *, long long);
+static int set_random_ifid(struct prefix_ifconf *);
 static void clear_poolconf(struct pool_conf *);
 static struct pool_conf *create_pool(char *, struct dhcp6_range *);
 struct host_conf *find_dynamic_hostconf(struct duid *);
@@ -531,7 +533,7 @@ add_pd_pif(iapdc, cfl0, if_count)
 {
 	struct cf_list *cfl;
 	struct prefix_ifconf *pif;
-	int i, use_default_ifid = 1;
+	int ifid_done = 0;
 
 	/* duplication check */
 	for (pif = TAILQ_FIRST(&iapdc->iapd_pif_list); pif;
@@ -581,17 +583,22 @@ add_pd_pif(iapdc, cfl0, if_count)
 				goto bad;
 			}
 			break;
-		case IFPARAM_IFID_RAND:
-			for (i = 0; i < pif->ifid_len ; i++) {
-				cfl->num = cfl->num * 2 + rand() % 2;
+		case IFPARAM_IFID_EUI64:
+			if (set_default_ifid(pif)) {
+				d_printf(LOG_NOTICE, FNAME,
+				    "failed to get default IF ID for %s",
+				    pif->ifname);
+				goto bad;
 			}
-			/* FALLTHROUGH */
+			ifid_done = 1;
+			break;
+		case IFPARAM_IFID_RAND:
+			set_random_ifid(pif);
+			ifid_done = 1;
+			break;
 		case IFPARAM_IFID:
-			for (i = sizeof(pif->ifid) -1; i >= 0; i--) {
-				pif->ifid[i] = (cfl->num >> 8 *
-				    (sizeof(pif->ifid) - 1 - i)) & 0xff;
-                        }
-			use_default_ifid = 0;
+			set_current_ifid(pif, cfl->num);
+			ifid_done = 1;
 			break;
 		default:
 			d_printf(LOG_ERR, FNAME, "%s:%d internal error: "
@@ -601,11 +608,11 @@ add_pd_pif(iapdc, cfl0, if_count)
 		}
 	}
 
-	/* XXX consider a fallback to ifid-random here */
-	if (use_default_ifid && get_default_ifid(pif)) {
+	if (!ifid_done && set_default_ifid(pif)) {
 		d_printf(LOG_NOTICE, FNAME,
-		    "failed to get default IF ID for %s", pif->ifname);
-		goto bad;
+		    "failed to get default IF ID for %s, using random ID",
+		    pif->ifname);
+		set_random_ifid(pif);
 	}
 
 	TAILQ_INSERT_TAIL(&iapdc->iapd_pif_list, pif, link);
@@ -1290,7 +1297,7 @@ configure_duid(str, duid)
 
 /* we currently only construct EUI-64 based interface ID */
 static int
-get_default_ifid(pif)
+set_default_ifid(pif)
 	struct prefix_ifconf *pif;
 {
 	struct ifaddrs *ifa, *ifap;
@@ -1376,6 +1383,33 @@ get_default_ifid(pif)
   fail:
 	freeifaddrs(ifap);
 	return (-1);
+}
+
+static int
+set_current_ifid(struct prefix_ifconf *pif, long long value)
+{
+	int i;
+
+	/* similar to EUI-64 and only passed a 64 bit SIGNED integer anyway */
+	for (i = 15; i >= 8; i--) {
+		pif->ifid[i] = value & 0xff;
+		value >>= 8;
+	}
+
+	return (0);
+}
+
+static int
+set_random_ifid(struct prefix_ifconf *pif)
+{
+	int i;
+
+	/* similar to EUI-64 and only passed a 64 bit SIGNED integer anyway */
+	for (i = 15; i >= 8; i--) {
+		pif->ifid[i] = arc4random() & 0xff;
+	}
+
+	return (0);
 }
 
 void

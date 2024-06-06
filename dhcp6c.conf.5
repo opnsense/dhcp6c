@@ -436,26 +436,23 @@ the default value 16 will be used.
 .It Ic ifid Ar ID ;
 This statement specifies the interface identifier value.
 .Ar ID
-must be a decimal integer.
+shall be a decimal integer.
 It will be combined with the delegated prefix and the
 .Ic sla-id
 to form a complete interface address.
 If the special value
 .Ar random
-is given, the behaviour is the same as providing
-.Ic ifid-random .
-When this option is omitted, the default is to use the EUI-64 address of the
-.Ar interface .
-.It Ic ifid-random ;
-This statement instructs the client to generate a pseudo random
-interface identifier value.
-This will override the
-.Ic ifid
-statement, if present.
-The resulting value will be combined with the delegated prefix and the
-.Ic sla-id
-to form a complete interface address.
-This option is provided for syntax compatibility.
+is given, it instructs the client to generate a pseudo random value
+during configuration parsing.
+If the special value
+.Ar eui-64
+is given, only the EUI-64 address generation will be attempted which
+reflects the historic client behaviour.
+When this option is omitted,
+.Ar eui-64
+will be used, and if it fails the client will fall back to
+.Ar random
+to allow operation for interfaces without a hardware address.
 .El
 .El
 .\"

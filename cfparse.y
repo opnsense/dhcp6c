@@ -115,7 +115,7 @@ void cf_init(void);
 %}
 
 %token INTERFACE IFNAME
-%token PREFIX_INTERFACE SLA_ID SLA_LEN IFID IFID_RAND RANDOM DUID_ID
+%token PREFIX_INTERFACE SLA_ID SLA_LEN IFID EUI64 RANDOM DUID_ID
 %token ID_ASSOC IA_PD IAID IA_NA
 %token ADDRESS
 %token REQUEST SEND ALLOW PREFERENCE
@@ -139,7 +139,7 @@ void cf_init(void);
 
 %union {
 	long long num;
-	char* str;
+	char *str;
 	struct cf_list *list;
 	struct dhcp6_prefix *prefix;
 	struct dhcp6_range *range;
@@ -1069,7 +1069,7 @@ ifparam:
 			struct cf_list *l;
 
 			MAKE_CFLIST(l, IFPARAM_IFID, NULL, NULL);
-			l->num = (u_int64_t)$2;
+			l->num = $2;
 			$$ = l;
 		}
 	|	IFID RANDOM EOS
@@ -1079,11 +1079,11 @@ ifparam:
 			MAKE_CFLIST(l, IFPARAM_IFID_RAND, NULL, NULL);
 			$$ = l;
 		}
-	|	IFID_RAND EOS
+	|	IFID EUI64 EOS
 		{
 			struct cf_list *l;
 
-			MAKE_CFLIST(l, IFPARAM_IFID_RAND, NULL, NULL);
+			MAKE_CFLIST(l, IFPARAM_IFID_EUI64, NULL, NULL);
 			$$ = l;
 		}
 	;

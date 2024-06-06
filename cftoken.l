@@ -252,8 +252,8 @@ ecl		\}
 <S_CNF>sla-id { DECHO; return (SLA_ID); }
 <S_CNF>sla-len { DECHO; return (SLA_LEN); }
 <S_CNF>ifid { DECHO; return (IFID); }
-<S_CNF>ifid-random { DECHO; return (IFID_RAND); }
 <S_CNF>random { DECHO; return (RANDOM); }
+<S_CNF>eui-64 { DECHO; return (EUI64); }
 
 	/* duration */
 <S_CNF>infinity { DECHO; return (INFINITY); }
