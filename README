@@ -9,6 +9,7 @@ Improvements include the following:
 - Accept interfaces from the configuration file
 - Allow assigning the prefix to the WAN interface
 - Several relevant patches from Debian
+- Extended prefix-interface ifid options
 
 It is based on a patched version of WIDE-DHCPv6 maintained by hrs@FreeBSD.org.
 
