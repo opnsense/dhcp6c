@@ -585,7 +585,7 @@ add_pd_pif(iapdc, cfl0, if_count)
 			for (i = 0; i < pif->ifid_len ; i++) {
 				cfl->num = cfl->num * 2 + rand() % 2;
 			}
-			/* FALLTRHROUGH */
+			/* FALLTHROUGH */
 		case IFPARAM_IFID:
 			for (i = sizeof(pif->ifid) -1; i >= 0; i--) {
 				pif->ifid[i] = (cfl->num >> 8 *
