@@ -1409,7 +1409,7 @@ set_random_ifid(struct prefix_ifconf *pif)
 		pif->ifid[i] = arc4random() & 0xff;
 	}
 
-	/* enable this bit to avoid clashing with a EUI-64 address */
+	/* enable this bit to avoid clashing with the EUI-64 format */
 	pif->ifid[12] |= 0x01;
 
 	return (0);
