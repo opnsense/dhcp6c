@@ -412,7 +412,6 @@ configure_ia(ialist, iatype)
 	struct ia_conf *iac = NULL;
 	size_t confsize;
 	static int init = 1;
-
 	u_int32_t if_count;
 
 	if (init) {
@@ -564,9 +563,9 @@ add_pd_pif(iapdc, cfl0, if_count)
 		goto bad;
 	}
 
-	pif->sla_id = if_count;
 	pif->ifid_len = IFID_LEN_DEFAULT;
 	pif->sla_len = SLA_LEN_DEFAULT;
+	pif->sla_id = if_count;
 
 	for (cfl = cfl0->list; cfl; cfl = cfl->next) {
 		switch(cfl->type) {
@@ -602,12 +601,11 @@ add_pd_pif(iapdc, cfl0, if_count)
 		}
 	}
 
-	if (use_default_ifid) {
-		if (get_default_ifid(pif)) {
-			d_printf(LOG_NOTICE, FNAME,
-			    "failed to get default IF ID for %s", pif->ifname);
-			goto bad;
-		}
+	/* XXX consider a fallback to ifid-random here */
+	if (use_default_ifid && get_default_ifid(pif)) {
+		d_printf(LOG_NOTICE, FNAME,
+		    "failed to get default IF ID for %s", pif->ifname);
+		goto bad;
 	}
 
 	TAILQ_INSERT_TAIL(&iapdc->iapd_pif_list, pif, link);
