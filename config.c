@@ -582,19 +582,12 @@ add_pd_pif(iapdc, cfl0, if_count)
 				goto bad;
 			}
 			break;
-		case IFPARAM_IFID:
-			if (use_default_ifid) {
-				for (i = sizeof(pif->ifid) - 1; i >= 0; i--) {
-					pif->ifid[i] = (cfl->num >> 8 *
-					    (sizeof(pif->ifid) - 1 - i)) & 0xff;
-				}
-				use_default_ifid = 0;
-			}
-			break;
 		case IFPARAM_IFID_RAND:
 			for (i = 0; i < pif->ifid_len ; i++) {
 				cfl->num = cfl->num * 2 + rand() % 2;
 			}
+			/* FALLTRHROUGH */
+		case IFPARAM_IFID:
 			for (i = sizeof(pif->ifid) -1; i >= 0; i--) {
 				pif->ifid[i] = (cfl->num >> 8 *
 				    (sizeof(pif->ifid) - 1 - i)) & 0xff;
