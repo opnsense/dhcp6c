@@ -1295,7 +1295,7 @@ configure_duid(str, duid)
 	return (-1);
 }
 
-/* we currently only construct EUI-64 based interface ID */
+/* construct EUI-64 based interface ID */
 static int
 set_default_ifid(pif)
 	struct prefix_ifconf *pif;
@@ -1408,6 +1408,9 @@ set_random_ifid(struct prefix_ifconf *pif)
 	for (i = 15; i >= 8; i--) {
 		pif->ifid[i] = arc4random() & 0xff;
 	}
+
+	/* enable this bit to avoid clashing with a EUI-64 address */
+	pif->ifid[12] |= 0x01;
 
 	return (0);
 }
