@@ -127,7 +127,7 @@ extern long long cf_refreshtime;
 extern char *configfilename;
 
 static struct keyinfo *find_keybyname(struct keyinfo *, char *);
-static int add_pd_pif (struct iapd_conf *, struct cf_list *, u_int32_t);
+static int add_pd_pif(struct iapd_conf *, struct cf_list *, u_int32_t);
 static int add_options(int, struct dhcp6_ifconf *, struct cf_list *);
 static int add_prefix(struct dhcp6_list *, const char *, int,
     struct dhcp6_prefix *);
