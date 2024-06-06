@@ -410,10 +410,7 @@ with the delegated prefix and the parameters provided in
 .Ar substatements .
 Possible substatements are as follows:
 .Bl -tag -width Ds -compact
-.It Xo
-.Ic sla-id Ar ID
-;
-.Xc
+.It Ic sla-id Ar ID ;
 This statement specifies the identifier value of the site-level aggregator
 .Pq SLA
 on the interface.
@@ -429,30 +426,27 @@ will combine the two values into a single IPv6 prefix,
 2001:db8:ffff:1::/64,
 and will configure the prefix on the specified
 .Ar interface .
-.It Xo
-.Ic sla-len Ar length
-;
+.It Ic sla-len Ar length ;
 .Xc
 This statement specifies the length of the SLA ID in bits.
 .Ar length
 must be a decimal number between 0 and 128.
 If the length is not specified by this statement,
 the default value 16 will be used.
-.It Xo
-.Ic ifid Ar ID
-;
-.Xc
+.It Ic ifid Ar ID ;
 This statement specifies the interface identifier value.
 .Ar ID
 must be a decimal integer.
 It will be combined with the delegated prefix and the
 .Ic sla-id
 to form a complete interface address.
-The default is to use the EUI-64 address of the
+If the special value
+.Ar random
+is given, the behaviour is the same as providing
+.Ic ifid-random .
+When this option is omitted, the default is to use the EUI-64 address of the
 .Ar interface .
-.It Xo
-.Ic ifid-random ;
-.Xc
+.It Ic ifid-random ;
 This statement instructs the client to generate a pseudo random
 interface identifier value.
 This will override the
@@ -461,6 +455,7 @@ statement, if present.
 The resulting value will be combined with the delegated prefix and the
 .Ic sla-id
 to form a complete interface address.
+This option is provided for syntax compatibility.
 .El
 .El
 .\"
