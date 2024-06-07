@@ -101,6 +101,7 @@ static struct keyinfo *ctlkey = NULL;
 static int ctldigestlen;
 
 static int infreq_mode = 0;
+static int config_test = 0;
 
 int opt_norelease;
 
@@ -162,7 +163,7 @@ main(int argc, char *argv[])
 	else
 		progname++;
 
-	while ((ch = getopt(argc, argv, "c:dDfinp:")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dDfinp:t")) != -1) {
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
@@ -174,7 +175,7 @@ main(int argc, char *argv[])
 			debug = 2;
 			break;
 		case 'f':
-			foreground++;
+			foreground = 1;
 			break;
 		case 'i':
 			infreq_mode = 1;
@@ -184,6 +185,10 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			pid_file = optarg;
+			break;
+		case 't':
+			config_test = 1;
+			foreground = 1; /* for logging */
 			break;
 		default:
 			usage();
@@ -215,9 +220,14 @@ main(int argc, char *argv[])
 
 	}
 
-	if (infreq_mode == 0 && cfparse(conffile)) {
+	if ((infreq_mode == 0 || config_test == 1) && cfparse(conffile)) {
 		d_printf(LOG_ERR, FNAME, "failed to parse configuration file");
 		exit(1);
+	}
+
+	if (config_test == 1) {
+		d_printf(LOG_ERR, FNAME, "successfully parsed configuration file");
+		exit(0);
 	}
 
 	if (foreground == 0 && infreq_mode == 0) {
@@ -241,7 +251,7 @@ static void
 usage()
 {
 
-	fprintf(stderr, "usage: dhcp6c [-c configfile] [-dDfin] "
+	fprintf(stderr, "usage: dhcp6c [-c configfile] [-dDfint] "
 	    "[-p pid-file] [interfaces...]\n");
 }
 
