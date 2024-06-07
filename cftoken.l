@@ -219,7 +219,11 @@ ecl		\}
 <S_CNF>bcmcs-server-domain-name { DECHO; return (BCMCS_NAME); }
 <S_CNF>refreshtime { DECHO; return (REFRESHTIME); }
 <S_CNF>raw-option { DECHO; BEGIN S_RAW; return (RAW); }
-<S_RAW>{integer} { DECHO; yylval.num = strtoll(yytext, NULL, 10); return (NUMBER); }
+<S_RAW>{integer} {
+	DECHO;
+	yylval.num = strtoull(yytext, NULL, 10);
+	return (NUMBER);
+}
 <S_RAW>{hexdata} {
 	DECHO;
 	yylval.str = strdup(yytext);
@@ -329,7 +333,7 @@ ecl		\}
 {comment}	{ DP("comment"); }
 {number} 	{
 	DECHO;
-	yylval.num = strtoll(yytext, NULL, 10);
+	yylval.num = strtoull(yytext, NULL, 10);
 	return (NUMBER);
 }
 {slash} { DECHO; return (SLASH); }

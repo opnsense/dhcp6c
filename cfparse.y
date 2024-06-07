@@ -138,7 +138,7 @@ void cf_init(void);
 %token RAW
 
 %union {
-	long long num;
+	unsigned long long num;
 	char *str;
 	struct cf_list *list;
 	struct dhcp6_prefix *prefix;

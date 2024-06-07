@@ -142,7 +142,7 @@ static int configure_addr(struct cf_list *, struct dhcp6_list *, const char *);
 static int configure_domain(struct cf_list *, struct dhcp6_list *,
     const char *);
 static int set_default_ifid(struct prefix_ifconf *);
-static int set_current_ifid(struct prefix_ifconf *, long long);
+static int set_current_ifid(struct prefix_ifconf *, unsigned long long);
 static int set_random_ifid(struct prefix_ifconf *);
 static void clear_poolconf(struct pool_conf *);
 static struct pool_conf *create_pool(char *, struct dhcp6_range *);
@@ -1386,7 +1386,7 @@ set_default_ifid(pif)
 }
 
 static int
-set_current_ifid(struct prefix_ifconf *pif, long long value)
+set_current_ifid(struct prefix_ifconf *pif, unsigned long long value)
 {
 	int i;
 
