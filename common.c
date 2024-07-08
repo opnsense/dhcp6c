@@ -3438,7 +3438,8 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 	memset(&req, 0, sizeof(req));
 #ifdef __KAME__
 	req.ifra_addr = *addr;
-	memcpy(req.ifra_name, ifname, sizeof(req.ifra_name));
+	memset(req.ifra_name, 0, sizeof(req.ifra_name));
+	strncpy(req.ifra_name, ifname, IFNAMSIZ - 1);
 	(void)sa6_plen2mask(&req.ifra_prefixmask, plen);
 	/* XXX: should lifetimes be calculated based on the lease duration? */
 	req.ifra_lifetime.ia6t_vltime = vltime;

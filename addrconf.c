@@ -166,9 +166,9 @@ update_address(struct ia *ia, struct dhcp6_statefuladdr *addr,
 	sa->addr.pltime = addr->pltime;
 	sa->addr.vltime = addr->vltime;
 	sa->dhcpif = dhcpifp;
-	d_printf(LOG_DEBUG, FNAME, "%s an address %s pltime=%lu, vltime=%lu",
+	d_printf(LOG_DEBUG, FNAME, "%s an address %s pltime=%u, vltime=%u",
 	    sacreate ? "create" : "update",
-	    in6addr2str(&addr->addr, 0), addr->pltime, addr->vltime);
+	    in6addr2str(&addr->addr, 0), (unsigned int)addr->pltime, (unsigned int)addr->vltime);
 
 	if ((sa->addr.vltime != 0) && sacreate)
 		if (na_ifaddrconf(IFADDRCONF_ADD, sa) < 0)
