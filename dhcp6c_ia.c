@@ -172,24 +172,37 @@ update_ia(iatype_t iatype, struct dhcp6_list *ialist, struct dhcp6_if *ifp,
 				    iastr(iatype), iav->val_ia.iaid,
 				    dhcp6_stcodestr(siav->val_num16));
 				if ((ia->state == IAS_RENEW ||
-				    ia->state == IAS_REBIND) &&
-				    siav->val_num16 == DH6OPT_STCODE_NOBINDING) {
-					/*
-					 * For each IA in the original Renew or
-					 * Rebind message, the client
-					 * sends a Request message if the IA
-					 * contained a Status Code option
-					 * with the NoBinding status.
-					 * [RFC3315 18.1.8]
-					 * XXX: what about the PD case?
-					 */
-					d_printf(LOG_INFO, FNAME,
-					    "receive NoBinding against "
-					    "renew/rebind for %s-%lu",
-					    iastr(ia->conf->type),
-					    ia->conf->iaid);
-					reestablish_ia(ia);
-					goto nextia;
+				    ia->state == IAS_REBIND)) {
+					if (siav->val_num16 == DH6OPT_STCODE_NOBINDING) {
+						/*
+						 * For each IA in the original Renew or
+						 * Rebind message, the client
+						 * sends a Request message if the IA
+						 * contained a Status Code option
+						 * with the NoBinding status.
+						 * [RFC3315 18.1.8]
+						 * XXX: what about the PD case?
+						 */
+						d_printf(LOG_NOTICE, FNAME,
+						    "receive NoBinding for %s-%lu",
+						    iastr(ia->conf->type),
+						    ia->conf->iaid);
+						reestablish_ia(ia);
+						goto nextia;
+					} else if (siav->val_num16 == DH6OPT_STCODE_NOTONLINK) {
+						/*
+						 * If we end up receiving NotOnLink for
+						 * a request triggered by NoBinding we
+						 * have no choice but to remove the IA
+						 * and start from scratch.
+						 */
+						d_printf(LOG_NOTICE, FNAME,
+						    "received NotOnLink for %s-%lu",
+						    iastr(ia->conf->type),
+						    ia->conf->iaid);
+						remove_ia(ia, 1);
+						goto nextia;
+					}
 				}
 				break;
 			default:
