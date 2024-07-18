@@ -1655,7 +1655,8 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 		    dhcp6_stcodestr(lv->val_num16));
 
 		if ((state == DHCP6S_RENEW || state == DHCP6S_REBIND) &&
-		    lv->val_num16 == DH6OPT_STCODE_NOBINDING) {
+		    (lv->val_num16 == DH6OPT_STCODE_NOBINDING ||
+		    lv->val_num16 == DH6OPT_STCODE_NOTONLINK)) {
 			/* server has no memory of our lease :( */
 			client6_reset(ifp);
 			return (0);
