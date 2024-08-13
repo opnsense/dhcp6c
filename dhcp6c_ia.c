@@ -81,7 +81,7 @@ static int update_authparam(struct ia *, struct authparam *);
 static void reestablish_ia(struct ia *);
 static void callback(struct ia *);
 static int release_ia(struct ia *);
-static void remove_ia(struct ia *);
+static void remove_ia(struct ia *, int);
 static struct ia *get_ia(iatype_t, struct dhcp6_if *, struct ia_conf *,
     struct dhcp6_listval *, struct duid *);
 static struct ia *find_ia(struct ia_conf *, iatype_t, uint32_t);
@@ -141,7 +141,7 @@ update_ia(iatype, ialist, ifp, serverid, authparam)
 			d_printf(LOG_WARNING, FNAME, "failed to update "
 			    "authentication param for IA "
 			    "type: %s, ID: %u", iastr(iac->type), iac->iaid);
-			remove_ia(ia);
+			remove_ia(ia, 1);
 			continue;
 		}
 
@@ -206,7 +206,7 @@ update_ia(iatype, ialist, ifp, serverid, authparam)
 		if (ia->ctl == NULL || !(*ia->ctl->isvalid)(ia->ctl)) {
 			d_printf(LOG_DEBUG, FNAME, "IA %s-%lu is invalidated",
 			    iastr(ia->conf->type), ia->conf->iaid);
-			remove_ia(ia);
+			remove_ia(ia, 1);
 			continue;
 		}
 
@@ -264,7 +264,7 @@ update_ia(iatype, ialist, ifp, serverid, authparam)
 			if (ia->timer == NULL) {
 				d_printf(LOG_ERR, FNAME,
 				    "failed to add IA timer");
-				remove_ia(ia); /* XXX */
+				remove_ia(ia, 1); /* XXX */
 				continue;
 			}
 			timo.tv_sec = ia->t1;
@@ -404,7 +404,7 @@ callback(ia)
 	if (ia->ctl == NULL || !(*ia->ctl->isvalid)(ia->ctl)) {
 		d_printf(LOG_DEBUG, FNAME, "IA %s-%lu is invalidated",
 		    iastr(ia->conf->type), ia->conf->iaid);
-		remove_ia(ia);
+		remove_ia(ia, 1);
 	}
 }
 
@@ -434,7 +434,7 @@ release_all_ia(ifp)
 			 * Release message exchange process.
 			 * [RFC3315 Section 18.1.6]
 			 */
-			remove_ia(ia);
+			remove_ia(ia, 0);
 		}
 	}
 }
@@ -513,8 +513,7 @@ release_ia(ia)
 }
 
 static void
-remove_ia(ia)
-	struct ia *ia;
+remove_ia(struct ia *ia, int restart)
 {
 	struct ia_conf *iac = ia->conf;
 	struct dhcp6_if *ifp = ia->ifp;
@@ -545,7 +544,8 @@ remove_ia(ia)
 
 	free(ia);
 
-	(void)client6_start(ifp);
+	if (restart)
+		(void)client6_start(ifp);
 }
 
 static struct dhcp6_timer *

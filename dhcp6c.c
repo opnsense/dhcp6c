@@ -476,16 +476,9 @@ free_resources(struct dhcp6_if *freeifp)
 		/* release all IAs as well as send RELEASE message(s) */
 		release_all_ia(ifp);
 
-		/*
-		 * Cancel all outstanding events for each interface except
-		 * ones being released.
-		 */
+		/* cancel all outstanding events */
 		for (ev = TAILQ_FIRST(&ifp->event_list); ev; ev = ev_next) {
 			ev_next = TAILQ_NEXT(ev, link);
-
-			if (ev->state == DHCP6S_RELEASE)
-				continue; /* keep it for now */
-
 			dhcp6_remove_event(ev);
 		}
 	}
