@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -115,8 +115,7 @@ static char *sprint_uint64(char *, int, uint64_t);
 static char *sprint_auth(struct dhcp6_optinfo *);
 
 int
-rawop_count_list(head)
-	struct rawop_list *head;
+rawop_count_list(struct rawop_list *head)
 {
 	struct rawoption *op;
 	int i;
@@ -131,8 +130,7 @@ rawop_count_list(head)
 }
 
 void
-rawop_clear_list(head)
-	struct rawop_list *head;
+rawop_clear_list(struct rawop_list *head)
 {
 	struct rawoption *op;
 
@@ -153,8 +151,7 @@ rawop_clear_list(head)
 }
 
 int
-rawop_copy_list(dst, src)
-	struct rawop_list *dst, *src;
+rawop_copy_list(struct rawop_list *dst, struct rawop_list *src)
 {
 	struct rawoption *op, *newop;
 
@@ -196,8 +193,7 @@ rawop_copy_list(dst, src)
 }
 
 void
-rawop_move_list(dst, src)
-	struct rawop_list *dst, *src;
+rawop_move_list(struct rawop_list *dst, struct rawop_list *src)
 {
 	struct rawoption *op;
 	/*
@@ -470,11 +466,8 @@ dhcp6_get_addr(int optlen, void *cp, dhcp6_listval_type_t type,
 }
 
 static int
-dhcp6_set_addr(type, list, p, optep, len)
-	dhcp6_listval_type_t type;
-	struct dhcp6_list *list;
-	struct dhcp6opt **p, *optep;
-	int *len;
+dhcp6_set_addr(dhcp6_listval_type_t type, struct dhcp6_list *list,
+    struct dhcp6opt **p, struct dhcp6opt *optep, int *len)
 {
 	struct in6_addr *in6;
 	struct dhcp6_listval *d;
@@ -502,11 +495,8 @@ dhcp6_set_addr(type, list, p, optep, len)
 }
 
 static int
-dhcp6_get_domain(optlen, cp, type, list)
-	int optlen;
-	void *cp;
-	dhcp6_listval_type_t type;
-	struct dhcp6_list *list;
+dhcp6_get_domain(int optlen, void *cp, dhcp6_listval_type_t type,
+    struct dhcp6_list *list)
 {
 	char *val;
 
@@ -541,11 +531,8 @@ dhcp6_get_domain(optlen, cp, type, list)
 }
 
 static int
-dhcp6_set_domain(type, list, p, optep, len)
-	dhcp6_listval_type_t type;
-	struct dhcp6_list *list;
-	struct dhcp6opt **p, *optep;
-	int *len;
+dhcp6_set_domain(dhcp6_listval_type_t type, struct dhcp6_list *list,
+    struct dhcp6opt **p, struct dhcp6opt *optep, int *len)
 {
 	int optlen = 0;
 	struct dhcp6_listval *d;
@@ -602,9 +589,7 @@ dhcp6_set_domain(type, list, p, optep, len)
 }
 
 struct dhcp6_event *
-dhcp6_create_event(ifp, state)
-	struct dhcp6_if *ifp;
-	int state;
+dhcp6_create_event(struct dhcp6_if *ifp, int state)
 {
 	struct dhcp6_event *ev;
 
@@ -622,8 +607,7 @@ dhcp6_create_event(ifp, state)
 }
 
 void
-dhcp6_remove_event(ev)
-	struct dhcp6_event *ev;
+dhcp6_remove_event(struct dhcp6_event *ev)
 {
 	struct dhcp6_serverinfo *sp, *sp_next;
 
@@ -656,8 +640,7 @@ dhcp6_remove_event(ev)
 }
 
 void
-dhcp6_remove_evdata(ev)
-	struct dhcp6_event *ev;
+dhcp6_remove_evdata(struct dhcp6_event *ev)
 {
 	struct dhcp6_eventdata *evd;
 
@@ -670,8 +653,7 @@ dhcp6_remove_evdata(ev)
 }
 
 struct authparam *
-new_authparam(proto, alg, rdm)
-	int proto, alg, rdm;
+new_authparam(int proto, int alg, int rdm)
 {
 	struct authparam *authparam;
 
@@ -691,8 +673,7 @@ new_authparam(proto, alg, rdm)
 }
 
 struct authparam *
-copy_authparam(authparam)
-	struct authparam *authparam;
+copy_authparam(struct authparam *authparam)
 {
 	struct authparam *dst;
 
@@ -720,9 +701,7 @@ ntohq(uint64_t x)
 #endif
 
 int
-dhcp6_auth_replaycheck(method, prev, current)
-	int method;
-	uint64_t prev, current;
+dhcp6_auth_replaycheck(int method, uint64_t prev, uint64_t current)
 {
 	char bufprev[] = "ffff ffff ffff ffff";
 	char bufcurrent[] = "ffff ffff ffff ffff";
@@ -754,13 +733,8 @@ dhcp6_auth_replaycheck(method, prev, current)
 }
 
 int
-getifaddr(addr, ifnam, prefix, plen, strong, ignoreflags)
-	struct in6_addr *addr;
-	char *ifnam;
-	struct in6_addr *prefix;
-	int plen;
-	int strong;		/* if strong host model is required or not */
-	int ignoreflags;
+getifaddr(struct in6_addr *addr, char *ifnam, struct in6_addr *prefix,
+    int plen, int strong, int ignoreflags)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in6 sin6;
@@ -823,7 +797,7 @@ getifaddr(addr, ifnam, prefix, plen, strong, ignoreflags)
 		memcpy(addr, &sin6.sin6_addr, sizeof(sin6.sin6_addr));
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(addr))
-			addr->s6_addr[2] = addr->s6_addr[3] = 0; 
+			addr->s6_addr[2] = addr->s6_addr[3] = 0;
 #endif
 		error = 0;
 		break;
@@ -834,9 +808,7 @@ getifaddr(addr, ifnam, prefix, plen, strong, ignoreflags)
 }
 
 int
-getifidfromaddr(addr, ifidp)
-	struct in6_addr *addr;
-	unsigned int *ifidp;
+getifidfromaddr(struct in6_addr *addr, unsigned int *ifidp)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in6 *sa6;
@@ -874,11 +846,9 @@ getifidfromaddr(addr, ifidp)
 }
 
 int
-in6_addrscopebyif(addr, ifnam)
-	struct in6_addr *addr;
-	char *ifnam;
+in6_addrscopebyif(struct in6_addr *addr, char *ifnam)
 {
-	u_int ifindex; 
+	u_int ifindex;
 
 	if ((ifindex = if_nametoindex(ifnam)) == 0)
 		return (-1);
@@ -896,11 +866,7 @@ in6_addrscopebyif(addr, ifnam)
 }
 
 int
-transmit_sa(s, sa, buf, len)
-	int s;
-	struct sockaddr *sa;
-	char *buf;
-	size_t len;
+transmit_sa(int s, struct sockaddr *sa, char *buf, size_t len)
 {
 	ssize_t error;
 
@@ -910,9 +876,7 @@ transmit_sa(s, sa, buf, len)
 }
 
 long
-random_between(x, y)
-	long x;
-	long y;
+random_between(long x, long y)
 {
 	long ratio;
 
@@ -923,9 +887,7 @@ random_between(x, y)
 }
 
 int
-prefix6_mask(in6, plen)
-	struct in6_addr *in6;
-	int plen;
+prefix6_mask(struct in6_addr *in6, int plen)
 {
 	struct sockaddr_in6 mask6;
 	int i;
@@ -940,9 +902,7 @@ prefix6_mask(in6, plen)
 }
 
 int
-sa6_plen2mask(sa6, plen)
-	struct sockaddr_in6 *sa6;
-	int plen;
+sa6_plen2mask(struct sockaddr_in6 *sa6, int plen)
 {
 	u_char *cp;
 
@@ -963,8 +923,7 @@ sa6_plen2mask(sa6, plen)
 }
 
 char *
-addr2str(sa)
-	struct sockaddr *sa;
+addr2str(struct sockaddr *sa)
 {
 	static char addrbuf[8][NI_MAXHOST];
 	static int round = 0;
@@ -980,9 +939,7 @@ addr2str(sa)
 }
 
 char *
-in6addr2str(in6, scopeid)
-	struct in6_addr *in6;
-	int scopeid;
+in6addr2str(struct in6_addr *in6, int scopeid)
 {
 	struct sockaddr_in6 sa6;
 
@@ -999,8 +956,7 @@ in6addr2str(in6, scopeid)
 
 /* return IPv6 address scope type. caller assumes that smaller is narrower. */
 int
-in6_scope(addr)
-	struct in6_addr *addr;
+in6_scope(struct in6_addr *addr)
 {
 	int scope;
 
@@ -1035,10 +991,7 @@ in6_scope(addr)
 }
 
 static int
-in6_matchflags(addr, ifnam, flags)
-	struct sockaddr *addr;
-	char *ifnam;
-	int flags;
+in6_matchflags(struct sockaddr *addr, char *ifnam, int flags)
 {
 #ifdef __KAME__
 	int s;
@@ -1068,9 +1021,7 @@ in6_matchflags(addr, ifnam, flags)
 }
 
 int
-get_duid(idfile, duid)
-	const char *idfile;
-	struct duid *duid;
+get_duid(const char *idfile, struct duid *duid)
 {
 	FILE *fp = NULL;
 	uint16_t len = 0, hwtype;
@@ -1296,11 +1247,7 @@ devfs_handler(di_node_t node, di_minor_t minor, void *arg)
 #endif
 
 static ssize_t
-gethwid(buf, len, ifname, hwtypep)
-	char *buf;
-	int len;
-	const char *ifname;
-	uint16_t *hwtypep;
+gethwid(char *buf, int len, const char *ifname, uint16_t *hwtypep)
 {
 	struct ifaddrs *ifa, *ifap;
 #ifdef __KAME__
@@ -1390,8 +1337,7 @@ gethwid(buf, len, ifname, hwtypep)
 }
 
 void
-dhcp6_init_options(optinfo)
-	struct dhcp6_optinfo *optinfo;
+dhcp6_init_options(struct dhcp6_optinfo *optinfo)
 {
 	memset(optinfo, 0, sizeof(*optinfo));
 
@@ -1423,8 +1369,7 @@ dhcp6_init_options(optinfo)
 }
 
 void
-dhcp6_clear_options(optinfo)
-	struct dhcp6_optinfo *optinfo;
+dhcp6_clear_options(struct dhcp6_optinfo *optinfo)
 {
 	switch (optinfo->authproto) {
 	case DHCP6_AUTHPROTO_DELAYED:
@@ -1466,8 +1411,7 @@ dhcp6_clear_options(optinfo)
 }
 
 int
-dhcp6_copy_options(dst, src)
-	struct dhcp6_optinfo *dst, *src;
+dhcp6_copy_options(struct dhcp6_optinfo *dst, struct dhcp6_optinfo *src)
 {
 	if (duidcpy(&dst->clientID, &src->clientID))
 		goto fail;
@@ -1566,9 +1510,8 @@ dhcp6_copy_options(dst, src)
 }
 
 int
-dhcp6_get_options(p, ep, optinfo)
-	struct dhcp6opt *p, *ep;
-	struct dhcp6_optinfo *optinfo;
+dhcp6_get_options(struct dhcp6opt *p, struct dhcp6opt *ep,
+    struct dhcp6_optinfo *optinfo)
 {
 	struct dhcp6opt *np, opth;
 	int i, opt, optlen, reqopts, num;
@@ -1995,11 +1938,7 @@ dhcp6_get_options(p, ep, optinfo)
 }
 
 static char *
-dnsdecode(sp, ep, buf, bufsiz)
-	u_char **sp;
-	u_char *ep;
-	char *buf;
-	size_t bufsiz;
+dnsdecode(u_char **sp, u_char *ep, char *buf, size_t bufsiz)
 {
 	int i, l;
 	u_char *cp;
@@ -2045,10 +1984,8 @@ dnsdecode(sp, ep, buf, bufsiz)
 }
 
 static int
-copyin_option(type, p, ep, list)
-	int type;
-	struct dhcp6opt *p, *ep;
-	struct dhcp6_list *list;
+copyin_option(int type, struct dhcp6opt *p, struct dhcp6opt *ep,
+    struct dhcp6_list *list)
 {
 	int opt, optlen;
 	char *cp;
@@ -2117,7 +2054,7 @@ copyin_option(type, p, ep, list)
 
 			if (dhcp6_find_listval(list, DHCP6_LISTVAL_PREFIX6,
 			    &iapd_prefix, 0)) {
-				d_printf(LOG_INFO, FNAME, 
+				d_printf(LOG_INFO, FNAME,
 				    "duplicated IA_PD prefix "
 				    "%s/%d pltime=%lu vltime=%lu",
 				    in6addr2str(&iapd_prefix.addr, 0),
@@ -2167,7 +2104,7 @@ copyin_option(type, p, ep, list)
 
 			if (dhcp6_find_listval(list,
 			    DHCP6_LISTVAL_STATEFULADDR6, &ia_addr, 0)) {
-				d_printf(LOG_INFO, FNAME, 
+				d_printf(LOG_INFO, FNAME,
 				    "duplicated IA_NA address"
 				    "%s pltime=%lu vltime=%lu",
 				    in6addr2str(&ia_addr.addr, 0),
@@ -2244,10 +2181,7 @@ copyin_option(type, p, ep, list)
 }
 
 static char *
-sprint_uint64(buf, buflen, i64)
-	char *buf;
-	int buflen;
-	uint64_t i64;
+sprint_uint64(char *buf, int buflen, uint64_t i64)
 {
 	uint16_t rd0, rd1, rd2, rd3;
 	uint16_t *ptr = (uint16_t *)(void *)&i64;
@@ -2263,8 +2197,7 @@ sprint_uint64(buf, buflen, i64)
 }
 
 static char *
-sprint_auth(optinfo)
-	struct dhcp6_optinfo *optinfo;
+sprint_auth(struct dhcp6_optinfo *optinfo)
 {
 	static char ret[1024];	/* XXX: thread unsafe */
 	const char *proto;
@@ -2342,10 +2275,8 @@ copy_option(uint16_t type, uint16_t len, void *val,
 }
 
 int
-dhcp6_set_options(type, optbp, optep, optinfo)
-	int type;
-	struct dhcp6opt *optbp, *optep;
-	struct dhcp6_optinfo *optinfo;
+dhcp6_set_options(int type, struct dhcp6opt *optbp,
+    struct dhcp6opt *optep, struct dhcp6_optinfo *optinfo)
 {
 	struct dhcp6opt *p = optbp;
 	struct dhcp6_listval *stcode, *op;
@@ -2648,10 +2579,11 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 				d_printf(LOG_DEBUG, FNAME,
 				    "key ID %x, offset %d",
 				    optinfo->delayedauth_keyid,
-				    optinfo->delayedauth_offset); 
+				    optinfo->delayedauth_offset);
 				break;
 #ifdef notyet
 			case DHCP6_AUTHPROTO_RECONFIG:
+				break;
 #endif
 			default:
 				d_printf(LOG_ERR, FNAME,
@@ -2678,10 +2610,7 @@ dhcp6_set_options(type, optbp, optep, optinfo)
 #undef COPY_OPTION
 
 static ssize_t
-dnsencode(name, buf, buflen)
-	const char *name;
-	char *buf;
-	size_t buflen;
+dnsencode(const char *name, char *buf, size_t buflen)
 {
 	char *cp, *ep;
 	const char *p, *q;
@@ -2746,9 +2675,7 @@ dnsencode(name, buf, buflen)
  * the possibility of overrun for safety.
  */
 static int
-copyout_option(p, ep, optval)
-	char *p, *ep;
-	struct dhcp6_listval *optval;
+copyout_option(char *p, char *ep, struct dhcp6_listval *optval)
 {
 	struct dhcp6opt *opt;
 	struct dhcp6opt_stcode stcodeopt;
@@ -2887,8 +2814,7 @@ copyout_option(p, ep, optval)
 }
 
 void
-dhcp6_set_timeoparam(ev)
-	struct dhcp6_event *ev;
+dhcp6_set_timeoparam(struct dhcp6_event *ev)
 {
 	ev->retrans = 0;
 	ev->init_retrans = 0;
@@ -2930,8 +2856,7 @@ dhcp6_set_timeoparam(ev)
 }
 
 void
-dhcp6_reset_timer(ev)
-	struct dhcp6_event *ev;
+dhcp6_reset_timer(struct dhcp6_event *ev)
 {
 	double n, r;
 	const char *statestr;
@@ -2987,8 +2912,7 @@ dhcp6_reset_timer(ev)
 }
 
 int
-duidcpy(dd, ds)
-	struct duid *dd, *ds;
+duidcpy(struct duid *dd, struct duid *ds)
 {
 	dd->duid_len = ds->duid_len;
 	if ((dd->duid_id = malloc(dd->duid_len)) == NULL) {
@@ -3001,8 +2925,7 @@ duidcpy(dd, ds)
 }
 
 int
-duidcmp(d1, d2)
-	struct duid *d1, *d2;
+duidcmp(struct duid *d1, struct duid *d2)
 {
 	if (d1->duid_len == d2->duid_len) {
 		return (memcmp(d1->duid_id, d2->duid_id, d1->duid_len));
@@ -3011,8 +2934,7 @@ duidcmp(d1, d2)
 }
 
 void
-duidfree(duid)
-	struct duid *duid;
+duidfree(struct duid *duid)
 {
 	if (duid->duid_id)
 		free(duid->duid_id);
@@ -3026,10 +2948,7 @@ duidfree(duid)
  */
 #define JAN_1970        2208988800UL        /* 1970 - 1900 in seconds */
 int
-get_rdvalue(rdm, rdvalue, rdsize)
-	int rdm;
-	void *rdvalue;
-	size_t rdsize;
+get_rdvalue(int rdm, void *rdvalue, size_t rdsize)
 {
 #if defined(HAVE_CLOCK_GETTIME)
 	struct timespec tp;
@@ -3082,8 +3001,7 @@ get_rdvalue(rdm, rdvalue, rdsize)
 }
 
 const char *
-dhcp6optstr(type)
-	int type;
+dhcp6optstr(int type)
 {
 	static char genstr[sizeof("opt_65535") + 1]; /* XXX thread unsafe */
 
@@ -3176,8 +3094,7 @@ dhcp6optstr(type)
 }
 
 const char *
-dhcp6msgstr(type)
-	int type;
+dhcp6msgstr(int type)
 {
 	static char genstr[sizeof("msg255") + 1]; /* XXX thread unsafe */
 
@@ -3247,8 +3164,7 @@ dhcp6_stcodestr(uint16_t code)
 }
 
 char *
-duidstr(duid)
-	struct duid *duid;
+duidstr(struct duid *duid)
 {
 	size_t i;
 	int n;
@@ -3270,8 +3186,8 @@ duidstr(duid)
 	return (duidstr);
 }
 
-const char *dhcp6_event_statestr(ev)
-	struct dhcp6_event *ev;
+const char *
+dhcp6_event_statestr(struct dhcp6_event *ev)
 {
 	switch(ev->state) {
 	case DHCP6S_INIT:
@@ -3298,8 +3214,7 @@ const char *dhcp6_event_statestr(ev)
 }
 
 void
-setloglevel(debuglevel)
-	int debuglevel;
+setloglevel(int debuglevel)
 {
 	if (foreground) {
 		switch(debuglevel) {
@@ -3378,13 +3293,8 @@ d_printf(int level, const char *fname, const char *fmt, ...)
 }
 
 int
-ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
-	ifaddrconf_cmd_t cmd;
-	char *ifname;
-	struct sockaddr_in6 *addr;
-	int plen;
-	int pltime;
-	int vltime;
+ifaddrconf(ifaddrconf_cmd_t cmd, char *ifname, struct sockaddr_in6 *addr,
+    int plen, int pltime, int vltime)
 {
 #ifdef __KAME__
 	struct in6_aliasreq req;
@@ -3450,8 +3360,8 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 	if (ioctl(s, SIOGIFINDEX, &ifr) < 0) {
 		d_printf(LOG_NOTICE, FNAME, "failed to get the index of %s: %s",
 		    ifname, strerror(errno));
-		close(s); 
-		return (-1); 
+		close(s);
+		return (-1);
 	}
 	memcpy(&req.ifr6_addr, &addr->sin6_addr, sizeof(struct in6_addr));
 	req.ifr6_prefixlen = plen;
@@ -3486,8 +3396,7 @@ ifaddrconf(cmd, ifname, addr, plen, pltime, vltime)
 }
 
 int
-safefile(path)
-	const char *path;
+safefile(const char *path)
 {
 	struct stat s;
 	uid_t myuid;
