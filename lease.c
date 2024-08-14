@@ -2,7 +2,7 @@
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,7 +14,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -61,12 +61,12 @@ struct hash_entry {
 };
 
 /* marked as declined (e.g. someone has been using the same address) */
-#define	DHCP6_LEASE_DECLINED	0x01	
+#define	DHCP6_LEASE_DECLINED	0x01
 
 LIST_HEAD(hash_head, hash_entry);
 
 typedef unsigned int (*pfn_hash_t)(void *val) ;
-typedef int (*pfh_hash_match_t)(void *val1, void *val2); 
+typedef int (*pfh_hash_match_t)(void *val1, void *val2);
 
 struct hash_table {
 	struct hash_head *table;
@@ -111,8 +111,7 @@ lease_cleanup(void)
 }
 
 int
-lease_address(addr)
-	struct in6_addr *addr;
+lease_address(struct in6_addr *addr)
 {
 	if (!addr)
 		return (FALSE);
@@ -133,8 +132,7 @@ lease_address(addr)
 }
 
 void
-release_address(addr)
-	struct in6_addr *addr;
+release_address(struct in6_addr *addr)
 {
 	if (!addr)
 		return;
@@ -147,8 +145,7 @@ release_address(addr)
 }
 
 void
-decline_address(addr)
-	struct in6_addr *addr;
+decline_address(struct in6_addr *addr)
 {
 	struct hash_entry *entry;
 
@@ -168,15 +165,13 @@ decline_address(addr)
 }
 
 int
-is_leased(addr)
-	struct in6_addr *addr;
+is_leased(struct in6_addr *addr)
 {
 	return (hash_table_find(&dhcp6_lease_table, addr) != NULL);
 }
 
 static unsigned int
-in6_addr_hash(val)
-	void *val;
+in6_addr_hash(void *val)
 {
 	uint8_t *addr = ((struct in6_addr *)val)->s6_addr;
 	unsigned int hash = 0;
@@ -190,8 +185,7 @@ in6_addr_hash(val)
 }
 
 static int
-in6_addr_match(val1, val2)
-	void *val1, *val2;
+in6_addr_match(void *val1, void *val2)
 {
 	struct in6_addr * addr1 = val1;
 	struct in6_addr * addr2 = val2;
@@ -203,11 +197,8 @@ in6_addr_match(val1, val2)
  * hash table
  */
 static int
-hash_table_init(table, size, hash, match)
-	struct hash_table *table; 
-	unsigned int size;
-	pfn_hash_t hash;
-	pfh_hash_match_t match;
+hash_table_init(struct hash_table *table, unsigned int size,
+    pfn_hash_t hash, pfh_hash_match_t match)
 {
 	size_t i;
 
@@ -230,8 +221,7 @@ hash_table_init(table, size, hash, match)
 }
 
 static void
-hash_table_cleanup(table)
-	struct hash_table *table; 
+hash_table_cleanup(struct hash_table *table)
 {
 	size_t i;
 
@@ -253,10 +243,7 @@ hash_table_cleanup(table)
 }
 
 static int
-hash_table_add(table, val, size)
-	struct hash_table *table; 
-	void *val;
-	unsigned int size;
+hash_table_add(struct hash_table *table, void *val, unsigned int size)
 {
 	struct hash_entry *entry = NULL;
 	int i = 0;
@@ -282,9 +269,7 @@ hash_table_add(table, val, size)
 }
 
 static int
-hash_table_remove(table, val)
-	struct hash_table *table; 
-	void *val;
+hash_table_remove(struct hash_table *table, void *val)
 {
 	struct hash_entry *entry;
 
@@ -305,9 +290,7 @@ hash_table_remove(table, val)
 }
 
 static struct hash_entry *
-hash_table_find(table, val)
-	struct hash_table *table; 
-	void *val;
+hash_table_find(struct hash_table *table, void *val)
 {
 	struct hash_entry *entry;
 	int i;
