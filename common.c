@@ -3216,33 +3216,20 @@ dhcp6_event_statestr(struct dhcp6_event *ev)
 void
 setloglevel(int debuglevel)
 {
-	if (foreground) {
-		switch(debuglevel) {
-		case 0:
-			debug_thresh = LOG_ERR;
-			break;
-		case 1:
-			debug_thresh = LOG_INFO;
-			break;
-		default:
-			debug_thresh = LOG_DEBUG;
-			break;
-		}
-	} else {
-		switch(debuglevel) {
-		case 0:
-			setlogmask(LOG_UPTO(LOG_ERR));
-			debug_thresh = LOG_ERR;
-			break;
-		case 1:
-			setlogmask(LOG_UPTO(LOG_INFO));
-			debug_thresh = LOG_INFO;
-			break;
-		case 2:
-			setlogmask(LOG_UPTO(LOG_DEBUG));
-			debug_thresh = LOG_DEBUG;
-			break;
-		}
+	switch (debuglevel) {
+	case 0:
+		debug_thresh = LOG_ERR;
+		break;
+	case 1:
+		debug_thresh = LOG_INFO;
+		break;
+	default:
+		debug_thresh = LOG_DEBUG;
+		break;
+	}
+
+	if (!foreground) {
+		setlogmask(LOG_UPTO(debug_thresh));
 	}
 }
 
