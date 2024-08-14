@@ -77,10 +77,7 @@ static char raw_dhcp_option_str[] = "raw_dhcp_option";
 int client6_script(char *, int, struct dhcp6_optinfo *);
 
 int
-client6_script(scriptpath, state, optinfo)
-	char *scriptpath;
-	int state;
-	struct dhcp6_optinfo *optinfo;
+client6_script(char *scriptpath, int state, struct dhcp6_optinfo *optinfo)
 {
 	int i, dnsservers, ntpservers, dnsnamelen, envc, elen, ret = 0;
 	int sipservers, sipnamelen;
