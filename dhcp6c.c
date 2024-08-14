@@ -248,9 +248,8 @@ main(int argc, char *argv[])
 }
 
 static void
-usage()
+usage(void)
 {
-
 	fprintf(stderr, "usage: dhcp6c [-c configfile] [-dDfint] "
 	    "[-p pid-file] [interfaces...]\n");
 }
