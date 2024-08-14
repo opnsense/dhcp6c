@@ -124,9 +124,6 @@ AC_ARG_WITH(localdbdir,
 AC_MSG_RESULT($localdbdir)
 AC_SUBST(localdbdir)
 
-dnl Checks for arc4random
-AC_REPLACE_FUNCS(arc4random)
-
 AC_MSG_CHECKING(if --enable-pedant option is specified)
 AC_ARG_ENABLE(pedant, [  --enable-pedant         pedantic compilation],
 	[if test "$enableval" = "yes"; then
