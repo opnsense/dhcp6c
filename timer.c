@@ -57,16 +57,14 @@ static void timeval_add(struct timeval *, struct timeval *,
 			     struct timeval *);
 
 void
-dhcp6_timer_init()
+dhcp6_timer_init(void)
 {
 	LIST_INIT(&timer_head);
 	tm_sentinel = tm_max;
 }
 
 struct dhcp6_timer *
-dhcp6_add_timer(timeout, timeodata)
-	struct dhcp6_timer *(*timeout)(void *);
-	void *timeodata;
+dhcp6_add_timer(struct dhcp6_timer *(*timeout)(void *), void *timeodata)
 {
 	struct dhcp6_timer *newtimer;
 
@@ -91,8 +89,7 @@ dhcp6_add_timer(timeout, timeodata)
 }
 
 void
-dhcp6_remove_timer(timer)
-	struct dhcp6_timer **timer;
+dhcp6_remove_timer(struct dhcp6_timer **timer)
 {
 	LIST_REMOVE(*timer, link);
 	free(*timer);
@@ -100,9 +97,7 @@ dhcp6_remove_timer(timer)
 }
 
 void
-dhcp6_set_timer(tm, timer)
-	struct timeval *tm;
-	struct dhcp6_timer *timer;
+dhcp6_set_timer(struct timeval *tm, struct dhcp6_timer *timer)
 {
 	struct timeval now;
 
@@ -124,7 +119,7 @@ dhcp6_set_timer(tm, timer)
  * Return the next interval for select() call.
  */
 struct timeval *
-dhcp6_check_timer()
+dhcp6_check_timer(void)
 {
 	static struct timeval returnval;
 	struct timeval now;
@@ -135,7 +130,7 @@ dhcp6_check_timer()
 	tm_sentinel = tm_max;
 	for (tm = LIST_FIRST(&timer_head); tm; tm = tm_next) {
 		tm_next = LIST_NEXT(tm, link);
-		
+
 		if (TIMEVAL_LEQ(tm->tm, now)) {
 			if ((*tm->expire)(tm->expire_data) == NULL)
 				continue; /* timer has been freed */
@@ -157,8 +152,7 @@ dhcp6_check_timer()
 }
 
 struct timeval *
-dhcp6_timer_rest(timer)
-	struct dhcp6_timer *timer;
+dhcp6_timer_rest(struct dhcp6_timer *timer)
 {
 	struct timeval now;
 	static struct timeval returnval; /* XXX */
@@ -176,8 +170,7 @@ dhcp6_timer_rest(timer)
 
 /* result = a + b */
 static void
-timeval_add(a, b, result)
-	struct timeval *a, *b, *result;
+timeval_add(struct timeval *a, struct timeval *b, struct timeval *result)
 {
 	long l;
 
@@ -196,8 +189,7 @@ timeval_add(a, b, result)
  * XXX: this function assumes that a >= b.
  */
 void
-timeval_sub(a, b, result)
-	struct timeval *a, *b, *result;
+timeval_sub(struct timeval *a, struct timeval *b, struct timeval *result)
 {
 	long l;
 
