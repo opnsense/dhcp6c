@@ -1388,7 +1388,7 @@ set_random_ifid(struct prefix_ifconf *pif)
 
 	/* similar to EUI-64 and only passed a 64 bit SIGNED integer anyway */
 	for (i = 15; i >= 8; i--) {
-		pif->ifid[i] = arc4random() & 0xff;
+		pif->ifid[i] = arc4random_uniform(0xff);
 	}
 
 	/* enable this bit to avoid clashing with the EUI-64 format */
