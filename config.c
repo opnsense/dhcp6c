@@ -212,8 +212,7 @@ void list_cfl (char *tag,struct cf_namelist *head)
 }
 
 int
-configure_interface(iflist)
-	struct cf_namelist *iflist;
+configure_interface(struct cf_namelist *iflist)
 {
 	struct cf_namelist *ifp;
 	struct dhcp6_ifconf *ifc;
@@ -406,9 +405,7 @@ configure_interface(iflist)
 }
 
 int
-configure_ia(ialist, iatype)
-	struct cf_namelist *ialist;
-	iatype_t iatype;
+configure_ia(struct cf_namelist *ialist, iatype_t iatype)
 {
 	struct cf_namelist *iap;
 	struct ia_conf *iac = NULL;
@@ -526,10 +523,7 @@ configure_ia(ialist, iatype)
 }
 
 static int
-add_pd_pif(iapdc, cfl0, if_count)
-	struct iapd_conf *iapdc;
-	struct cf_list *cfl0;
-	u_int32_t if_count;
+add_pd_pif(struct iapd_conf *iapdc, struct cf_list *cfl0, u_int32_t if_count)
 {
 	struct cf_list *cfl;
 	struct prefix_ifconf *pif;
@@ -579,7 +573,7 @@ add_pd_pif(iapdc, cfl0, if_count)
 			if (pif->sla_len < 0 || pif->sla_len > 128) {
 				d_printf(LOG_ERR, FNAME, "%s:%d "
 				    "invalid SLA length: %d",
-				    configfilename, cfl->line, pif->sla_len); 
+				    configfilename, cfl->line, pif->sla_len);
 				goto bad;
 			}
 			break;
@@ -626,8 +620,7 @@ add_pd_pif(iapdc, cfl0, if_count)
 }
 
 int
-configure_host(hostlist)
-	struct cf_namelist *hostlist;
+configure_host(struct cf_namelist *hostlist)
 {
 	struct cf_namelist *host;
 	struct host_conf *hconf;
@@ -770,8 +763,7 @@ configure_host(hostlist)
 }
 
 int
-configure_keys(keylist)
-	struct cf_namelist *keylist;
+configure_keys(struct cf_namelist *keylist)
 {
 	struct cf_namelist *key;
 	char *secretstr;
@@ -873,7 +865,7 @@ configure_keys(keylist)
 					    "for secret");
 					goto bad;
 				}
-				memcpy(kinfo->secret, secret, secretlen); 
+				memcpy(kinfo->secret, secret, secretlen);
 				kinfo->secretlen = secretlen;
 				break;
 			case KEYPARAM_EXPIRE:
@@ -958,9 +950,7 @@ configure_keys(keylist)
 }
 
 static struct keyinfo *
-find_keybyname(head, kname)
-	struct keyinfo *head;
-	char *kname;
+find_keybyname(struct keyinfo *head, char *kname)
 {
 	struct keyinfo *kinfo;
 
@@ -973,8 +963,7 @@ find_keybyname(head, kname)
 }
 
 int
-configure_authinfo(authlist)
-	struct cf_namelist *authlist;
+configure_authinfo(struct cf_namelist *authlist)
 {
 	struct cf_namelist *auth;
 	struct authinfo *ainfo;
@@ -1088,7 +1077,7 @@ configure_authinfo(authlist)
 }
 
 int
-configure_global_option()
+configure_global_option(void)
 {
 	/* SIP Server address */
 	if (configure_addr(cf_sip_list, &siplist0, "SIP") < 0)
@@ -1146,10 +1135,8 @@ configure_global_option()
 }
 
 static int
-configure_addr(cf_addr_list, list0, optname)
-	struct cf_list *cf_addr_list;
-	struct dhcp6_list *list0;
-	const char *optname;
+configure_addr(struct cf_list *cf_addr_list, struct dhcp6_list *list0,
+    const char *optname)
 {
 	struct cf_list *cl;
 
@@ -1184,10 +1171,8 @@ configure_addr(cf_addr_list, list0, optname)
 }
 
 static int
-configure_domain(cf_name_list, list0, optname)
-	struct cf_list *cf_name_list;
-	struct dhcp6_list *list0;
-	const char *optname;
+configure_domain(struct cf_list *cf_name_list, struct dhcp6_list *list0,
+    const char *optname)
 {
 	struct cf_list *cl;
 
@@ -1242,9 +1227,7 @@ configure_domain(cf_name_list, list0, optname)
 }
 
 static int
-configure_duid(str, duid)
-	char *str;		/* this is a valid DUID string */
-	struct duid *duid;
+configure_duid(char *str, struct duid *duid)
 {
 	char *cp, *bp;
 	char *idbuf = NULL;
@@ -1297,8 +1280,7 @@ configure_duid(str, duid)
 
 /* construct EUI-64 based interface ID */
 static int
-set_default_ifid(pif)
-	struct prefix_ifconf *pif;
+set_default_ifid(struct prefix_ifconf *pif)
 {
 	struct ifaddrs *ifa, *ifap;
 #ifdef __KAME__
@@ -1416,7 +1398,7 @@ set_random_ifid(struct prefix_ifconf *pif)
 }
 
 void
-configure_cleanup()
+configure_cleanup(void)
 {
 	clear_iaconf(&ia_conflist0);
 	clear_ifconf(dhcp6_ifconflist);
@@ -1443,7 +1425,7 @@ configure_cleanup()
 }
 
 void
-configure_commit()
+configure_commit(void)
 {
 	struct dhcp6_ifconf *ifc;
 	struct dhcp6_if *ifp;
@@ -1581,8 +1563,7 @@ configure_commit()
 }
 
 static void
-clear_ifconf(iflist)
-	struct dhcp6_ifconf *iflist;
+clear_ifconf(struct dhcp6_ifconf *iflist)
 {
 	struct dhcp6_ifconf *ifc, *ifc_next;
 
@@ -1605,8 +1586,7 @@ clear_ifconf(iflist)
 }
 
 static void
-clear_pd_pif(iapdc)
-	struct iapd_conf *iapdc;
+clear_pd_pif(struct iapd_conf *iapdc)
 {
 	struct prefix_ifconf *pif, *pif_next;
 
@@ -1621,8 +1601,7 @@ clear_pd_pif(iapdc)
 }
 
 static void
-clear_iaconf(ialist)
-	struct ia_conflist *ialist;
+clear_iaconf(struct ia_conflist *ialist)
 {
 	struct ia_conf *iac;
 
@@ -1645,8 +1624,7 @@ clear_iaconf(ialist)
 }
 
 static void
-clear_hostconf(hlist)
-	struct host_conf *hlist;
+clear_hostconf(struct host_conf *hlist)
 {
 	struct host_conf *host, *host_next;
 
@@ -1665,8 +1643,7 @@ clear_hostconf(hlist)
 }
 
 static void
-clear_keys(klist)
-	struct keyinfo *klist;
+clear_keys(struct keyinfo *klist)
 {
 	struct keyinfo *key, *key_next;
 
@@ -1681,8 +1658,7 @@ clear_keys(klist)
 }
 
 static void
-clear_authinfo(alist)
-	struct authinfo *alist;
+clear_authinfo(struct authinfo *alist)
 {
 	struct authinfo *auth, *auth_next;
 
@@ -1693,10 +1669,7 @@ clear_authinfo(alist)
 }
 
 static int
-add_options(opcode, ifc, cfl0)
-	int opcode;
-	struct dhcp6_ifconf *ifc;
-	struct cf_list *cfl0;
+add_options(int opcode, struct dhcp6_ifconf *ifc, struct cf_list *cfl0)
 {
 	struct cf_list *cfl;
 	int opttype;
@@ -1743,7 +1716,7 @@ add_options(opcode, ifc, cfl0)
 				    configfilename, cfl->line, ifc->ifname);
 				return (-1);
 			}
-			ifc->authinfo = ainfo; 
+			ifc->authinfo = ainfo;
 			break;
 		case DHCPOPT_IA_PD:
 			switch (opcode) {
@@ -1916,11 +1889,8 @@ add_options(opcode, ifc, cfl0)
 }
 
 static int
-add_prefix(head, name, type, prefix0)
-	struct dhcp6_list *head;
-	const char *name;
-	int type;
-	struct dhcp6_prefix *prefix0;
+add_prefix(struct dhcp6_list *head, const char *name, int type,
+    struct dhcp6_prefix *prefix0)
 {
 	struct dhcp6_prefix oprefix;
 
@@ -1991,10 +1961,7 @@ add_prefix(head, name, type, prefix0)
 }
 
 struct ia_conf *
-find_iaconf(head, type, iaid)
-	struct ia_conflist *head;
-	int type;
-	uint32_t iaid;
+find_iaconf(struct ia_conflist *head, int type, uint32_t iaid)
 {
 	struct ia_conf *iac;
 
@@ -2007,8 +1974,7 @@ find_iaconf(head, type, iaid)
 }
 
 struct host_conf *
-find_hostconf(duid)
-	struct duid *duid;
+find_hostconf(struct duid *duid)
 {
 	struct host_conf *host;
 
@@ -2028,9 +1994,7 @@ find_hostconf(duid)
 }
 
 struct authinfo *
-find_authinfo(head, name)
-	struct authinfo *head;
-	char *name;
+find_authinfo(struct authinfo *head, char *name)
 {
 	struct authinfo *ainfo;
 
@@ -2043,9 +2007,7 @@ find_authinfo(head, name)
 }
 
 struct dhcp6_prefix *
-find_prefix6(list, prefix)
-	struct dhcp6_list *list;
-	struct dhcp6_prefix *prefix;
+find_prefix6(struct dhcp6_list *list, struct dhcp6_prefix *prefix)
 {
 	struct dhcp6_listval *v;
 
@@ -2059,10 +2021,7 @@ find_prefix6(list, prefix)
 }
 
 struct keyinfo *
-find_key(realm, realmlen, id)
-	char *realm;
-	size_t realmlen;
-	uint32_t id;
+find_key(char *realm, size_t realmlen, uint32_t id)
 {
 	struct keyinfo *key;
 
@@ -2078,8 +2037,7 @@ find_key(realm, realmlen, id)
 }
 
 char *
-qstrdup(qstr)
-	char *qstr;
+qstrdup(char *qstr)
 {
 	size_t len;
 	char *dup;
@@ -2098,8 +2056,7 @@ qstrdup(qstr)
 }
 
 int
-configure_pool(poollist)
-	struct cf_namelist *poollist;
+configure_pool(struct cf_namelist *poollist)
 {
 	struct cf_namelist *plp;
 
@@ -2154,8 +2111,7 @@ configure_pool(poollist)
 }
 
 static void
-clear_poolconf(plist)
-	struct pool_conf *plist;
+clear_poolconf(struct pool_conf *plist)
 {
 	struct pool_conf *pool, *pool_next;
 
@@ -2169,9 +2125,7 @@ clear_poolconf(plist)
 }
 
 struct host_conf *
-create_dynamic_hostconf(duid, pool)
-	struct duid *duid;
-	struct dhcp6_poolspec *pool;
+create_dynamic_hostconf(struct duid *duid, struct dhcp6_poolspec *pool)
 {
 	struct dynamic_hostconf *dynconf = NULL;
 	struct host_conf *host;
@@ -2235,7 +2189,7 @@ create_dynamic_hostconf(duid, pool)
 
 	dynconf->host = host;
 	TAILQ_INSERT_HEAD(&dynamic_hostconf_head, dynconf, link);
-	dynamic_hostconf_count++; 
+	dynamic_hostconf_count++;
 
 	d_printf(LOG_DEBUG, FNAME, "created host_conf (name=%s)", host->name);
 
@@ -2251,8 +2205,7 @@ bad:
 }
 
 struct host_conf *
-find_dynamic_hostconf(duid)
-	struct duid *duid;
+find_dynamic_hostconf(struct duid *duid)
 {
 	struct dynamic_hostconf *dynconf = NULL;
 
@@ -2275,9 +2228,7 @@ find_dynamic_hostconf(duid)
 }
 
 struct pool_conf *
-create_pool(name, range)
-	char *name;
-	struct dhcp6_range *range;
+create_pool(char *name, struct dhcp6_range *range)
 {
 	struct pool_conf *pool = NULL;
 
@@ -2311,11 +2262,10 @@ create_pool(name, range)
 }
 
 struct pool_conf *
-find_pool(name)
-	const char *name;
+find_pool(const char *name)
 {
 	struct pool_conf *pool = NULL;
-	
+
 	if (!name)
 		return (NULL);
 
@@ -2334,9 +2284,7 @@ find_pool(name)
 }
 
 int
-get_free_address_from_pool(pool, addr)
-	struct pool_conf *pool;
-	struct in6_addr *addr;
+get_free_address_from_pool(struct pool_conf *pool, struct in6_addr *addr)
 {
 	struct in6_addr cur;
 	if (!pool || !addr)
@@ -2365,9 +2313,7 @@ get_free_address_from_pool(pool, addr)
 }
 
 int
-is_available_in_pool(pool, addr)
-	struct pool_conf *pool;
-	struct in6_addr *addr;
+is_available_in_pool(struct pool_conf *pool, struct in6_addr *addr)
 {
 	if (!pool || !addr)
 		return (0);
@@ -2390,9 +2336,8 @@ is_available_in_pool(pool, addr)
 	return (0);
 }
 
-static int 
-in6_addr_cmp(addr1, addr2)
-	struct in6_addr *addr1, *addr2;
+static int
+in6_addr_cmp(struct in6_addr *addr1, struct in6_addr *addr2)
 {
 	int i;
 
@@ -2409,8 +2354,7 @@ in6_addr_cmp(addr1, addr2)
 }
 
 static void
-in6_addr_inc(addr)
-	struct in6_addr *addr;
+in6_addr_inc(struct in6_addr *addr)
 {
 	int i;
 
