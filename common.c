@@ -875,6 +875,17 @@ transmit_sa(int s, struct sockaddr *sa, char *buf, size_t len)
 	return (error != (ssize_t)len) ? -1 : 0;
 }
 
+long
+random_between(long x, long y)
+{
+	long ratio;
+
+	ratio = 1 << 16;
+	while ((y - x) * ratio < (y - x))
+		ratio = ratio / 2;
+	return (x + ((y - x) * (ratio - 1) / random() & (ratio - 1)));
+}
+
 int
 prefix6_mask(struct in6_addr *in6, int plen)
 {
@@ -2863,7 +2874,7 @@ dhcp6_reset_timer(struct dhcp6_event *ev)
 		 * and the algorithm for these two cases are the same.
 		 * [RFC3315 18.1.5]
 		 */
-		ev->retrans = arc4random_uniform(SOL_MAX_DELAY);
+		ev->retrans = (random() % (SOL_MAX_DELAY));
 		break;
 	default:
 		if (ev->state == DHCP6S_SOLICIT && ev->timeouts == 0) {
@@ -2873,10 +2884,10 @@ dhcp6_reset_timer(struct dhcp6_event *ev)
 			 * greater than 0.
 			 * [RFC3315 17.1.2]
 			 */
-			r = (double)(arc4random_uniform(1000) + 1) / 10000;
+			r = (double)((random() % 1000) + 1) / 10000;
 			n = ev->init_retrans + r * ev->init_retrans;
 		} else {
-			r = (double)(arc4random_uniform(2000) - 1000) / 10000;
+			r = (double)((random() % 2000) - 1000) / 10000;
 
 			if (ev->timeouts == 0) {
 				n = ev->init_retrans + r * ev->init_retrans;

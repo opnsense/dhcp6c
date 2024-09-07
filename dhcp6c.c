@@ -154,6 +154,10 @@ main(int argc, char *argv[])
 	FILE *pidfp;
 	struct cf_namelist *ifnamep;
 
+#ifndef HAVE_ARC4RANDOM
+	srandom(time(NULL) & getpid());
+#endif
+
 	if ((progname = strrchr(*argv, '/')) == NULL)
 		progname = *argv;
 	else
@@ -1014,7 +1018,11 @@ client6_send(struct dhcp6_event *ev)
 		 * A client MUST leave the transaction-ID unchanged in
 		 * retransmissions of a message. [RFC3315 15.1]
 		 */
-		ev->xid = arc4random_uniform(DH6_XIDMASK);
+#ifdef HAVE_ARC4RANDOM
+		ev->xid = arc4random() & DH6_XIDMASK;
+#else
+		ev->xid = random() & DH6_XIDMASK;
+#endif
 		d_printf(LOG_DEBUG, FNAME, "a new XID (%x) is generated",
 		    ev->xid);
 	}
