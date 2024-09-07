@@ -153,7 +153,6 @@ int getifaddr(struct in6_addr *, char *, struct in6_addr *,
 			  int, int, int);
 int getifidfromaddr(struct in6_addr *, unsigned int *);
 int transmit_sa(int, struct sockaddr *, char *, size_t);
-long random_between(long, long);
 int prefix6_mask(struct in6_addr *, int);
 int sa6_plen2mask(struct sockaddr_in6 *, int);
 char *addr2str(struct sockaddr *);

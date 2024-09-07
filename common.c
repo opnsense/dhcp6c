@@ -875,17 +875,6 @@ transmit_sa(int s, struct sockaddr *sa, char *buf, size_t len)
 	return (error != (ssize_t)len) ? -1 : 0;
 }
 
-long
-random_between(long x, long y)
-{
-	long ratio;
-
-	ratio = 1 << 16;
-	while ((y - x) * ratio < (y - x))
-		ratio = ratio / 2;
-	return (x + ((y - x) * (ratio - 1) / random() & (ratio - 1)));
-}
-
 int
 prefix6_mask(struct in6_addr *in6, int plen)
 {
