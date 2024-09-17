@@ -2864,15 +2864,16 @@ dhcp6_reset_timer(struct dhcp6_event *ev)
 	default:
 		if (ev->state == DHCP6S_SOLICIT && ev->timeouts == 0) {
 			r = (double)((random() % 1000) + 1) / 10000;
-			n = ev->init_retrans + r * ev->init_retrans;
+			d_printf(LOG_DEBUG, FNAME, "RAND 0 < %.4f <= 0.1", r);
 		} else {
 			r = (double)((random() % 2000) - 1000) / 10000;
+			d_printf(LOG_DEBUG, FNAME, "RAND -0.1 <= %.4f <= 0.1", r);
+		}
 
-			if (ev->timeouts == 0) {
-				n = ev->init_retrans + r * ev->init_retrans;
-			} else {
-				n = 2 * ev->retrans + r * ev->retrans;
-			}
+		if (ev->timeouts == 0) {
+			n = ev->init_retrans + r * ev->init_retrans;
+		} else {
+			n = 2 * ev->retrans + r * ev->retrans;
 		}
 
 		if (ev->max_retrans_time && n > ev->max_retrans_time) {
