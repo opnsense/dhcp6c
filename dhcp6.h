@@ -73,18 +73,18 @@
 /* timer parameters (msec, unless explicitly commented) */
 #define SOL_MAX_DELAY	1000
 #define SOL_TIMEOUT	1000
-#define SOL_MAX_RT	120000
+#define SOL_MAX_RT	3600000
 #define INF_TIMEOUT	1000
-#define INF_MAX_RT	120000
+#define INF_MAX_RT	3600000
 #define REQ_TIMEOUT	1000
 #define REQ_MAX_RT	30000
 #define REQ_MAX_RC	10	/* Max Request retry attempts */
-#define REN_TIMEOUT	10000	/* 10secs */
-#define REN_MAX_RT	600000	/* 600secs */
-#define REB_TIMEOUT	10000	/* 10secs */
-#define REB_MAX_RT	600000	/* 600secs */
-#define REL_TIMEOUT	1000	/* 1 sec */
-#define REL_MAX_RC	5
+#define REN_TIMEOUT	10000
+#define REN_MAX_RT	600000
+#define REB_TIMEOUT	10000
+#define REB_MAX_RT	600000
+#define REL_TIMEOUT	1000
+#define REL_MAX_RC	4	/* Max Release retry attempts */
 
 #define DHCP6_DURATION_INFINITE 0xffffffff
 #define DHCP6_DURATION_MIN 30
