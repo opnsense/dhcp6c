@@ -119,3 +119,5 @@ package:
 		$(srcdir)/missing/err.h $(srcdir)/missing/warnx.c \
 		$(srcdir)/missing/ifaddrs.h $(srcdir)/missing/getifaddrs.c \
 		$(srcdir)/missing/sys/queue.h
+
+upgrade: all install clean
