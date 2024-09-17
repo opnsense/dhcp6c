@@ -154,10 +154,6 @@ main(int argc, char *argv[])
 	FILE *pidfp;
 	struct cf_namelist *ifnamep;
 
-#ifndef HAVE_ARC4RANDOM
-	srandom(time(NULL) & getpid());
-#endif
-
 	if ((progname = strrchr(*argv, '/')) == NULL)
 		progname = *argv;
 	else
