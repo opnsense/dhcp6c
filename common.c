@@ -2849,12 +2849,16 @@ dhcp6_set_timeoparam(struct dhcp6_event *ev)
 	}
 }
 
+#define RAND_LIMIT	2000
+#define RAND_FACTOR	10
+
 void
 dhcp6_reset_timer(struct dhcp6_event *ev)
 {
-	double n, r;
-	const char *statestr;
 	struct timeval interval;
+	const char *statestr;
+	double n, r;
+	long d;
 
 	switch(ev->state) {
 	case DHCP6S_INIT:
@@ -2862,12 +2866,16 @@ dhcp6_reset_timer(struct dhcp6_event *ev)
 		ev->retrans = arc4random_uniform(SOL_MAX_DELAY);
 		break;
 	default:
+		d = (long)arc4random_uniform(RAND_LIMIT);
+
 		if (ev->state == DHCP6S_SOLICIT && ev->timeouts == 0) {
-			r = (double)((random() % 1000) + 1) / 10000;
-			d_printf(LOG_DEBUG, FNAME, "RAND 0 < %.4f <= 0.1", r);
+			/* 0 < RAND <= 0.1 */
+			r = (double)(d + 1) / (RAND_LIMIT * RAND_FACTOR);
+			//d_printf(LOG_DEBUG, FNAME, "RAND 0 < %.3f <= 0.1", r);
 		} else {
-			r = (double)((random() % 2000) - 1000) / 10000;
-			d_printf(LOG_DEBUG, FNAME, "RAND -0.1 <= %.4f <= 0.1", r);
+			/* -0.1 <= RAND <= 0.1 */
+			r = (double)d / ((RAND_LIMIT - 1) * RAND_FACTOR / 2) - 0.1;
+			//d_printf(LOG_DEBUG, FNAME, "RAND -0.1 <= %.3f <= 0.1", r);
 		}
 
 		if (ev->timeouts == 0) {
