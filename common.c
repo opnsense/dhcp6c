@@ -2828,10 +2828,15 @@ dhcp6_set_timeoparam(struct dhcp6_event *ev)
 	case DHCP6S_RENEW:
 		ev->init_retrans = REN_TIMEOUT;
 		ev->max_retrans_time = REN_MAX_RT;
+		/* XXX max_retrans_dur: Remaining time until earliest T2 */
 		break;
 	case DHCP6S_REBIND:
 		ev->init_retrans = REB_TIMEOUT;
 		ev->max_retrans_time = REB_MAX_RT;
+		/*
+		 * XXX max_retrans_dur: Remaining time until valid
+		 * lifetimes of all leases in all IAs have expired
+		 */
 		break;
 	case DHCP6S_RELEASE:
 		ev->init_retrans = REL_TIMEOUT;
@@ -2853,26 +2858,11 @@ dhcp6_reset_timer(struct dhcp6_event *ev)
 
 	switch(ev->state) {
 	case DHCP6S_INIT:
-		/*
-		 * The first Solicit message from the client on the interface
-		 * MUST be delayed by a random amount of time between
-		 * 0 and SOL_MAX_DELAY.
-		 * [RFC3315 17.1.2]
-		 * XXX: a random delay is also necessary before the first
-		 * information-request message.  Fortunately, the parameters
-		 * and the algorithm for these two cases are the same.
-		 * [RFC3315 18.1.5]
-		 */
-		ev->retrans = (random() % (SOL_MAX_DELAY));
+		/* same as INF_MAX_DELAY as per [RFC8415 18.2.6] */
+		ev->retrans = arc4random_uniform(SOL_MAX_DELAY);
 		break;
 	default:
 		if (ev->state == DHCP6S_SOLICIT && ev->timeouts == 0) {
-			/*
-			 * The first RT MUST be selected to be strictly
-			 * greater than IRT by choosing RAND to be strictly
-			 * greater than 0.
-			 * [RFC3315 17.1.2]
-			 */
 			r = (double)((random() % 1000) + 1) / 10000;
 			n = ev->init_retrans + r * ev->init_retrans;
 		} else {
@@ -2880,11 +2870,15 @@ dhcp6_reset_timer(struct dhcp6_event *ev)
 
 			if (ev->timeouts == 0) {
 				n = ev->init_retrans + r * ev->init_retrans;
-			} else
+			} else {
 				n = 2 * ev->retrans + r * ev->retrans;
+			}
 		}
-		if (ev->max_retrans_time && n > ev->max_retrans_time)
+
+		if (ev->max_retrans_time && n > ev->max_retrans_time) {
 			n = ev->max_retrans_time + r * ev->max_retrans_time;
+                }
+
 		ev->retrans = (long)n;
 		break;
 	}
