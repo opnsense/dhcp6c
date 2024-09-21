@@ -167,10 +167,6 @@ update_ia(iatype_t iatype, struct dhcp6_list *ialist, struct dhcp6_if *ifp,
 				}
 				break;
 			case DHCP6_LISTVAL_STCODE:
-				d_printf(LOG_INFO, FNAME,
-				    "status code for %s-%lu: %s",
-				    iastr(iatype), iav->val_ia.iaid,
-				    dhcp6_stcodestr(siav->val_num16));
 				if ((ia->state == IAS_RENEW ||
 				    ia->state == IAS_REBIND)) {
 					if (siav->val_num16 == DH6OPT_STCODE_NOBINDING) {
@@ -184,7 +180,7 @@ update_ia(iatype_t iatype, struct dhcp6_list *ialist, struct dhcp6_if *ifp,
 						 * XXX: what about the PD case?
 						 */
 						d_printf(LOG_NOTICE, FNAME,
-						    "receive NoBinding for %s-%lu",
+						    "received NoBinding for %s-%lu",
 						    iastr(ia->conf->type),
 						    ia->conf->iaid);
 						reestablish_ia(ia);
@@ -218,6 +214,10 @@ update_ia(iatype_t iatype, struct dhcp6_list *ialist, struct dhcp6_if *ifp,
 						goto nextia;
 					}
 				}
+				d_printf(LOG_INFO, FNAME,
+				    "status code for %s-%lu: %s",
+				    iastr(iatype), iav->val_ia.iaid,
+				    dhcp6_stcodestr(siav->val_num16));
 				break;
 			default:
 				d_printf(LOG_ERR, FNAME, "impossible case");
