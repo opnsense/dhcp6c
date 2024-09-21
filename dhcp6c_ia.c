@@ -202,6 +202,20 @@ update_ia(iatype_t iatype, struct dhcp6_list *ialist, struct dhcp6_if *ifp,
 						    ia->conf->iaid);
 						remove_ia(ia, 1);
 						goto nextia;
+					} else if (siav->val_num16 == DH6OPT_STCODE_NOADDRSAVAIL) {
+						/*
+						 * Apparently there was no address since
+						 * we got NoAddrAvail in the status code,
+						 * but it may have looked like one and we
+						 * would end up invalidating it immediately
+						 * breaking the flow of the lease acquire.
+						 */
+						d_printf(LOG_NOTICE, FNAME,
+						    "received NoAddrAvail for %s-%lu",
+						    iastr(ia->conf->type),
+						    ia->conf->iaid);
+						remove_ia(ia, 1);
+						goto nextia;
 					}
 				}
 				break;
