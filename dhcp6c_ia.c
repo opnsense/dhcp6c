@@ -215,7 +215,7 @@ update_ia(iatype_t iatype, struct dhcp6_list *ialist, struct dhcp6_if *ifp,
 					}
 				}
 				d_printf(LOG_INFO, FNAME,
-				    "status code for %s-%lu: %s",
+				    "unhandled status code for %s-%lu: %s",
 				    iastr(iatype), iav->val_ia.iaid,
 				    dhcp6_stcodestr(siav->val_num16));
 				break;
