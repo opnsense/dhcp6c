@@ -149,8 +149,9 @@ static char **saved_cli_if;
 int
 main(int argc, char *argv[])
 {
-	int ch, pid;
+	int ch, lock_fd, pid;
 	char *progname;
+	const char *lockfile = NULL;
 	FILE *pidfp;
 	struct cf_namelist *ifnamep;
 
@@ -159,7 +160,7 @@ main(int argc, char *argv[])
 	else
 		progname++;
 
-	while ((ch = getopt(argc, argv, "c:dDfinp:t")) != -1) {
+	while ((ch = getopt(argc, argv, "c:dDfil:np:t")) != -1) {
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
@@ -175,6 +176,9 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			infreq_mode = 1;
+			break;
+		case 'l':
+			lockfile = optarg;
 			break;
 		case 'n':
 			opt_norelease = 1;
@@ -198,6 +202,17 @@ main(int argc, char *argv[])
 		openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
 	setloglevel(debug);
+
+	if (lockfile != NULL) {
+		lock_fd = open(lockfile, O_RDWR|O_CREAT, 0666);
+		if (lock_fd < 0)
+			err(1, "cannot open lockfile %s", lockfile);
+
+		if (flock(lock_fd, LOCK_EX|LOCK_NB) != 0) {
+			info_printf("cannot obtain exclusive lock on %s (%s)", lockfile, strerror(errno));
+			exit(0);
+		}
+	}
 
 	client6_init();
 
@@ -246,7 +261,7 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: dhcp6c [-c configfile] [-dDfint] "
+	fprintf(stderr, "usage: dhcp6c [-c configfile] [-l lockfile] [-dDfint] "
 	    "[-p pid-file] [interfaces...]\n");
 }
 

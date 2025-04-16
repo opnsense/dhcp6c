@@ -37,6 +37,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl c Ar configfile
+.Op Fl l Ar lockfile
 .Op Fl Ddfint
 .Op Fl p Ar pid-file
 .Op Ar interfaces...
@@ -89,6 +90,11 @@ is terminated.  (suits for a use in shell-script etc).
 Since the configuration is internally generated, you cannot provide a configuration in this mode.  If you want to have different actions for the stateless DHCPv6 information, you should write an appropriate configuration and invoke
 .Nm
 without this option.
+.It Fl l Ar lockfile
+Obtain an exclusive lock on
+.Ar lockfile
+before operation to avoid concurrent runs of the DHCPv6 client.  The lock
+is held until the process exits.
 .It Fl n
 Prevent Release message from being sent to DHCPv6 server when
 .Nm
