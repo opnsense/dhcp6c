@@ -305,6 +305,19 @@ client6_script(struct dhcp6_if *ifp, int state, struct dhcp6_optinfo *optinfo)
 	RENDER_NAME("new_aftr_name", aftrname);
 	RENDER_RAWOPT("new_raw_option", rawopt); /* XXX does not handle option duplication */
 
+	{
+		/* XXX loop through all configurations here, possibly for dhcp6c_ia.c */
+		struct ia_conf *iac;
+		struct ia *ia;
+
+		TAILQ_FOREACH(iac, &ifp->iaconf_list, link) {
+			TAILQ_FOREACH(ia, &iac->iadata, link) {
+				d_printf(LOG_DEBUG, FNAME, "list an IA: %s-%" PRIu32,
+				    iastr(ia->conf->type), ia->conf->iaid);
+			}
+		}
+	}
+
 	/* launch the script */
 	pid = fork();
 	if (pid < 0) {
