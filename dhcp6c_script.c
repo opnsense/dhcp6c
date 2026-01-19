@@ -225,9 +225,11 @@
 } while (0)
 
 int
-client6_script(char *scriptpath, const char *ifname, int state,
-    struct dhcp6_optinfo *optinfo)
+client6_script(struct dhcp6_if *ifp, int state, struct dhcp6_optinfo *optinfo)
 {
+	char *scriptpath = ifp->scriptpath;
+	const char *ifname = ifp->ifname;
+
 	/* we at least include the interface, reason and the terminator */
 	int envc = 3;
 	int i, ret = 0;

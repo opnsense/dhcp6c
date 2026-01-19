@@ -533,8 +533,7 @@ check_exit(void)
 	}
 
 	for (ifp = dhcp6_if; ifp; ifp = ifp->next) {
-		client6_script(ifp->scriptpath, ifp->ifname, DHCP6S_EXIT,
-		    NULL);
+		client6_script(ifp, DHCP6S_EXIT, NULL);
 	}
 
 	/* We have no existing event.  Do exit. */
@@ -1786,7 +1785,7 @@ client6_recvreply(struct dhcp6_if *ifp, struct dhcp6 *dh6,
 	 * Call the configuration script, if specified, to handle various
 	 * configuration parameters.
 	 */
-	client6_script(ifp->scriptpath, ifp->ifname, state, optinfo);
+	client6_script(ifp, state, optinfo);
 
 	d_printf(LOG_DEBUG, FNAME, "got an expected reply, sleeping.");
 
