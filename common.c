@@ -3343,7 +3343,10 @@ ifaddrconf(ifaddrconf_cmd_t cmd, char *ifname, struct sockaddr_in6 *addr,
 #endif
 	unsigned long ioctl_cmd;
 	const char *cmdstr;
+	int ioctl_flags;
 	int s;			/* XXX overhead */
+
+	ioctl_flags = 0;
 
 	switch (cmd) {
 	case IFADDRCONF_ADD:
@@ -3356,6 +3359,21 @@ ifaddrconf(ifaddrconf_cmd_t cmd, char *ifname, struct sockaddr_in6 *addr,
 #endif
 #ifdef __sun__
 		ioctl_cmd = SIOCLIFADDIF;
+#endif
+		break;
+	case IFADDRCONF_DEPRECATE:
+		cmdstr = "deprecate";
+#ifdef __KAME__
+		ioctl_cmd = SIOCAIFADDR_IN6;
+		ioctl_flags = IN6_IFF_DEPRECATED;
+#endif
+#ifdef __linux__
+		ioctl_cmd = SIOCSIFADDR;
+		/* XXX ioctl_flags */
+#endif
+#ifdef __sun__
+		ioctl_cmd = SIOCLIFADDIF;
+		/* XXX ioctl_flags */
 #endif
 		break;
 	case IFADDRCONF_REMOVE:
@@ -3387,6 +3405,7 @@ ifaddrconf(ifaddrconf_cmd_t cmd, char *ifname, struct sockaddr_in6 *addr,
 	(void)sa6_plen2mask(&req.ifra_prefixmask, plen);
 	req.ifra_lifetime.ia6t_vltime = vltime;
 	req.ifra_lifetime.ia6t_pltime = pltime;
+	req.ifra_flags |= ioctl_flags;
 #endif
 #ifdef __linux__
 	memset(&ifr, 0, sizeof(ifr));

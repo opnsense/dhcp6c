@@ -292,7 +292,8 @@ remove_siteprefix(struct siteprefix *sp)
 	/* remove all interface prefixes */
 	while ((pip = TAILQ_FIRST(&sp->ifprefix_list)) != NULL) {
 		TAILQ_REMOVE(&sp->ifprefix_list, pip, plink);
-		pd_ifaddrconf(IFADDRCONF_REMOVE, pip);
+		/* XXX test driving deprecation instead */
+		pd_ifaddrconf(IFADDRCONF_DEPRECATE, pip);
 		free(pip);
 	}
 

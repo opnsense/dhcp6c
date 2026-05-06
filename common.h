@@ -129,7 +129,7 @@ extern int opt_norelease;
 #define MATCHLIST_PREFIXLEN 0x1
 
 /* common.c */
-typedef enum { IFADDRCONF_ADD, IFADDRCONF_REMOVE } ifaddrconf_cmd_t;
+typedef enum { IFADDRCONF_ADD, IFADDRCONF_DEPRECATE, IFADDRCONF_REMOVE } ifaddrconf_cmd_t;
 int rawop_copy_list(struct rawop_list *, struct rawop_list *);
 void rawop_clear_list(struct rawop_list *);
 int dhcp6_copy_list(struct dhcp6_list *, struct dhcp6_list *);
