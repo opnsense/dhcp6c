@@ -93,7 +93,7 @@
 	struct dhcp6_listval *v; \
 	TAILQ_FOREACH(v, &optinfo->lname##_list, link) { \
 		/* one space separator plus address length or as is */ \
-		lname##_len += 1 + ((lip) ? INET6_ADDRSTRLEN : lname##_len); \
+		lname##_len += 1 + ((lip) ? INET6_ADDRSTRLEN : v->val_vbuf.dv_len); \
 	} \
 	envc += lname##_len ? 1 : 0; \
 } while (0)
